@@ -413,7 +413,7 @@ const DealerPage = () => {
               disabled={!connected || gameState.autoDealingInProgress} 
               className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-600 font-semibold"
             >
-              🎮 New Game
+              🔄 RESET GAME
             </button>
             <button 
               onClick={() => handleGameAction('calculate_result')} 
@@ -430,6 +430,13 @@ const DealerPage = () => {
               ↩️ Undo
             </button>
             <button 
+              onClick={() => handleGameAction('delete_last_entry')} 
+              disabled={!connected || !gameState.canUndo || gameState.autoDealingInProgress} 
+              className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-600 font-semibold"
+            >
+              ⏪ DELETE LAST WIN
+            </button>
+            <button 
               onClick={() => handleGameAction('shuffle_cards')} 
               disabled={!connected || !gameState.canShuffle || gameState.autoDealingInProgress} 
               className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 font-semibold"
@@ -441,7 +448,7 @@ const DealerPage = () => {
               disabled={!connected || gameState.autoDealingInProgress} 
               className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 font-semibold"
             >
-              🔄 Reset
+              🗑️ DELETE ALL WINS
             </button>
             <button 
               onClick={() => handleGameAction('auto_deal')} 
@@ -449,13 +456,6 @@ const DealerPage = () => {
               className="p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-600 font-semibold"
             >
               🤖 Auto Deal
-            </button>
-            <button
-              onClick={() => handleGameAction('delete_last_entry')}
-              disabled={!connected || gameState.autoDealingInProgress}
-              className="p-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:bg-gray-600 font-semibold"
-            >
-              ⏪ Last Win Undo
             </button>
           </div>
         </div>

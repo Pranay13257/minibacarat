@@ -398,7 +398,7 @@ const GameMenu = ({ socket }: GameMenuProps) => {
                                 onClick={resetGame} 
                                 className="bg-red-500 text-white px-4 py-2 w-full rounded-lg hover:bg-red-600 transition"
                               >
-                                Reset Game
+                                RESET GAME
                               </button>
                             </div>
                             
