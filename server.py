@@ -11,11 +11,11 @@ from datetime import datetime
 # MongoDB Configuration
 MONGO_URI = "mongodb://localhost:27017"
 DB_NAME = "game_db"
-COUNTERS_COLLECTION = "game_counters"
+COLLECTION_NAME = "game_results"
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
-counters_collection = db[COUNTERS_COLLECTION]
+collection = db[COLLECTION_NAME]
 
 # Configure logging to suppress websocket handshake errors
 logging.basicConfig(level=logging.INFO)
@@ -40,9 +40,7 @@ game_state = {
     "burn_enabled": True,  # Always enabled by default
     "active_players": set(),
     "auto_dealing": False,
-    "can_manage_players": True,
-    "player_pair_count": 0,
-    "banker_pair_count": 0
+    "can_manage_players": True
 }
 
 remaining_cards = None
@@ -62,8 +60,6 @@ game_results = {
     "is_super_six": False
 }
 
-last_round_auto_deal = False  # Track if last round was auto-deal
-
 async def check_connection():
     try:
         await client.admin.command('ping')
@@ -72,62 +68,75 @@ async def check_connection():
         logging.error("Could not connect to MongoDB: %s", e)
         exit(1)
 
-async def initialize_counters():
-    """On server startup, delete all counters documents and create a new one with all counters zero."""
+async def save_game_result(winner, round_num, player_cards, banker_cards, player_score, banker_score, is_super_six=False, player_pair=False, banker_pair=False, is_natural=False, natural_type=None):
     try:
-        # Delete all documents in the collection
-        await counters_collection.delete_many({})
-        # Create a new zeroed document
-        zero_doc = {
-            "_id": "game_counters",
-            "round": 0,
-            "banker_wins": 0,
-            "player_wins": 0,
-            "ties": 0,
-            "super_six_count": 0,
-            "natural_count": 0,
-            "player_pair_count": 0,
-            "banker_pair_count": 0,
-            "last_updated": datetime.utcnow()
+        game_doc = {
+            "timestamp": datetime.utcnow(),
+            "round": round_num,
+            "winner": winner,
+            "player_cards": player_cards,
+            "banker_cards": banker_cards,
+            "player_score": player_score,
+            "banker_score": banker_score,
+            "is_super_six": is_super_six,
+            "player_pair": player_pair,
+            "banker_pair": banker_pair,
+            "is_natural": is_natural,
+            "natural_type": natural_type
         }
-        await counters_collection.insert_one(zero_doc)
-        game_state.update({
-            "round": 0,
-            "banker_wins": 0,
-            "player_wins": 0,
-            "ties": 0,
-            "super_six_count": 0,
-            "natural_count": 0,
-            "player_pair_count": 0,
-            "banker_pair_count": 0
-        })
-        logging.info("[INIT] All counters reset to zero and MongoDB document recreated.")
+        result = await collection.insert_one(game_doc)
+        logging.info(f"Game {round_num} saved: {winner} wins - Super Six: {is_super_six}, Player Pair: {player_pair}, Banker Pair: {banker_pair}")
+        return result.inserted_id
     except Exception as e:
-        logging.error(f"Error initializing counters: {e}")
+        logging.error(f"Error saving to MongoDB: {e}")
+        return None
 
-async def update_counters_in_db():
-    """Update the counters document in MongoDB to match in-memory game_state"""
+async def delete_last_game_entry(websocket):
+    """Delete last entry and optionally restore stats if it affects current game state"""
     try:
-        counters_doc = {
-            "round": game_state["round"],
-            "banker_wins": game_state["banker_wins"],
-            "player_wins": game_state["player_wins"],
-            "ties": game_state["ties"],
-            "super_six_count": game_state["super_six_count"],
-            "natural_count": game_state["natural_count"],
-            "player_pair_count": game_state["player_pair_count"],
-            "banker_pair_count": game_state["banker_pair_count"],
-            "last_updated": datetime.utcnow()
-        }
-        logging.info(f"[MongoDB] Writing counters: {counters_doc}")
-        result = await counters_collection.update_one(
-            {"_id": "game_counters"},
-            {"$set": counters_doc},
-            upsert=True
-        )
-        logging.info(f"[MongoDB] Update result: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
+        # Get the last entry before deleting to check if we need to update stats
+        last_entry = await collection.find_one(sort=[("timestamp", -1)])
+        
+        if last_entry:
+            # Delete the entry
+            await collection.delete_one({"_id": last_entry["_id"]})
+            
+            # If this was the last game played (matching current round), restore stats
+            if last_entry.get("round") == game_state["round"]:
+                # Restore stats by decrementing counts
+                winner = last_entry.get("winner")
+                if winner == "player":
+                    game_state["player_wins"] = max(0, game_state["player_wins"] - 1)
+                elif winner == "banker":
+                    game_state["banker_wins"] = max(0, game_state["banker_wins"] - 1)
+                    # Also check for Super Six
+                    if last_entry.get("is_super_six", False):
+                        game_state["super_six_count"] = max(0, game_state["super_six_count"] - 1)
+                elif winner == "tie":
+                    game_state["ties"] = max(0, game_state["ties"] - 1)
+                
+                # Check for natural count
+                if last_entry.get("is_natural", False):
+                    game_state["natural_count"] = max(0, game_state["natural_count"] - 1)
+                
+                # Decrement round count
+                game_state["round"] = max(0, game_state["round"] - 1)
+                
+                await send_success(websocket, f"Deleted last game entry (Round {last_entry.get('round', 'Unknown')}) and restored stats")
+            else:
+                await send_success(websocket, f"Deleted game entry: Round {last_entry.get('round', 'Unknown')}")
+            
+            logging.info(f"Deleted game entry: Round {last_entry.get('round', 'Unknown')}")
+            return True
+        else:
+            await send_error(websocket, "No entries found to delete")
+            logging.info("No entries to delete")
+            return False
+            
     except Exception as e:
-        logging.error(f"[MongoDB] Error updating counters: {e}")
+        logging.error(f"Error deleting last entry: {e}")
+        await send_error(websocket, f"Error deleting entry: {str(e)}")
+        return False
 
 # Create 8-deck shoe (416 cards total)
 def create_8_deck_shoe():
@@ -176,6 +185,7 @@ def new_round():
     last_card_info = {"card": None, "recipient": None}
     last_game_result = None
     game_pairs = {"player_pair": False, "banker_pair": False}  # Reset pairs for new round
+    game_results = {"is_super_six": False}
     
     game_state.update({
         "game_phase": "waiting",
@@ -187,10 +197,18 @@ def new_round():
 
 async def reset_all():
     global remaining_cards, card_duplicates, burn_card
+    
     remaining_cards = create_8_deck_shoe()  # Reset to full 416 cards
     card_duplicates = defaultdict(int)
     burn_card = None
     new_round()
+    
+    try:
+        await collection.delete_many({})
+        logging.info("MongoDB collection cleared")
+    except Exception as e:
+        logging.error(f"Error clearing MongoDB: {e}")
+    
     game_state.update({
         "round": 0,
         "banker_wins": 0,
@@ -198,14 +216,9 @@ async def reset_all():
         "ties": 0,
         "super_six_count": 0,
         "natural_count": 0,
-        "player_pair_count": 0,
-        "banker_pair_count": 0,
         "burn_enabled": True,
         "can_manage_players": True  # Always enabled after reset
     })
-    logging.info(f"[RESET] In-memory counters after reset: { {k: game_state[k] for k in ['round','banker_wins','player_wins','ties','super_six_count','natural_count','player_pair_count','banker_pair_count']} }")
-    await update_counters_in_db()
-    logging.info("All data reset successfully")
 
 # FIXED: More precise next card recipient logic for auto-dealing
 def get_next_card_recipient():
@@ -326,8 +339,7 @@ async def broadcast_game_state():
         "autoDealingInProgress": game_state["auto_dealing"],
         "noPlayersActive": next_recipient == "no_players",
         "canManagePlayers": game_state["can_manage_players"],
-        "playerPairCount": game_state["player_pair_count"],
-        "bankerPairCount": game_state["banker_pair_count"]
+        "is_super_six": game_results["is_super_six"]  
     }
     
     websockets_to_remove = set()
@@ -433,7 +445,7 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
 
 async def calculate_result():
     """Calculate and broadcast game result"""
-    global last_game_result, last_round_auto_deal
+    global last_game_result
     
     player_score = calculate_hand_score(player_cards)
     banker_score = calculate_hand_score(banker_cards)
@@ -444,6 +456,7 @@ async def calculate_result():
     # Use PERSISTENT pair status
     player_pair = game_pairs["player_pair"]
     banker_pair = game_pairs["banker_pair"]
+    game_results["is_super_six"] = is_super_six
     
     is_natural = game_state["natural_win"]
     natural_type = game_state["natural_type"]
@@ -473,13 +486,16 @@ async def calculate_result():
     
     if is_natural:
         game_state["natural_count"] += 1
-    if player_pair:
-        game_state["player_pair_count"] += 1
-    if banker_pair:
-        game_state["banker_pair_count"] += 1
     
-    # Save to database (update counters only)
-    await update_counters_in_db()
+    # Save to MongoDB
+    game_state["round"] += 1
+    await save_game_result(
+        winner, game_state["round"], 
+        player_cards.copy(), banker_cards.copy(),
+        player_score, banker_score,
+        is_super_six, player_pair, banker_pair, 
+        is_natural, natural_type
+    )
     
     # Store result for potential undo
     last_game_result = {
@@ -491,8 +507,7 @@ async def calculate_result():
     
     # IMPORTANT: Set game phase to finished
     game_state["game_phase"] = "finished"
-    game_state["can_calculate"] = False
-    last_round_auto_deal = False  # Manual result, so not auto-deal
+    game_state["can_calculate"] = False  # Disable further calculation
     
     # Create result message
     result_data = {
@@ -548,138 +563,96 @@ async def handle_burn_card(websocket, card):
 
 async def handle_undo_card(websocket):
     """
-    Unified undo: after finished game (manual or auto-deal), restores stats and removes last card. Otherwise, undoes last card as before.
+    Single unified undo function - undoes one card at a time until both hands are empty
     """
-    global last_game_result, last_round_auto_deal
-
-    # Block undo only if auto_dealing is currently True (not after auto-deal is finished)
+    global last_game_result
+    
+    # Block undo during auto-dealing
     if game_state["auto_dealing"]:
-        await send_error(websocket, "Cannot undo during auto-dealing in progress")
+        await send_error(websocket, "Cannot undo during auto-dealing")
         return False
-
-    # Block undo if last round was auto-deal and game is finished
-    if game_state["game_phase"] == "finished" and last_round_auto_deal:
-        await send_error(websocket, "Undo is not allowed after auto-deal round.")
-        return False
-
-    # If game is finished and last_game_result exists, restore stats and remove last card
+    
+    # Check if there's a finished game to undo first
     if last_game_result and game_state["game_phase"] == "finished":
-        previous_state = last_game_result["previous_state"]
-        # Restore all previous stats and flags
-        game_state.update(previous_state)
-        game_state["game_phase"] = "waiting"
-        game_state["can_calculate"] = True
-        game_state["natural_win"] = False
-        game_state["natural_type"] = None
-        # Always decrement pair counts if last result had a pair
-        if last_game_result.get("player_pair"):
-            game_state["player_pair_count"] = max(0, game_state["player_pair_count"] - 1)
-        if last_game_result.get("banker_pair"):
-            game_state["banker_pair_count"] = max(0, game_state["banker_pair_count"] - 1)
-        last_game_result = None
-        # Remove the last card (from the correct hand)
-        last_card_to_undo = None
-        last_recipient = None
-        if len(player_cards) > 0 and len(banker_cards) > 0:
-            total_cards = len(player_cards) + len(banker_cards)
-            if total_cards == 2:
-                last_card_to_undo = banker_cards[-1]
-                last_recipient = "banker"
-            elif total_cards == 3:
-                last_card_to_undo = player_cards[-1]
-                last_recipient = "player"
-            elif total_cards == 4:
-                last_card_to_undo = banker_cards[-1]
-                last_recipient = "banker"
-            elif total_cards == 5:
-                last_card_to_undo = player_cards[-1]
-                last_recipient = "player"
-            elif total_cards == 6:
-                last_card_to_undo = banker_cards[-1]
-                last_recipient = "banker"
-        elif len(player_cards) > 0:
-            last_card_to_undo = player_cards[-1]
-            last_recipient = "player"
-        elif len(banker_cards) > 0:
-            last_card_to_undo = banker_cards[-1]
-            last_recipient = "banker"
-        else:
-            await update_counters_in_db()
-            await send_success(websocket, "Undid game result, no cards left to undo.")
-            return True
-        # Remove the last card
-        if last_recipient == "player":
-            player_cards.pop()
-        else:
-            banker_cards.pop()
-        update_card_tracking(last_card_to_undo, last_recipient, is_undo=True)
-        # Recalculate pair flags for display only
-        game_pairs["player_pair"] = len(player_cards) == 2 and has_pair(player_cards)
-        game_pairs["banker_pair"] = len(banker_cards) == 2 and has_pair(banker_cards)
-        # Reset game state flags based on remaining cards
-        total_cards = len(player_cards) + len(banker_cards)
-        if total_cards < 4:
-            game_state.update({
-                "natural_win": False,
-                "natural_type": None,
-                "can_calculate": False,
-                "game_phase": "waiting"
-            })
-        elif total_cards == 4:
-            player_score = calculate_hand_score(player_cards)
-            banker_score = calculate_hand_score(banker_cards)
-            if player_score >= 8 or banker_score >= 8:
-                game_state["natural_win"] = True
-                game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
-            else:
+        try:
+            # Get the last entry from database to verify it matches current round
+            last_entry = await collection.find_one(sort=[("timestamp", -1)])
+            
+            if last_entry and last_entry.get("round") == game_state["round"]:
+                # Delete the database entry
+                await collection.delete_one({"_id": last_entry["_id"]})
+                
+                # Restore previous game state
+                previous_state = last_game_result["previous_state"]
+                game_state.update(previous_state)
+                
+                # Reset game phase and flags
+                game_state["game_phase"] = "waiting"
+                game_state["can_calculate"] = True
                 game_state["natural_win"] = False
                 game_state["natural_type"] = None
-            game_state["can_calculate"] = True
-            game_state["game_phase"] = "waiting"
-        if total_cards == 0:
-            game_state["can_manage_players"] = True
-        await update_counters_in_db()
-        await send_success(websocket, f"Undid game result and last card: {last_card_to_undo} from {last_recipient}")
-        return True
-
-    # Otherwise, undo the last card as before
+                
+                # Clear the last game result
+                last_game_result = None
+                
+                await send_success(websocket, f"Undid game result for Round {last_entry.get('round')}")
+                logging.info(f"Undid game result for Round {last_entry.get('round')}")
+                return True
+                
+        except Exception as e:
+            logging.error(f"Error undoing game result: {e}")
+            await send_error(websocket, "Error undoing game result")
+            return False
+    
+    # Find the last card to undo (most recently added card)
     last_card_to_undo = None
     last_recipient = None
+    
+    # Check which hand has more cards or was dealt to last
     if len(player_cards) > 0 and len(banker_cards) > 0:
+        # Both hands have cards - find which was dealt last based on card count
         total_cards = len(player_cards) + len(banker_cards)
-        if total_cards == 2:
+        if total_cards == 2:  # Player: 1, Banker: 1 -> last was banker
             last_card_to_undo = banker_cards[-1]
             last_recipient = "banker"
-        elif total_cards == 3:
+        elif total_cards == 3:  # Player: 2, Banker: 1 -> last was player
             last_card_to_undo = player_cards[-1]
             last_recipient = "player"
-        elif total_cards == 4:
+        elif total_cards == 4:  # Player: 2, Banker: 2 -> last was banker
             last_card_to_undo = banker_cards[-1]
             last_recipient = "banker"
-        elif total_cards == 5:
+        elif total_cards == 5:  # Player: 3, Banker: 2 -> last was player
             last_card_to_undo = player_cards[-1]
             last_recipient = "player"
-        elif total_cards == 6:
+        elif total_cards == 6:  # Player: 3, Banker: 3 -> last was banker
             last_card_to_undo = banker_cards[-1]
             last_recipient = "banker"
     elif len(player_cards) > 0:
+        # Only player has cards
         last_card_to_undo = player_cards[-1]
         last_recipient = "player"
     elif len(banker_cards) > 0:
+        # Only banker has cards
         last_card_to_undo = banker_cards[-1]
         last_recipient = "banker"
     else:
+        # No cards to undo
         await send_error(websocket, "No cards to undo")
         return False
+    
     # Remove the last card
     if last_recipient == "player":
         player_cards.pop()
     else:
         banker_cards.pop()
+    
+    # Update card tracking
     update_card_tracking(last_card_to_undo, last_recipient, is_undo=True)
+    
     # Recalculate pairs based on remaining cards
     game_pairs["player_pair"] = len(player_cards) == 2 and has_pair(player_cards)
     game_pairs["banker_pair"] = len(banker_cards) == 2 and has_pair(banker_cards)
+    
     # Reset game state flags based on remaining cards
     total_cards = len(player_cards) + len(banker_cards)
     if total_cards < 4:
@@ -690,21 +663,26 @@ async def handle_undo_card(websocket):
             "game_phase": "waiting"
         })
     elif total_cards == 4:
+        # Check if we still have a natural after undo
         player_score = calculate_hand_score(player_cards)
         banker_score = calculate_hand_score(banker_cards)
+        
         if player_score >= 8 or banker_score >= 8:
             game_state["natural_win"] = True
             game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
         else:
             game_state["natural_win"] = False
             game_state["natural_type"] = None
+        
         game_state["can_calculate"] = True
         game_state["game_phase"] = "waiting"
+    
+    # Re-enable player management if no cards dealt
     if total_cards == 0:
         game_state["can_manage_players"] = True
+    
     await send_success(websocket, f"Undid card: {last_card_to_undo} from {last_recipient}")
     logging.info(f"Undid card: {last_card_to_undo} from {last_recipient}")
-    await update_counters_in_db()
     return True
 
 async def handle_shuffle_cards(websocket):
@@ -722,97 +700,81 @@ async def handle_shuffle_cards(websocket):
     await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
     return True
 
+async def handle_delete_last_entry(websocket):
+    success = await delete_last_game_entry(websocket)
+    if success:
+        await send_success(websocket, "Last game entry deleted from database")
+    else:
+        await send_error(websocket, "No entries found to delete")
+    return success
+
+# SIMPLIFIED AUTO-DEAL using unified add_card function
 async def handle_auto_deal(websocket):
-    global last_round_auto_deal
+    """Auto-deal using the unified add_card function - NO BURN CARD"""
     try:
         if game_state["auto_dealing"]:
             await send_error(websocket, "Auto-dealing already in progress")
             return False
-
+        
         if len(player_cards) > 0 or len(banker_cards) > 0:
             await send_error(websocket, "Please start a new game before auto-dealing")
             return False
-
-        # Block auto-deal if there are no active players
-        if not game_state["active_players"]:
-            await send_error(websocket, "Cannot auto-deal: No active players.")
-            return False
-
+        
         game_state["auto_dealing"] = True
         game_state["game_phase"] = "auto_dealing"
-
+        
         await send_success(websocket, "Starting auto-deal...")
         await broadcast_game_state()
-
+        
+        # Auto-shuffle if needed
         if len(remaining_cards) < 52:
             await shuffle_deck()
             await broadcast_game_state()
             await asyncio.sleep(1.0)
-
+        
+        # Deal cards automatically using unified add_card function
         card_count = 0
         while True:
             recipient = get_next_card_recipient()
+            
             if recipient in ["complete", "no_players"]:
                 break
+                
             if len(remaining_cards) == 0:
                 raise Exception("No cards available to deal")
+            
+            # Get next card from shuffled deck
             card = remaining_cards.popleft()
+            
+            # Use unified add_card function with auto-deal flag
             success = await handle_add_card(websocket, card, is_auto_deal=True)
             if not success:
                 break
+            
             card_count += 1
             logging.info(f"Auto-deal progress: {card_count} cards dealt ({card} to {recipient})")
+            
             await broadcast_game_state()
-            await asyncio.sleep(1.5)
-
+            await asyncio.sleep(1.5)  # Delay between each card
+        
+        # Calculate result after all cards are dealt
         if get_next_card_recipient() == "complete":
             await calculate_result()
             await broadcast_game_state()
-
+        
         game_state["auto_dealing"] = False
         game_state["game_phase"] = "finished"
-        last_round_auto_deal = True
-
+        
         await send_success(websocket, "Auto-deal completed!")
         await broadcast_game_state()
         return True
-
+        
     except Exception as e:
         game_state["auto_dealing"] = False
         game_state["game_phase"] = "waiting"
         await send_error(websocket, f"Auto-deal failed: {str(e)}")
         await broadcast_game_state()
         return False
-
-async def handle_delete_last_entry(websocket):
-    # Delete the document and recreate it with zeros
-    await counters_collection.delete_many({})
-    zero_doc = {
-        "_id": "game_counters",
-        "round": 0,
-        "banker_wins": 0,
-        "player_wins": 0,
-        "ties": 0,
-        "super_six_count": 0,
-        "natural_count": 0,
-        "player_pair_count": 0,
-        "banker_pair_count": 0,
-        "last_updated": datetime.utcnow()
-    }
-    await counters_collection.insert_one(zero_doc)
-    game_state.update({
-        "round": 0,
-        "banker_wins": 0,
-        "player_wins": 0,
-        "ties": 0,
-        "super_six_count": 0,
-        "natural_count": 0,
-        "player_pair_count": 0,
-        "banker_pair_count": 0
-    })
-    await send_success(websocket, "All counters reset to zero (all history deleted)")
-    await broadcast_game_state()
-    return True
 
 async def handle_client(websocket):
     try:
@@ -871,6 +833,13 @@ async def handle_client(websocket):
                     if success:
                         await broadcast_game_state()
                         
+                elif action == "delete_last_entry":
+                    success =await handle_delete_last_entry(websocket)
+                    await broadcast_game_state()
+                    
+                elif action == "auto_deal":
+                    await handle_auto_deal(websocket)
+                    
                 elif action == "update_players":
                     # RESTRICTION: Only allow player management at specific times
                     if game_state["auto_dealing"]:
@@ -888,12 +857,6 @@ async def handle_client(websocket):
                             await send_success(websocket, f"Player {player_id} removed")
                         await broadcast_game_state()
                     
-                elif action == "auto_deal":
-                    await handle_auto_deal(websocket)
-                
-                elif action == "delete_last_entry":
-                    await handle_delete_last_entry(websocket)
-                
                 else:
                     await send_error(websocket, f"Unknown action: {action}")
                     
@@ -909,7 +872,6 @@ async def handle_client(websocket):
 
 async def main():
     await check_connection()
-    await initialize_counters()
     
     # Initialize with full 8-deck shoe (416 cards)
     global remaining_cards
