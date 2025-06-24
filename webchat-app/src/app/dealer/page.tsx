@@ -32,6 +32,9 @@ interface GameState {
   naturalType?: string | null;
   isSuperSix?: boolean;
   lastGameResult?: any;
+  table_number?: string;
+  max_bet?: number;
+  min_bet?: number;
   // Add any other new fields from server.py here
 }
 
@@ -87,6 +90,39 @@ const DealerPage = () => {
     isSuperSix: false,
     lastGameResult: null
   });
+
+  const [stats, setStats] = useState({
+    banker_wins: 0,
+    player_wins: 0,
+    ties: 0,
+    player_pairs: 0,
+    banker_pairs: 0,
+    player_naturals: 0,
+    banker_naturals: 0,
+  });
+
+  const [canUndoLastWin, setCanUndoLastWin] = useState(false);
+
+  // Table/bet state for editing
+  const [tableNumberInput, setTableNumberInput] = useState("");
+  const [maxBetInput, setMaxBetInput] = useState("");
+  const [minBetInput, setMinBetInput] = useState("");
+
+  useEffect(() => {
+    setTableNumberInput(gameState.table_number || "");
+    setMaxBetInput(gameState.max_bet?.toString() || "");
+    setMinBetInput(gameState.min_bet?.toString() || "");
+  }, [gameState.table_number, gameState.max_bet, gameState.min_bet]);
+
+  const saveTableNumber = () => {
+    sendMessage({ action: "set_table_number", table_number: tableNumberInput });
+  };
+  const saveMaxBet = () => {
+    sendMessage({ action: "set_max_bet", max_bet: maxBetInput });
+  };
+  const saveMinBet = () => {
+    sendMessage({ action: "set_min_bet", min_bet: minBetInput });
+  };
 
   const setStatusMessageWithTimeout = (message: string, timeout: number = 3000) => {
     if (statusTimeoutRef.current) {
@@ -160,6 +196,37 @@ const DealerPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+    socket.send(JSON.stringify({ action: 'get_stats' }));
+    const handleStats = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.action === 'stats') {
+          setStats({
+            banker_wins: data.banker_wins,
+            player_wins: data.player_wins,
+            ties: data.ties,
+            player_pairs: data.player_pairs,
+            banker_pairs: data.banker_pairs,
+            player_naturals: data.player_naturals,
+            banker_naturals: data.banker_naturals,
+          });
+        }
+        if (data.action === 'game_state' || data.action === 'game_result') {
+          if (typeof data.canUndoLastWin !== 'undefined') {
+            setCanUndoLastWin(data.canUndoLastWin);
+          }
+        }
+        if (data.action === 'refresh_stats') {
+          socket.send(JSON.stringify({ action: 'get_stats' }));
+        }
+      } catch (e) {}
+    };
+    socket.addEventListener('message', handleStats);
+    return () => socket.removeEventListener('message', handleStats);
+  }, [socket]);
+
   const handleMessage = (data: WebSocketMessage) => {
     switch(data.action) {
       case 'game_state':
@@ -197,7 +264,10 @@ const DealerPage = () => {
           naturalWin: data.naturalWin || false,
           naturalType: data.naturalType || null,
           isSuperSix: data.is_super_six || false,
-          lastGameResult: data.lastGameResult || null
+          lastGameResult: data.lastGameResult || null,
+          table_number: data.table_number || undefined,
+          max_bet: data.max_bet || undefined,
+          min_bet: data.min_bet || undefined
         };
         
         if (newGameState.burnEnabled && !hasBurnedCard) {
@@ -277,15 +347,17 @@ const DealerPage = () => {
 
   const getWinReason = () => {
     if (!gameState || gameState.gamePhase !== 'finished') return null;
-    
     const reasons = [];
     if (gameState.playerPair) reasons.push("Player Pair");
     if (gameState.bankerPair) reasons.push("Banker Pair");
-    if (gameState.naturalWin) {
-      reasons.push(`Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`);
-    }
     if (gameState.isSuperSix) reasons.push("Super Six");
-    
+    if (gameState.naturalWin && gameState.naturalType) {
+      if (gameState.playerTotal > gameState.bankerTotal && (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')) {
+        reasons.push(`Player Natural ${gameState.naturalType === 'natural_8' ? '8' : '9'}`);
+      } else if (gameState.bankerTotal > gameState.playerTotal && (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')) {
+        reasons.push(`Banker Natural ${gameState.naturalType === 'natural_8' ? '8' : '9'}`);
+      }
+    }
     return reasons.join(", ");
   };
 
@@ -338,27 +410,54 @@ const DealerPage = () => {
             </div>
           )}
 
-          {/* Game Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4 text-sm">
-            <div className="bg-gray-800 p-3 rounded text-center">
-              <div className="text-gray-400 text-xs">ROUND</div>
-              <div className="font-bold text-lg">{gameState.round}</div>
+          {/* Add this above the stats grid in the header */}
+          <div className="flex flex-wrap gap-4 mb-4 justify-center">
+            <div className="flex items-center gap-2">
+              <label className="font-semibold">Table Number:</label>
+              <input type="text" value={tableNumberInput} onChange={e => setTableNumberInput(e.target.value)} className="p-1 rounded text-black w-24" />
+              <button onClick={saveTableNumber} className="bg-blue-600 text-white px-2 py-1 rounded">Save</button>
             </div>
+            <div className="flex items-center gap-2">
+              <label className="font-semibold">Max Bet:</label>
+              <input type="number" value={maxBetInput} onChange={e => setMaxBetInput(e.target.value)} className="p-1 rounded text-black w-24" min={0} />
+              <button onClick={saveMaxBet} className="bg-blue-600 text-white px-2 py-1 rounded">Save</button>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="font-semibold">Min Bet:</label>
+              <input type="number" value={minBetInput} onChange={e => setMinBetInput(e.target.value)} className="p-1 rounded text-black w-24" min={0} />
+              <button onClick={saveMinBet} className="bg-blue-600 text-white px-2 py-1 rounded">Save</button>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4 text-sm">
             <div className="bg-blue-900 p-3 rounded text-center">
-              <div className="text-blue-300 text-xs">PLAYER</div>
-              <div className="font-bold text-lg text-blue-200">{gameState.playerWins}</div>
+              <div className="text-blue-300 text-xs">PLAYER WINS</div>
+              <div className="font-bold text-lg text-blue-200">{stats.player_wins}</div>
             </div>
             <div className="bg-red-900 p-3 rounded text-center">
-              <div className="text-red-300 text-xs">BANKER</div>
-              <div className="font-bold text-lg text-red-200">{gameState.bankerWins}</div>
+              <div className="text-red-300 text-xs">BANKER WINS</div>
+              <div className="font-bold text-lg text-red-200">{stats.banker_wins}</div>
             </div>
             <div className="bg-gray-800 p-3 rounded text-center">
               <div className="text-gray-400 text-xs">TIES</div>
-              <div className="font-bold text-lg">{gameState.ties}</div>
+              <div className="font-bold text-lg">{stats.ties}</div>
+            </div>
+            <div className="bg-blue-800 p-3 rounded text-center">
+              <div className="text-blue-200 text-xs">PLAYER PAIRS</div>
+              <div className="font-bold text-lg">{stats.player_pairs}</div>
+            </div>
+            <div className="bg-red-800 p-3 rounded text-center">
+              <div className="text-red-200 text-xs">BANKER PAIRS</div>
+              <div className="font-bold text-lg">{stats.banker_pairs}</div>
             </div>
             <div className="bg-green-900 p-3 rounded text-center">
-              <div className="text-green-300 text-xs">NATURALS</div>
-              <div className="font-bold text-lg text-green-200">{gameState.naturalCount}</div>
+              <div className="text-green-300 text-xs">PLAYER NATURALS</div>
+              <div className="font-bold text-lg text-green-200">{stats.player_naturals}</div>
+            </div>
+            <div className="bg-green-800 p-3 rounded text-center">
+              <div className="text-green-200 text-xs">BANKER NATURALS</div>
+              <div className="font-bold text-lg">{stats.banker_naturals}</div>
             </div>
           </div>
 
@@ -431,7 +530,7 @@ const DealerPage = () => {
             </button>
             <button 
               onClick={() => handleGameAction('delete_last_entry')} 
-              disabled={!connected || !gameState.canUndo || gameState.autoDealingInProgress} 
+              disabled={!connected || !canUndoLastWin || gameState.autoDealingInProgress} 
               className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-600 font-semibold"
             >
               ⏪ DELETE LAST WIN

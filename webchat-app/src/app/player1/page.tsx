@@ -30,6 +30,9 @@ interface GameState {
   naturalType: string | null;
   isSuperSix: boolean;
   lastGameResult?: any;
+  table_number?: string;
+  max_bet?: number;
+  min_bet?: number;
 }
 
 const Player1Page = () => {
@@ -65,8 +68,21 @@ const Player1Page = () => {
     naturalWin: false,
     naturalType: null,
     isSuperSix: false,
-    lastGameResult: null
+    lastGameResult: null,
+    table_number: "",
+    max_bet: 0,
+    min_bet: 0,
   });
+  const [stats, setStats] = useState({
+    banker_wins: 0,
+    player_wins: 0,
+    ties: 0,
+    player_pairs: 0,
+    banker_pairs: 0,
+    player_naturals: 0,
+    banker_naturals: 0,
+  });
+  const [canUndoLastWin, setCanUndoLastWin] = useState(false);
 
   useEffect(() => {
     const connectWebSocket = () => {
@@ -106,6 +122,37 @@ const Player1Page = () => {
     return () => socket?.close();
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+    socket.send(JSON.stringify({ action: 'get_stats' }));
+    const handleStats = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.action === 'stats') {
+          setStats({
+            banker_wins: data.banker_wins,
+            player_wins: data.player_wins,
+            ties: data.ties,
+            player_pairs: data.player_pairs,
+            banker_pairs: data.banker_pairs,
+            player_naturals: data.player_naturals,
+            banker_naturals: data.banker_naturals,
+          });
+        }
+        if (data.action === 'game_state' || data.action === 'game_result') {
+          if (typeof data.canUndoLastWin !== 'undefined') {
+            setCanUndoLastWin(data.canUndoLastWin);
+          }
+        }
+        if (data.action === 'refresh_stats') {
+          socket.send(JSON.stringify({ action: 'get_stats' }));
+        }
+      } catch (e) {}
+    };
+    socket.addEventListener('message', handleStats);
+    return () => socket.removeEventListener('message', handleStats);
+  }, [socket]);
+
   const handleMessage = (data: any) => {
     switch(data.action) {
       case 'game_state':
@@ -137,7 +184,10 @@ const Player1Page = () => {
           naturalWin: data.naturalWin || false,
           naturalType: data.naturalType || null,
           isSuperSix: data.is_super_six || false,
-          lastGameResult: data.lastGameResult || null
+          lastGameResult: data.lastGameResult || null,
+          table_number: data.table_number || "",
+          max_bet: data.max_bet || 0,
+          min_bet: data.min_bet || 0,
         };
         setGameState(newGameState);
         setIsActive(newGameState.activePlayers.includes('player1'));
@@ -153,36 +203,44 @@ const Player1Page = () => {
           <div className="text-center mb-4">
             <h1 className="text-3xl font-bold mb-2">🎰 Mini Baccarat - Player 1</h1>
             <div className="flex justify-center items-center gap-4">
-              <div className={`text-lg font-semibold ${connected ? 'text-green-400' : 'text-red-400'}`}>
-                {connected ? '🟢' : '🔴'} {connectionStatus}
-              </div>
-              <div className={`text-lg font-semibold ${isActive ? 'text-green-400' : 'text-red-400'}`}>
-                {isActive ? '🟢' : '🔴'} {isActive ? 'Active' : 'Inactive'}
-              </div>
+              <div className={`text-lg font-semibold ${connected ? 'text-green-400' : 'text-red-400'}`}>{connected ? '🟢' : '🔴'} {connectionStatus}</div>
+              <div className={`text-lg font-semibold ${isActive ? 'text-green-400' : 'text-red-400'}`}>{isActive ? '🟢' : '🔴'} {isActive ? 'Active' : 'Inactive'}</div>
             </div>
           </div>
-
-          {/* Game Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4 text-sm">
-            <div className="bg-gray-800 p-3 rounded text-center">
-              <div className="text-gray-400 text-xs">ROUND</div>
-              <div className="font-bold text-lg">{gameState.round}</div>
-            </div>
+          <div className="flex flex-wrap gap-4 mb-4 justify-center">
+            <div className="font-semibold">Table Number: <span className="text-green-300">{gameState.table_number}</span></div>
+            <div className="font-semibold">Max Bet: <span className="text-green-300">{gameState.max_bet}</span></div>
+            <div className="font-semibold">Min Bet: <span className="text-green-300">{gameState.min_bet}</span></div>
+          </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4 text-sm">
             <div className="bg-blue-900 p-3 rounded text-center">
-              <div className="text-blue-300 text-xs">PLAYER</div>
-              <div className="font-bold text-lg text-blue-200">{gameState.playerWins}</div>
+              <div className="text-blue-300 text-xs">PLAYER WINS</div>
+              <div className="font-bold text-lg text-blue-200">{stats.player_wins}</div>
             </div>
             <div className="bg-red-900 p-3 rounded text-center">
-              <div className="text-red-300 text-xs">BANKER</div>
-              <div className="font-bold text-lg text-red-200">{gameState.bankerWins}</div>
+              <div className="text-red-300 text-xs">BANKER WINS</div>
+              <div className="font-bold text-lg text-red-200">{stats.banker_wins}</div>
             </div>
             <div className="bg-gray-800 p-3 rounded text-center">
               <div className="text-gray-400 text-xs">TIES</div>
-              <div className="font-bold text-lg">{gameState.ties}</div>
+              <div className="font-bold text-lg">{stats.ties}</div>
             </div>
-            <div className="bg-gray-800 p-3 rounded text-center">
-              <div className="text-gray-400 text-xs">NATURAL</div>
-              <div className="font-bold text-lg">{gameState.naturalCount}</div>
+            <div className="bg-blue-800 p-3 rounded text-center">
+              <div className="text-blue-200 text-xs">PLAYER PAIRS</div>
+              <div className="font-bold text-lg">{stats.player_pairs}</div>
+            </div>
+            <div className="bg-red-800 p-3 rounded text-center">
+              <div className="text-red-200 text-xs">BANKER PAIRS</div>
+              <div className="font-bold text-lg">{stats.banker_pairs}</div>
+            </div>
+            <div className="bg-green-900 p-3 rounded text-center">
+              <div className="text-green-300 text-xs">PLAYER NATURALS</div>
+              <div className="font-bold text-lg text-green-200">{stats.player_naturals}</div>
+            </div>
+            <div className="bg-green-800 p-3 rounded text-center">
+              <div className="text-green-200 text-xs">BANKER NATURALS</div>
+              <div className="font-bold text-lg">{stats.banker_naturals}</div>
             </div>
           </div>
         </div>

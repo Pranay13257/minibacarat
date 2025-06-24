@@ -52,14 +52,18 @@ const GameBoard = ({ gameState }: GameBoardProps) => {
 
   const getWinnerText = () => {
     if (!gameState || gameState.gamePhase !== 'finished') return null;
-    
     if (gameState.winMessage) {
       return gameState.winMessage;
     }
-    
     if (gameState.playerTotal > gameState.bankerTotal) {
+      if (gameState.naturalWin && (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')) {
+        return `Player Wins by Natural ${gameState.naturalType === 'natural_8' ? '8' : '9'}`;
+      }
       return `Player Wins by ${gameState.playerTotal}`;
     } else if (gameState.bankerTotal > gameState.playerTotal) {
+      if (gameState.naturalWin && (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')) {
+        return `Banker Wins by Natural ${gameState.naturalType === 'natural_8' ? '8' : '9'}`;
+      }
       return `Banker Wins by ${gameState.bankerTotal}`;
     } else {
       return "Tie";
@@ -72,9 +76,6 @@ const GameBoard = ({ gameState }: GameBoardProps) => {
     const reasons = [];
     if (gameState.playerPair) reasons.push("Player Pair");
     if (gameState.bankerPair) reasons.push("Banker Pair");
-    if (gameState.naturalWin) {
-      reasons.push(`Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`);
-    }
     if (gameState.isSuperSix) reasons.push("Super Six");
     
     return reasons.join(", ");
