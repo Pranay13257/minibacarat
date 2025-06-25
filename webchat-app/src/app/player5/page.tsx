@@ -33,6 +33,9 @@ interface GameState {
   table_number?: string;
   max_bet?: number;
   min_bet?: number;
+  game_mode?: string;
+  vip_revealer?: string | null;
+  cards_revealed?: boolean;
 }
 
 const Player5Page = () => {
@@ -72,6 +75,9 @@ const Player5Page = () => {
     table_number: "",
     max_bet: 0,
     min_bet: 0,
+    game_mode: undefined,
+    vip_revealer: null,
+    cards_revealed: false,
   });
   const [stats, setStats] = useState({
     banker_wins: 0,
@@ -188,12 +194,19 @@ const Player5Page = () => {
           table_number: data.table_number || "",
           max_bet: data.max_bet || 0,
           min_bet: data.min_bet || 0,
+          game_mode: data.game_mode || undefined,
+          vip_revealer: data.vip_revealer || null,
+          cards_revealed: data.cards_revealed || false,
         };
         setGameState(newGameState);
         setIsActive(newGameState.activePlayers.includes('player5'));
         break;
     }
   };
+
+  const isVipMode = gameState.game_mode === 'vip';
+  const isRevealer = isVipMode && gameState.vip_revealer === 'player5';
+  const cardsRevealed = !!gameState.cards_revealed;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -252,62 +265,81 @@ const Player5Page = () => {
           {/* Game Board */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-lg p-6">
-              {/* Player Section */}
-              <div className="mb-8 bg-blue-50 p-4 rounded-lg">
-                <h2 className="text-2xl font-bold mb-4 text-blue-900">Player</h2>
-                <div className="flex gap-4">
-                  {gameState.playerCards.map((card, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={`/cards/${card.toLowerCase()}.png`}
-                        alt={`Card ${card}`}
-                        className="w-24 h-36 border rounded shadow-lg"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-2 text-xl font-semibold text-blue-900">
-                  Total: {gameState.playerTotal}
-                  {gameState.playerPair && <span className="ml-2">(Pair)</span>}
-                </div>
-              </div>
-
-              {/* Banker Section */}
-              <div className="mb-8 bg-red-50 p-4 rounded-lg">
-                <h2 className="text-2xl font-bold mb-4 text-red-900">Banker</h2>
-                <div className="flex gap-4">
-                  {gameState.bankerCards.map((card, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={`/cards/${card.toLowerCase()}.png`}
-                        alt={`Card ${card}`}
-                        className="w-24 h-36 border rounded shadow-lg"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-2 text-xl font-semibold text-red-900">
-                  Total: {gameState.bankerTotal}
-                  {gameState.bankerPair && <span className="ml-2">(Pair)</span>}
-                </div>
-              </div>
-
-              {/* Game Result */}
-              {gameState.gamePhase === 'finished' && (
-                <div className="mt-8 text-center">
-                  <div className="text-3xl font-bold text-gray-900 mb-2">
-                    {gameState.winMessage || (gameState.playerTotal > gameState.bankerTotal ? `Player Wins by ${gameState.playerTotal}` : 
-                     gameState.bankerTotal > gameState.playerTotal ? `Banker Wins by ${gameState.bankerTotal}` : "Tie")}
+              {/* VIP Reveal Logic */}
+              {isVipMode && !cardsRevealed ? (
+                isRevealer ? (
+                  <div className="mb-8 text-center">
+                    <button
+                      className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-xl"
+                      onClick={() => socket?.send(JSON.stringify({ action: 'vip_reveal', player_id: 'player5' }))}
+                      disabled={!connected}
+                    >
+                      👁️ Reveal Cards
+                    </button>
                   </div>
-                  <div className="text-xl text-gray-700">
-                    {[
-                      gameState.playerPair && "Player Pair",
-                      gameState.bankerPair && "Banker Pair",
-                      gameState.naturalWin && `Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`,
-                      gameState.isSuperSix && "Super Six"
-                    ].filter(Boolean).join(", ")}
+                ) : (
+                  <div className="mb-8 text-center text-purple-700 text-xl font-bold">
+                    Waiting for revealer to reveal cards...
                   </div>
-                </div>
+                )
+              ) : (
+                <>
+                  {/* Player Section */}
+                  <div className="mb-8 bg-blue-50 p-4 rounded-lg">
+                    <h2 className="text-2xl font-bold mb-4 text-blue-900">Player</h2>
+                    <div className="flex gap-4">
+                      {gameState.playerCards.map((card, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={`/cards/${card.toLowerCase()}.png`}
+                            alt={`Card ${card}`}
+                            className="w-24 h-36 border rounded shadow-lg"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-xl font-semibold text-blue-900">
+                      Total: {gameState.playerTotal}
+                      {gameState.playerPair && <span className="ml-2">(Pair)</span>}
+                    </div>
+                  </div>
+                  {/* Banker Section */}
+                  <div className="mb-8 bg-red-50 p-4 rounded-lg">
+                    <h2 className="text-2xl font-bold mb-4 text-red-900">Banker</h2>
+                    <div className="flex gap-4">
+                      {gameState.bankerCards.map((card, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={`/cards/${card.toLowerCase()}.png`}
+                            alt={`Card ${card}`}
+                            className="w-24 h-36 border rounded shadow-lg"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-xl font-semibold text-red-900">
+                      Total: {gameState.bankerTotal}
+                      {gameState.bankerPair && <span className="ml-2">(Pair)</span>}
+                    </div>
+                  </div>
+                  {/* Game Result */}
+                  {gameState.gamePhase === 'finished' && (
+                    <div className="mt-8 text-center">
+                      <div className="text-3xl font-bold text-gray-900 mb-2">
+                        {gameState.winMessage || (gameState.playerTotal > gameState.bankerTotal ? `Player Wins by ${gameState.playerTotal}` : 
+                         gameState.bankerTotal > gameState.playerTotal ? `Banker Wins by ${gameState.bankerTotal}` : "Tie")}
+                      </div>
+                      <div className="text-xl text-gray-700">
+                        {[
+                          gameState.playerPair && "Player Pair",
+                          gameState.bankerPair && "Banker Pair",
+                          gameState.naturalWin && `Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`,
+                          gameState.isSuperSix && "Super Six"
+                        ].filter(Boolean).join(", ")}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

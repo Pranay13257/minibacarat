@@ -33,9 +33,10 @@ interface GameBoardProps {
     lastGameResult?: any;
     // Add any other new fields from server.py here
   };
+  hideCards?: boolean;
 }
 
-const GameBoard = ({ gameState }: GameBoardProps) => {
+const GameBoard = ({ gameState, hideCards = false }: GameBoardProps) => {
   const [cardInput, setCardInput] = useState("");
 
   const renderCard = (card: string) => {
@@ -83,6 +84,19 @@ const GameBoard = ({ gameState }: GameBoardProps) => {
 
   if (!gameState) return null;
 
+  if (hideCards) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center min-h-[300px]">
+        <div className="flex gap-8 mb-6">
+          {[0,1,2].map(i => (
+            <img key={i} src="/cards/back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70" />
+          ))}
+        </div>
+        <div className="text-xl font-bold text-gray-700 text-center">Cards are hidden until revealed by the VIP revealer.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       {/* Game Info */}
@@ -90,10 +104,6 @@ const GameBoard = ({ gameState }: GameBoardProps) => {
         <div className="bg-gray-100 p-2 rounded">
           <div className="text-gray-600">Round</div>
           <div className="font-bold text-black">{gameState.round}</div>
-        </div>
-        <div className="bg-gray-100 p-2 rounded">
-          <div className="text-gray-600">Remaining Cards</div>
-          <div className="font-bold text-black">{gameState.remainingCards}</div>
         </div>
       </div>
 
