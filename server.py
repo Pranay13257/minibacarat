@@ -261,14 +261,12 @@ def get_next_card_recipient():
     
     return "complete"
 
-async def shuffle_deck():
+async def shuffle_deck(mode=None):
     global remaining_cards, card_duplicates
-    
     remaining_cards = create_8_deck_shoe()
     card_duplicates = defaultdict(int)
     game_state["burn_mode"] = "inactive"
     game_state["burn_available"] = True  # Enable burn after shuffle
-    
     logging.info(f"Deck shuffled - {len(remaining_cards)} cards available")
 
 async def burn_card_from_deck():
@@ -661,14 +659,22 @@ async def handle_shuffle_cards(websocket):
     if game_state["auto_dealing"]:
         await send_error(websocket, "Cannot shuffle manually during auto-dealing")
         return False
-    
     if len(remaining_cards) >= 52:
         await send_error(websocket, "Too many cards remaining to shuffle")
         return False
-    
-    await shuffle_deck()
-    await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
-    return True
+    mode = game_state.get("game_mode", "manual")
+    if mode in ["live", "vip"]:
+        # In live/vip, shuffle only restores the 8-deck shoe and enables burn
+        await shuffle_deck(mode)
+        await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
+        await broadcast_game_state()
+        return True
+    else:
+        # In automatic mode, keep current logic
+        await shuffle_deck(mode)
+        await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
+        await broadcast_game_state()
+        return True
 
 async def handle_auto_deal(websocket):
     try:
