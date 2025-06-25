@@ -638,7 +638,7 @@ const DealerPage = () => {
             </div>
 
             {/* Control buttons for non-manual modes */}
-            <div className={`grid grid-cols-2 ${mode === 'live' || mode === 'vip' ? 'md:grid-cols-4' : 'md:grid-cols-5'} gap-4 mt-4`}>
+            <div className={`grid grid-cols-2 ${mode === 'live' || mode === 'vip' ? 'md:grid-cols-5' : 'md:grid-cols-5'} gap-4 mt-4`}>
               <button onClick={() => handleGameAction('start_new_game')} disabled={!connected || gameState.autoDealingInProgress} className="p-3 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:bg-gray-600 font-semibold">New Game</button>
               
               {mode === 'automatic' ? (
@@ -647,11 +647,21 @@ const DealerPage = () => {
                   <button onClick={() => handleGameAction('auto_deal')} disabled={!connected || gameState.autoDealingInProgress || gameState.playerCards.length > 0 || gameState.bankerCards.length > 0} className="p-3 bg-indigo-600 text-black rounded-lg hover:bg-indigo-700 disabled:bg-gray-600 font-semibold">🤖 Auto Deal</button>
                 </>
               ) : (
-                <button onClick={() => handleGameAction('undo')} disabled={!connected || !gameState.canUndo || gameState.autoDealingInProgress} className="p-3 bg-purple-600 text-black rounded-lg hover:bg-purple-700 disabled:bg-gray-600 font-semibold">↩️ Undo</button>
+                <>
+                  <button onClick={() => handleGameAction('undo')} disabled={!connected || !gameState.canUndo || gameState.autoDealingInProgress} className="p-3 bg-purple-600 text-black rounded-lg hover:bg-purple-700 disabled:bg-gray-600 font-semibold">↩️ Undo</button>
+                  <button onClick={() => handleGameAction('delete_last_entry')} disabled={!connected || !canUndoLastWin || gameState.autoDealingInProgress} className="p-3 bg-purple-800 text-white rounded-lg hover:bg-purple-900 disabled:bg-gray-600 font-semibold">⏪ Undo Last Win</button>
+                  <button onClick={() => handleGameAction('reset_game')} disabled={!connected || gameState.autoDealingInProgress} className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 font-semibold">🗑️ Reset All</button>
+                  {(mode === 'live' || mode === 'vip') && (
+                    <button
+                      onClick={() => sendMessage({ action: 'shuffle_cards' })}
+                      disabled={!connected || gameState.autoDealingInProgress}
+                      className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold"
+                    >
+                      🔀 Shuffle
+                    </button>
+                  )}
+                </>
               )}
-              
-              <button onClick={() => handleGameAction('delete_last_entry')} disabled={!connected || !canUndoLastWin || gameState.autoDealingInProgress} className="p-3 bg-purple-800 text-white rounded-lg hover:bg-purple-900 disabled:bg-gray-600 font-semibold">⏪ Undo Last Win</button>
-              <button onClick={() => handleGameAction('reset_game')} disabled={!connected || gameState.autoDealingInProgress} className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 font-semibold">🗑️ Reset All</button>
             </div>
           </>
         )}
