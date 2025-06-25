@@ -38,6 +38,8 @@ interface GameState {
   game_mode?: string;
   vip_revealer?: string | null;
   cards_revealed?: boolean;
+  burnAvailable?: boolean;
+  burnMode?: string;
   // Add any other new fields from server.py here
 }
 
@@ -93,7 +95,9 @@ const DealerPage = () => {
     isSuperSix: false,
     lastGameResult: null,
     vip_revealer: null,
-    cards_revealed: false
+    cards_revealed: false,
+    burnAvailable: false,
+    burnMode: 'inactive'
   });
 
   const [stats, setStats] = useState({
@@ -302,12 +306,10 @@ const DealerPage = () => {
           min_bet: data.min_bet || undefined,
           game_mode: data.game_mode || undefined,
           vip_revealer: data.vip_revealer || null,
-          cards_revealed: data.cards_revealed || false
+          cards_revealed: data.cards_revealed || false,
+          burnAvailable: typeof data.burnAvailable !== 'undefined' ? data.burnAvailable : false,
+          burnMode: typeof data.burnMode !== 'undefined' ? data.burnMode : 'inactive'
         };
-        
-        if (newGameState.burnEnabled && !hasBurnedCard) {
-          setShowBurnPopup(true);
-        }
         
         setGameState(newGameState);
         break;
@@ -426,36 +428,6 @@ const DealerPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Burn Card Popup */}
-      {showBurnPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold mb-4 text-center">🔥 Burn Card Required</h3>
-            <p className="text-gray-600 mb-4 text-center">Enter a card to burn before dealing</p>
-            <div className="flex gap-3 mb-4">
-              <input
-                type="text"
-                value={burnCardInput}
-                onChange={(e) => setBurnCardInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && burnCard()}
-                placeholder="e.g., 2C, JH, AS"
-                className="flex-1 p-3 border rounded-lg text-center font-mono text-lg"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-3">
-              <button 
-                onClick={burnCard}
-                disabled={!burnCardInput.trim()}
-                className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-400 font-semibold"
-              >
-                🔥 Burn Card
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-gray-900 text-white p-4">
         <div className="max-w-6xl mx-auto">
@@ -557,7 +529,7 @@ const DealerPage = () => {
             })}
           </div>
         </div>
-          </div>
+      </div>
 
       {/* Main Content Area */}
       <div className="max-w-6xl mx-auto p-4">
@@ -605,34 +577,65 @@ const DealerPage = () => {
         {mode !== 'manual' && (
           <>
             {mode !== 'automatic' && (
-          <div className="bg-gray-800 p-4 rounded-lg mb-4">
-            <h3 className="font-bold mb-3 text-center text-white">🃏 Add Card</h3>
-            <div className="flex gap-3 max-w-md mx-auto">
-              <input
-                type="text"
-                value={cardInput}
-                onChange={(e) => setCardInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addCard()}
-                placeholder="e.g., AH, KS, 9D"
-                className="flex-1 p-3 border rounded-lg text-center font-mono text-lg bg-gray-700 text-white"
-                disabled={!connected || gameState.autoDealingInProgress}
-              />
-              <button 
-                onClick={addCard}
-                disabled={!connected || gameState.nextCardGoesTo === 'complete' || gameState.autoDealingInProgress}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-600 font-semibold"
-              >
-                Add
-              </button>
-            </div>
-          </div>
+              <div className="bg-gray-800 p-4 rounded-lg mb-4">
+                <h3 className="font-bold mb-3 text-center text-white">🃏 Add Card</h3>
+                <div className="flex gap-3 max-w-md mx-auto">
+                  <input
+                    type="text"
+                    value={cardInput}
+                    onChange={(e) => setCardInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addCard()}
+                    placeholder="e.g., AH, KS, 9D"
+                    className="flex-1 p-3 border rounded-lg text-center font-mono text-lg bg-gray-700 text-white"
+                    disabled={!connected || gameState.autoDealingInProgress}
+                  />
+                  <button 
+                    onClick={addCard}
+                    disabled={!connected || gameState.nextCardGoesTo === 'complete' || gameState.autoDealingInProgress}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-600 font-semibold"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* Burn Card Buttons for live and vip modes */}
+            {(mode === 'live' || mode === 'vip') && (
+              <div className="flex gap-4 mb-4 justify-center">
+                <button
+                  onClick={() => sendMessage({ action: 'start_burn_card' })}
+                  disabled={
+                    !connected ||
+                    !gameState.burnAvailable ||
+                    gameState.burnMode === 'active' ||
+                    gameState.burnMode === 'completed' ||
+                    gameState.autoDealingInProgress ||
+                    (gameState.playerCards && gameState.playerCards.length >= 1)
+                  }
+                  className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-400 font-semibold"
+                >
+                  Start Burn Card
+                </button>
+                <button
+                  onClick={() => sendMessage({ action: 'end_burn_card' })}
+                  disabled={
+                    !connected ||
+                    gameState.burnMode !== 'active' ||
+                    gameState.autoDealingInProgress ||
+                    (gameState.playerCards && gameState.playerCards.length >= 1)
+                  }
+                  className="px-6 py-3 bg-orange-700 text-white rounded-lg hover:bg-orange-800 disabled:bg-gray-400 font-semibold"
+                >
+                  End Burn Card
+                </button>
+              </div>
             )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Game Board */}
               <div className="lg:col-span-2">
                 <GameBoard gameState={gameState} hideCards={mode === 'vip' && !gameState.cards_revealed} />
-        </div>
-      </div>
+              </div>
+            </div>
 
             {/* Control buttons for non-manual modes */}
             <div className={`grid grid-cols-2 ${mode === 'live' || mode === 'vip' ? 'md:grid-cols-4' : 'md:grid-cols-5'} gap-4 mt-4`}>
