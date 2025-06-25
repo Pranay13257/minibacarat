@@ -317,6 +317,11 @@ async def broadcast_game_state():
     has_mongo_entries = await collection.count_documents({}) > 0
     
     next_recipient = get_next_card_recipient()
+    mode = game_state.get("game_mode", "manual")
+    if mode == "automatic":
+        can_shuffle = len(remaining_cards) < 52
+    else:
+        can_shuffle = False
     message = {
         "action": "game_state",
         "playerCards": player_cards,
@@ -332,7 +337,7 @@ async def broadcast_game_state():
         "canUndo": len(player_cards) > 0 or len(banker_cards) > 0 or (last_game_result and game_state["game_phase"] == "finished"),
         "canUndoLastWin": has_mongo_entries,
         "canCalculate": game_state["can_calculate"],
-        "canShuffle": len(remaining_cards) < 52,
+        "canShuffle": can_shuffle,
         "burnMode": game_state["burn_mode"],  # Changed from burnEnabled 
         "burnAvailable": game_state["burn_available"],  # NEW: for frontend logic
         "burnCard": burn_card,
@@ -659,22 +664,19 @@ async def handle_shuffle_cards(websocket):
     if game_state["auto_dealing"]:
         await send_error(websocket, "Cannot shuffle manually during auto-dealing")
         return False
-    if len(remaining_cards) >= 52:
+    
+    mode = game_state.get("game_mode", "manual")
+    
+    # Check card count only for automatic mode
+    if mode == "automatic" and len(remaining_cards) >= 52:
         await send_error(websocket, "Too many cards remaining to shuffle")
         return False
-    mode = game_state.get("game_mode", "manual")
-    if mode in ["live", "vip"]:
-        # In live/vip, shuffle only restores the 8-deck shoe and enables burn
-        await shuffle_deck(mode)
-        await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
-        await broadcast_game_state()
-        return True
-    else:
-        # In automatic mode, keep current logic
-        await shuffle_deck(mode)
-        await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
-        await broadcast_game_state()
-        return True
+    
+    # Shuffle deck and send response (same for all modes)
+    await shuffle_deck(mode)
+    await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
+    await broadcast_game_state()
+    return True
 
 async def handle_auto_deal(websocket):
     try:
