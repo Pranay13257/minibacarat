@@ -32,7 +32,8 @@ game_state = {
     "natural_win": False,
     "natural_type": None,
     "can_calculate": False,
-    "burn_enabled": True,
+    "burn_mode": "inactive",  # inactive, active, completed
+    "burn_available": False,  # NEW: controls when start burn is enabled
     "active_players": set(),
     "auto_dealing": False,
     "can_manage_players": True,
@@ -51,8 +52,8 @@ last_game_result = None
 player_cards = []
 banker_cards = []
 burn_card = None
+burned_cards = []  # Track all burned cards in the current round
 
-# Store pairs detected at first 2 cards - PERSISTENT throughout game
 game_pairs = {
     "player_pair": False,
     "banker_pair": False
@@ -69,7 +70,6 @@ async def check_connection():
         logging.error("Could not connect to MongoDB: %s", e)
         exit(1)
 
-# OPTIMIZED: Minimal MongoDB document - removed unnecessary fields
 async def save_game_result(winner, round_num, is_super_six=False, player_pair=False, banker_pair=False, player_natural=False, banker_natural=False):
     try:
         game_doc = {
@@ -162,6 +162,8 @@ def new_round():
     last_game_result = None
     game_pairs = {"player_pair": False, "banker_pair": False}
     game_results["is_super_six"] = False
+    global burned_cards
+    burned_cards = []
     
     is_vip_mode = game_state.get("game_mode") == "vip"
 
@@ -192,6 +194,8 @@ async def reset_all():
     remaining_cards = create_8_deck_shoe()
     card_duplicates = defaultdict(int)
     burn_card = None
+    global burned_cards
+    burned_cards = []
     new_round()
     try:
         await collection.delete_many({})
@@ -200,7 +204,8 @@ async def reset_all():
         logging.error(f"Error clearing MongoDB: {e}")
     game_state.update({
         "round": 0,
-        "burn_enabled": True,
+        "burn_mode": "inactive",
+        "burn_available": True,  # Enable burn after reset
         "can_manage_players": True
     })
     await broadcast_refresh_stats()
@@ -259,7 +264,8 @@ async def shuffle_deck():
     
     remaining_cards = create_8_deck_shoe()
     card_duplicates = defaultdict(int)
-    game_state["burn_enabled"] = True
+    game_state["burn_mode"] = "inactive"
+    game_state["burn_available"] = True  # Enable burn after shuffle
     
     logging.info(f"Deck shuffled - {len(remaining_cards)} cards available")
 
@@ -273,6 +279,35 @@ async def burn_card_from_deck():
         logging.info(f"Burned card: {burn_card}")
         return burn_card
     return None
+
+async def handle_start_burn_card(websocket):
+    """Handle start burn card button"""
+    if game_state["auto_dealing"]:
+        await send_error(websocket, "Cannot start burn during auto-dealing")
+        return False
+    if not game_state["burn_available"]:
+        await send_error(websocket, "Burn card not available")
+        return False
+    if game_state["burn_mode"] != "inactive":
+        await send_error(websocket, "Burn mode already active")
+        return False
+    game_state["burn_mode"] = "active"
+    game_state["burn_available"] = False  # Immediately disable Start Burn button
+    await send_success(websocket, "Burn mode activated. Next cards will be burned.")
+    logging.info("Burn mode activated")
+    return True
+
+async def handle_end_burn_card(websocket):
+    """Handle end burn card button"""
+    if game_state["burn_mode"] != "active":
+        game_state["burn_available"] = False  # Always disable End Burn button on click
+        await send_error(websocket, "Burn mode not active")
+        return False
+    game_state["burn_mode"] = "completed"
+    game_state["burn_available"] = False  # Immediately disable End Burn button
+    await send_success(websocket, "Burn mode ended.")
+    logging.info("Burn mode ended.")
+    return True
 
 async def broadcast_game_state():
     if not connected_clients:
@@ -298,7 +333,8 @@ async def broadcast_game_state():
         "canUndoLastWin": has_mongo_entries,
         "canCalculate": game_state["can_calculate"],
         "canShuffle": len(remaining_cards) < 52,
-        "burnEnabled": game_state["burn_enabled"],
+        "burnMode": game_state["burn_mode"],  # Changed from burnEnabled 
+        "burnAvailable": game_state["burn_available"],  # NEW: for frontend logic
         "burnCard": burn_card,
         "naturalWin": game_state["natural_win"],
         "naturalType": game_state["natural_type"],
@@ -350,6 +386,23 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
             await send_error(websocket, "Cannot add cards manually during auto-dealing")
             return False
         
+        # MULTI-BURN: If in burn mode, burn every card added until burn mode ends
+        if game_state["burn_mode"] == "active":
+            if not card or not is_valid_card(card) or not can_add_card(card):
+                await send_error(websocket, f"Invalid burn card: {card}")
+                return False
+            global burned_cards
+            if card in remaining_cards:
+                remaining_cards.remove(card)
+            card_duplicates[card] += 1
+            burned_cards.append(card)
+            burn_card = card
+            # Do NOT set burn_mode to completed here; only when End Burn is clicked
+            # burn_available remains False
+            await send_success(websocket, f"Card burned: {card}")
+            logging.info(f"Card burned: {card}")
+            return True
+        
         if not card or not is_valid_card(card) or not can_add_card(card):
             await send_error(websocket, f"Invalid card: {card}")
             return False
@@ -367,6 +420,10 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
     
     if recipient == "player":
         player_cards.append(card)
+        # Once the first card is dealt to player, disable burn buttons
+        if len(player_cards) == 1:
+            game_state["burn_available"] = False
+            game_state["burn_mode"] = "completed"
     else:
         banker_cards.append(card)
     
@@ -751,8 +808,9 @@ async def handle_vip_reveal(websocket, player_id):
 
     return True
 
-
+counter=0
 async def handle_client(websocket):
+    global counter
     try:
         connected_clients.add(websocket)
         await broadcast_game_state()
@@ -793,11 +851,6 @@ async def handle_client(websocket):
                     if success:
                         await broadcast_game_state()
                         
-                elif action == "burn_card":
-                    success = await handle_burn_card(websocket, data.get("card", "").strip().upper())
-                    if success:
-                        await broadcast_game_state()
-                        
                 elif action == "delete_last_entry":
                     await delete_last_game_entry(websocket)
                     
@@ -810,7 +863,15 @@ async def handle_client(websocket):
                     if mode not in ["manual", "live", "automatic", "vip"]:
                         await send_error(websocket, "Invalid game mode")
                     else:
+                        old_mode = game_state["game_mode"]
                         game_state["game_mode"] = mode
+                        
+                        # Enable burn ONLY on first switch to live/vip mode
+                        if (old_mode == "manual" or old_mode=="automatic" )and mode in ["live", "vip"] and counter==0:
+                            game_state["burn_available"] = True
+                            logging.info(f"Burn enabled for first switch to {mode} mode")
+                            counter=1
+                        
                         if mode == "vip":
                             game_state["vip_revealer"] = None
                             game_state["cards_revealed"] = False
@@ -877,7 +938,17 @@ async def handle_client(websocket):
                         "banker_naturals": await get_banker_naturals(),
                     }
                     await websocket.send(json.dumps({"action": "stats", **stats}))
-                    
+
+                elif action == "start_burn_card":
+                    success = await handle_start_burn_card(websocket)
+                    if success:
+                        await broadcast_game_state()
+                
+                elif action == "end_burn_card":
+                    success = await handle_end_burn_card(websocket)
+                    if success:
+                        await broadcast_game_state()
+                   
                 else:
                     await send_error(websocket, f"Unknown action: {action}")
                     
