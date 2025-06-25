@@ -38,7 +38,10 @@ game_state = {
     "can_manage_players": True,
     "table_number": "13257",
     "max_bet": 100000,
-    "min_bet": 10000
+    "min_bet": 10000,
+    "game_mode": "manual",
+    "vip_revealer": None,
+    "cards_revealed": False
 }
 
 remaining_cards = None
@@ -153,20 +156,23 @@ def update_card_tracking(card, recipient, is_undo=False):
 
 def new_round():
     global player_cards, banker_cards, last_card_info, game_pairs, last_game_result
-    
     player_cards = []
     banker_cards = []
     last_card_info = {"card": None, "recipient": None}
     last_game_result = None
     game_pairs = {"player_pair": False, "banker_pair": False}
-    game_results = {"is_super_six": False}
+    game_results["is_super_six"] = False
     
+    is_vip_mode = game_state.get("game_mode") == "vip"
+
     game_state.update({
         "game_phase": "waiting",
         "natural_win": False,
         "natural_type": None,
-        "can_calculate": False,
-        "auto_dealing": False
+        "auto_dealing": False,
+        "vip_revealer": None,  # Reset revealer every game
+        "cards_revealed": not is_vip_mode,  # Default to True unless in VIP mode
+        "can_manage_players": True
     })
 
 async def broadcast_refresh_stats():
@@ -210,6 +216,10 @@ def get_next_card_recipient():
             return "player"
         elif total_cards%2 == 1:
             return "banker"
+
+    # In VIP mode, stop dealing after 4 cards until they are revealed
+    if game_state["game_mode"] == "vip" and not game_state["cards_revealed"] and total_cards >= 4:
+        return "complete"
         
     if total_cards == 4:
         player_score = calculate_hand_score(player_cards)
@@ -250,7 +260,6 @@ async def shuffle_deck():
     remaining_cards = create_8_deck_shoe()
     card_duplicates = defaultdict(int)
     game_state["burn_enabled"] = True
-    game_state["can_manage_players"] = True
     
     logging.info(f"Deck shuffled - {len(remaining_cards)} cards available")
 
@@ -301,7 +310,10 @@ async def broadcast_game_state():
         "is_super_six": game_results["is_super_six"],
         "table_number": game_state["table_number"],
         "max_bet": game_state["max_bet"],
-        "min_bet": game_state["min_bet"]
+        "min_bet": game_state["min_bet"],
+        "game_mode": game_state["game_mode"],
+        "vip_revealer": game_state["vip_revealer"],
+        "cards_revealed": game_state["cards_revealed"]
     }
     websockets_to_remove = set()
     for websocket in connected_clients:
@@ -376,6 +388,14 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
         logging.info(f"Banker pair detected: {banker_cards} -> {game_pairs['banker_pair']}")
     
     total_cards = len(player_cards) + len(banker_cards)
+
+    # NEW: VIP logic to pause after 4 cards for reveal
+    if total_cards == 4 and game_state["game_mode"] == "vip" and not game_state["cards_revealed"]:
+        game_state["game_phase"] = "waiting_for_reveal"
+        game_state["can_calculate"] = False # Cannot calculate until reveal
+        await broadcast_game_state()
+        return True # Stop dealing process
+
     if total_cards == 4:
         player_score = calculate_hand_score(player_cards)
         banker_score = calculate_hand_score(banker_cards)
@@ -591,16 +611,6 @@ async def handle_shuffle_cards(websocket):
     await send_success(websocket, "Cards shuffled! Deck reset to 416 cards. Burn card enabled.")
     return True
 
-async def handle_delete_last_entry(websocket):
-    success = await delete_last_game_entry(websocket)
-    if success:
-        await send_success(websocket, "Last game entry deleted from database")
-        await broadcast_refresh_stats()
-        await broadcast_game_state()
-    else:
-        await send_error(websocket, "No entries found to delete")
-    return success
-
 async def handle_auto_deal(websocket):
     try:
         if game_state["auto_dealing"]:
@@ -655,6 +665,93 @@ async def handle_auto_deal(websocket):
         await broadcast_game_state()
         return False
 
+async def handle_manual_result(websocket, data):
+    """Handle manual game result entry"""
+    try:
+        winner = data.get("winner")
+        is_super_six = data.get("is_super_six", False)
+        player_pair = data.get("player_pair", False)
+        banker_pair = data.get("banker_pair", False)
+        player_natural = data.get("player_natural", False)
+        banker_natural = data.get("banker_natural", False)
+        
+        if winner not in ["player", "banker", "tie"]:
+            await send_error(websocket, "Invalid winner")
+            return False
+        
+        game_state["round"] += 1
+        await save_game_result(
+            winner, game_state["round"],
+            is_super_six, player_pair, banker_pair,
+            player_natural, banker_natural
+        )
+        
+        await send_success(websocket, f"Manual result saved: {winner} wins (Round {game_state['round']})")
+        await broadcast_refresh_stats()
+        await broadcast_game_state()
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error handling manual result: {e}")
+        await send_error(websocket, f"Error saving manual result: {str(e)}")
+        return False
+
+async def handle_set_vip_revealer(websocket, player_id):
+    """Set the VIP revealer player"""
+    if game_state["game_mode"] != "vip":
+        await send_error(websocket, "VIP revealer can only be set in VIP mode")
+        return False
+    # Allow setting revealer after 4 cards are dealt in VIP
+    if game_state["game_phase"] not in ["finished", "waiting_for_reveal"]:
+        await send_error(websocket, "Revealer can only be set when the game is paused for reveal.")
+        return False
+    if game_state["vip_revealer"] is not None:
+        await send_error(websocket, "Revealer already set for this round.")
+        return False
+    if player_id not in game_state["active_players"]:
+        await send_error(websocket, "Player must be active to be a revealer")
+        return False
+    game_state["vip_revealer"] = player_id
+    await send_success(websocket, f"Player {player_id} set as VIP revealer")
+    await broadcast_game_state()
+    return True
+
+async def handle_vip_reveal(websocket, player_id):
+    """Handle VIP card revelation"""
+    if game_state["game_mode"] != "vip":
+        await send_error(websocket, "Card revelation only available in VIP mode")
+        return False
+    
+    if game_state["vip_revealer"] != player_id:
+        await send_error(websocket, "Only the designated revealer can reveal cards")
+        return False
+    
+    if game_state["cards_revealed"]:
+        await send_error(websocket, "Cards have already been revealed.")
+        return False
+
+    game_state["cards_revealed"] = True
+    await send_success(websocket, "Cards revealed!")
+
+    # After revealing, check if the game ends (natural) or continues to 3rd card
+    player_score = calculate_hand_score(player_cards)
+    banker_score = calculate_hand_score(banker_cards)
+    is_natural = player_score >= 8 or banker_score >= 8
+
+    if is_natural:
+        # Game ends here, calculate result
+        game_state["natural_win"] = True
+        game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
+        await calculate_result()
+    else:
+        # Game continues, check for 3rd card
+        game_state["game_phase"] = "waiting" # Or "dealing"
+        # The frontend will see the revealed cards and nextCardGoesTo
+        await broadcast_game_state()
+
+    return True
+
+
 async def handle_client(websocket):
     try:
         connected_clients.add(websocket)
@@ -702,17 +799,44 @@ async def handle_client(websocket):
                         await broadcast_game_state()
                         
                 elif action == "delete_last_entry":
-                    success =await handle_delete_last_entry(websocket)
-                    await broadcast_game_state()
+                    await delete_last_game_entry(websocket)
                     
                 elif action == "auto_deal":
                     await handle_auto_deal(websocket)
                     await broadcast_game_state()
                     
+                elif action == "set_game_mode":
+                    mode = data.get("mode", "manual")
+                    if mode not in ["manual", "live", "automatic", "vip"]:
+                        await send_error(websocket, "Invalid game mode")
+                    else:
+                        game_state["game_mode"] = mode
+                        if mode == "vip":
+                            game_state["vip_revealer"] = None
+                            game_state["cards_revealed"] = False
+                        else:
+                            game_state["vip_revealer"] = None
+                            game_state["cards_revealed"] = True
+                        await send_success(websocket, f"Game mode set to {mode}")
+                        await broadcast_game_state()
+
+                elif action == "manual_result":
+                    if game_state["game_mode"] != "manual":
+                        await send_error(websocket, "Manual result only allowed in manual mode")
+                    else:
+                        await handle_manual_result(websocket, data)
+
+                elif action == "set_vip_revealer":
+                    player_id = data.get("player_id")
+                    await handle_set_vip_revealer(websocket, player_id)
+
+                elif action == "vip_reveal":
+                    player_id = data.get("player_id")
+                    await handle_vip_reveal(websocket, player_id)
+
                 elif action == "update_players":
-                    # 4. Only allow player management when can_manage_players is True
                     if not game_state["can_manage_players"]:
-                        await send_error(websocket, "Cannot add/remove players now. Use Reset or Shuffle to enable player management.")
+                        await send_error(websocket, "Cannot add/remove players while a round is in progress. Start a new game to manage players.")
                     else:
                         player_id = data.get("player_id")
                         is_active = data.get("is_active", False)
