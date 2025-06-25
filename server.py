@@ -202,6 +202,8 @@ async def reset_all():
         logging.info("MongoDB collection cleared")
     except Exception as e:
         logging.error(f"Error clearing MongoDB: {e}")
+    # Deactivate all players
+    game_state["active_players"] = set()
     game_state.update({
         "round": 0,
         "burn_mode": "inactive",
