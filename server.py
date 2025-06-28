@@ -3,6 +3,10 @@ import websockets
 import json
 import logging
 import random
+import serial
+import time
+import urllib.parse
+import re
 from collections import defaultdict, deque
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ServerSelectionTimeoutError
@@ -16,6 +20,44 @@ COLLECTION_NAME = "game_results"
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
+
+# Serial connection for shoe reader
+try:
+    ser = serial.Serial("COM1", 9600, timeout=0.1)  # Adjust baud rate if necessary
+    logging.info(f"Connected to shoe reader on {ser.name}")
+except Exception as e:
+    logging.error(f"Failed to connect to shoe reader: {e}")
+    ser = None
+
+def extract_card_value(input_string):
+    """
+    Extract the card value from the input string formatted like:
+    [Manual Burn Cards]<Card:{data}>
+    """
+    match = re.search(r"<Card:(.*?)>", input_string)
+    return match.group(1) if match else None
+
+async def read_from_serial():
+    """Continuously reads card values from the casino shoe reader and adds them to the game.
+    This is just an automated input method for Live and VIP modes (not Manual mode)."""
+    if not ser:
+        logging.warning("Serial connection not available, skipping shoe reader")
+        return
+    
+    while True:
+        try:
+            if ser.in_waiting > 0:
+                raw_data = ser.readline().decode("utf-8").strip()
+                card = extract_card_value(raw_data)
+                print(f"Card read from shoe: {card}")
+                if card:
+                    # Shoe reader is just an automated input method for Live/VIP modes
+                    # Works exactly like manual card entry but automated
+                    await handle_add_card(None, card, is_auto_deal=False)
+                    await broadcast_game_state()
+        except Exception as e:
+            logging.error(f"Error reading from serial: {e}")
+        await asyncio.sleep(0.1)  # Adjust delay if necessary
 
 # Configure logging to suppress websocket handshake errors
 logging.basicConfig(level=logging.INFO)
@@ -386,15 +428,20 @@ async def send_success(websocket, message):
     await websocket.send(json.dumps({"action": "success", "message": message}))
 
 async def handle_add_card(websocket, card, is_auto_deal=False):
+    # Check if this is shoe reader input (websocket is None but not auto-deal)
+    is_shoe_reader = websocket is None and not is_auto_deal
+    
     if not is_auto_deal:
         if game_state["auto_dealing"]:
-            await send_error(websocket, "Cannot add cards manually during auto-dealing")
+            if websocket:  # Only send error if websocket exists
+                await send_error(websocket, "Cannot add cards manually during auto-dealing")
             return False
         
         # MULTI-BURN: If in burn mode, burn every card added until burn mode ends
         if game_state["burn_mode"] == "active":
             if not card or not is_valid_card(card) or not can_add_card(card):
-                await send_error(websocket, f"Invalid burn card: {card}")
+                if websocket:  # Only send error if websocket exists
+                    await send_error(websocket, f"Invalid burn card: {card}")
                 return False
             global burned_cards
             if card in remaining_cards:
@@ -404,22 +451,25 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
             burn_card = card
             # Do NOT set burn_mode to completed here; only when End Burn is clicked
             # burn_available remains False
-            await send_success(websocket, f"Card burned: {card}")
+            if websocket:  # Only send success if websocket exists
+                await send_success(websocket, f"Card burned: {card}")
             logging.info(f"Card burned: {card}")
             return True
         
         if not card or not is_valid_card(card) or not can_add_card(card):
-            await send_error(websocket, f"Invalid card: {card}")
+            if websocket:  # Only send error if websocket exists
+                await send_error(websocket, f"Invalid card: {card}")
             return False
     
     recipient = get_next_card_recipient()
     
     if not is_auto_deal and recipient == "no_players":
-        await send_error(websocket, "No active players - cannot deal cards")
+        if websocket:  # Only send error if websocket exists
+            await send_error(websocket, "No active players - cannot deal cards")
         return False
     
     if recipient == "complete":
-        if not is_auto_deal:
+        if not is_auto_deal and websocket:  # Only send error if websocket exists
             await send_error(websocket, "Cannot add more cards")
         return False
     
@@ -436,10 +486,12 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
         game_state["can_manage_players"] = False
         logging.info("Player management disabled - cards being dealt")
     
+    # Handle card tracking for different input types
     if is_auto_deal:
         card_duplicates[card] += 1
         last_card_info.update({"card": card, "recipient": recipient})
     else:
+        # Manual entry and shoe reader use the same tracking logic
         update_card_tracking(card, recipient)
     
     if recipient == "player" and len(player_cards) == 2:
@@ -471,6 +523,10 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
                 return True
     
     if not is_auto_deal and get_next_card_recipient() == "complete":
+        await calculate_result()
+    
+    # For auto-deal mode, also calculate result when game is complete
+    if is_auto_deal and get_next_card_recipient() == "complete":
         await calculate_result()
     
     return True
@@ -982,8 +1038,16 @@ async def main():
     print(f"Baccarat WebSocket server running on localhost:6789")
     print(f"Initialized with {len(remaining_cards)} cards")
     
-    async with websockets.serve(handle_client, "localhost", 6789):
-        await asyncio.Future()
+    # Run both WebSocket server and serial reader concurrently
+    server = websockets.serve(handle_client, "localhost", 6789)
+    print("WebSocket server running on ws://localhost:6789")
+    
+    if ser:
+        print(f"Connected to shoe reader on {ser.name}")
+        await asyncio.gather(server, read_from_serial())  # Run both tasks concurrently
+    else:
+        print("Shoe reader not connected, running WebSocket server only")
+        await asyncio.gather(server, asyncio.Future())  # Run only WebSocket server
 
 # --- MongoDB stat aggregation functions ---
 async def get_banker_wins():
