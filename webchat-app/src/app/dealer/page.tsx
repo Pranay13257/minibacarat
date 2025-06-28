@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import GameBoard from "@/components/GameBoard";
+import ControlPanelPopup from "@/components/ControlPanelPopup";
 
 interface GameState {
   playerCards: string[];
@@ -138,11 +139,14 @@ const DealerPage = () => {
   }, [gameState.game_mode]);
 
   // Mode selection handler
-  const handleModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newMode = e.target.value;
+  const handleModeChange = (e: string) => {
+    // const newMode = e.target.value;
+    const newMode = e;
     setMode(newMode);
     sendMessage({ action: 'set_game_mode', mode: newMode });
   };
+
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
 
   useEffect(() => {
     setTableNumberInput(gameState.table_number || "");
@@ -374,9 +378,9 @@ const DealerPage = () => {
 
   const handleGameAction = (action: string) => {
     if (action === 'reset_game') {
-      if (!window.confirm('Reset everything? This will clear all game data.')) {
-        return;
-      }
+      // if (!window.confirm('Reset everything? This will clear all game data.')) {
+      //   return;
+      // }
       setHasBurnedCard(false);
     }
     sendMessage({ action });
@@ -428,6 +432,41 @@ const DealerPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Control Panel Button and Popup */}
+      <div className="p-4 flex justify-end max-w-6xl mx-auto">
+        <button
+          className="px-4 py-2 bg-[#911606] text-white rounded-lg font-bold shadow hover:bg-[#741003] transition-colors"
+          onClick={() => setIsControlPanelOpen(true)}
+        >
+          Open Control Panel
+        </button>
+      </div>
+      <ControlPanelPopup 
+        open={isControlPanelOpen}
+        onClose={() => setIsControlPanelOpen(false)}
+        handleGameAction={handleGameAction}
+        stats={stats}
+        tableNumberInput={tableNumberInput}
+        setTableNumberInput={setTableNumberInput}
+        saveTableNumber={saveTableNumber}
+        maxBetInput={maxBetInput}
+        setMaxBetInput={setMaxBetInput}
+        minBetInput={minBetInput}
+        setMinBetInput={setMinBetInput}
+        saveMaxBet={saveMaxBet}
+        saveMinBet={saveMinBet}
+        addCard={addCard}
+        cardInput={cardInput}
+        setCardInput={setCardInput}
+        sendMessage={sendMessage}
+        gameState={gameState}
+        selectedMode={mode}
+        setSelectedMode={handleModeChange}
+        connected={connected}
+        setSelectedRevealer={setSelectedRevealer}
+        canUndoLastWin={canUndoLastWin}
+      />
+
       {/* Header */}
       <div className="bg-gray-900 text-white p-4">
         <div className="max-w-6xl mx-auto">
@@ -465,7 +504,7 @@ const DealerPage = () => {
           </div>
 
           {/* Mode Selection */}
-          <div className="bg-white p-4 flex justify-center items-center gap-4">
+          {/* <div className="bg-white p-4 flex justify-center items-center gap-4">
             <label className="font-semibold text-black">Game Mode:</label>
             <select value={mode} onChange={handleModeChange} className="p-2 rounded border bg-white text-black" style={{ color: 'black' }}>
               <option value="manual" style={{ color: 'black' }}>Manual</option>
@@ -474,7 +513,7 @@ const DealerPage = () => {
               <option value="vip" style={{ color: 'black' }}>VIP</option>
             </select>
             <span className="ml-4 font-mono text-sm text-gray-600">Current: <span className="text-black">{mode.toUpperCase()}</span></span>
-          </div>
+          </div> */}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4 text-sm">
