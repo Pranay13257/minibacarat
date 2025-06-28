@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import GameBoard from "@/components/GameBoard";
 import ControlPanelPopup from "@/components/ControlPanelPopup";
+import Header from "@/components/Header";
 
 interface GameState {
   playerCards: string[];
@@ -431,16 +432,13 @@ const DealerPage = () => {
   }, [mode, gameState.gamePhase]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-vdarkRed flex flex-col justify-start items-center">
+      <Header
+        onMenuClick={() => setIsControlPanelOpen(true)}
+        activePlayers={gameState.activePlayers}
+        onTogglePlayer={togglePlayer}
+      />
       {/* Control Panel Button and Popup */}
-      <div className="p-4 flex justify-end max-w-6xl mx-auto">
-        <button
-          className="px-4 py-2 bg-[#911606] text-white rounded-lg font-bold shadow hover:bg-[#741003] transition-colors"
-          onClick={() => setIsControlPanelOpen(true)}
-        >
-          Open Control Panel
-        </button>
-      </div>
       <ControlPanelPopup 
         open={isControlPanelOpen}
         onClose={() => setIsControlPanelOpen(false)}
@@ -466,276 +464,31 @@ const DealerPage = () => {
         setSelectedRevealer={setSelectedRevealer}
         canUndoLastWin={canUndoLastWin}
       />
-
-      {/* Header */}
-      <div className="bg-gray-900 text-white p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-4">
-            <h1 className="text-3xl font-bold mb-2">🎰 Baccarat Dealer Control</h1>
-            <div className={`text-lg font-semibold ${connected ? 'text-green-400' : 'text-red-400'}`}>
-              {connected ? '🟢' : '🔴'} {connectionStatus}
-            </div>
-          </div>
-
-          {/* Status Message */}
-          {statusMessage && (
+      {/* {statusMessage && (
             <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4 text-center">
               {statusMessage}
             </div>
-          )}
-
-          {/* Add this above the stats grid in the header */}
-          <div className="flex flex-wrap gap-4 mb-4 justify-center">
-            <div className="flex items-center gap-2">
-              <label className="font-semibold">Table Number:</label>
-              <input type="text" value={tableNumberInput} onChange={e => setTableNumberInput(e.target.value)} className="p-1 rounded text-black w-24" />
-              <button onClick={saveTableNumber} className="bg-blue-600 text-white px-2 py-1 rounded">Save</button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="font-semibold">Max Bet:</label>
-              <input type="number" value={maxBetInput} onChange={e => setMaxBetInput(e.target.value)} className="p-1 rounded text-black w-24" min={0} />
-              <button onClick={saveMaxBet} className="bg-blue-600 text-white px-2 py-1 rounded">Save</button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="font-semibold">Min Bet:</label>
-              <input type="number" value={minBetInput} onChange={e => setMinBetInput(e.target.value)} className="p-1 rounded text-black w-24" min={0} />
-              <button onClick={saveMinBet} className="bg-blue-600 text-white px-2 py-1 rounded">Save</button>
-            </div>
-          </div>
-
-          {/* Mode Selection */}
-          {/* <div className="bg-white p-4 flex justify-center items-center gap-4">
-            <label className="font-semibold text-black">Game Mode:</label>
-            <select value={mode} onChange={handleModeChange} className="p-2 rounded border bg-white text-black" style={{ color: 'black' }}>
-              <option value="manual" style={{ color: 'black' }}>Manual</option>
-              <option value="live" style={{ color: 'black' }}>Live</option>
-              <option value="automatic" style={{ color: 'black' }}>Automatic</option>
-              <option value="vip" style={{ color: 'black' }}>VIP</option>
-            </select>
-            <span className="ml-4 font-mono text-sm text-gray-600">Current: <span className="text-black">{mode.toUpperCase()}</span></span>
-          </div> */}
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4 text-sm">
-            <div className="bg-blue-900 p-3 rounded text-center">
-              <div className="text-blue-300 text-xs">PLAYER WINS</div>
-              <div className="font-bold text-lg text-blue-200">{stats.player_wins}</div>
-            </div>
-            <div className="bg-red-900 p-3 rounded text-center">
-              <div className="text-red-300 text-xs">BANKER WINS</div>
-              <div className="font-bold text-lg text-red-200">{stats.banker_wins}</div>
-            </div>
-            <div className="bg-gray-800 p-3 rounded text-center">
-              <div className="text-gray-400 text-xs">TIES</div>
-              <div className="font-bold text-lg">{stats.ties}</div>
-            </div>
-            <div className="bg-blue-800 p-3 rounded text-center">
-              <div className="text-blue-200 text-xs">PLAYER PAIRS</div>
-              <div className="font-bold text-lg">{stats.player_pairs}</div>
-            </div>
-            <div className="bg-red-800 p-3 rounded text-center">
-              <div className="text-red-200 text-xs">BANKER PAIRS</div>
-              <div className="font-bold text-lg">{stats.banker_pairs}</div>
-            </div>
-            <div className="bg-green-900 p-3 rounded text-center">
-              <div className="text-green-300 text-xs">PLAYER NATURALS</div>
-              <div className="font-bold text-lg text-green-200">{stats.player_naturals}</div>
-            </div>
-            <div className="bg-green-800 p-3 rounded text-center">
-              <div className="text-green-200 text-xs">BANKER NATURALS</div>
-              <div className="font-bold text-lg">{stats.banker_naturals}</div>
-            </div>
-          </div>
-
-          {/* Player Activation */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {[1, 2, 3, 4, 5, 6].map((playerNum) => {
-              const playerId = `player${playerNum}`;
-              const isActive = gameState.activePlayers.includes(playerId);
-              return (
-                <button
-                  key={playerId}
-                  onClick={() => togglePlayer(playerId)}
-                  className={`p-3 rounded-lg font-semibold transition-colors ${
-                    isActive 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : 'bg-gray-700 hover:bg-gray-600'
-                  }`}
-                >
-                  {playerId.toUpperCase()} {isActive ? '✅' : '❌'}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
+      )} */}
       {/* Main Content Area */}
-      <div className="max-w-6xl mx-auto p-4">
-        {/* VIP Mode Reveal Logic */}
-        {mode === 'vip' && (
-          <div className="mb-6">
-            {/* Step 1: After 4 cards are dealt, select revealer if not set */}
-            {gameState.gamePhase === 'waiting_for_reveal' && !gameState.vip_revealer && (
-              <div className="bg-yellow-200 p-4 rounded mb-4 flex flex-col md:flex-row items-center gap-4">
-                <span className="font-bold text-black">Select VIP Revealer:</span>
-                <select
-                  value={selectedRevealer}
-                  onChange={e => setSelectedRevealer(e.target.value)}
-                  className="p-2 rounded border text-black bg-white"
-                >
-                  <option value="">-- Select Player --</option>
-                  {gameState.activePlayers.map(pid => (
-                    <option key={pid} value={pid}>{pid.toUpperCase()}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={handleSetRevealer}
-                  disabled={!selectedRevealer}
-                  className="px-4 py-2 bg-green-600 text-white rounded disabled:bg-gray-400"
-                >
-                  Set Revealer
-                </button>
-              </div>
-            )}
-            {/* Step 2: Show Reveal button if revealer is set and not revealed */}
-            {gameState.gamePhase === 'waiting_for_reveal' && gameState.vip_revealer && !gameState.cards_revealed && (
-              <div className="bg-yellow-100 p-4 rounded mb-4 flex flex-col md:flex-row items-center gap-4">
-                <span className="font-bold text-black">VIP Revealer: {gameState.vip_revealer.toUpperCase()}</span>
-                <button
-                  onClick={() => sendMessage({ action: 'vip_reveal', player_id: gameState.vip_revealer })}
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
-                >
-                  Reveal Cards
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        {/* Non-Manual Mode Content */}
-        {mode !== 'manual' && (
-          <>
-            {mode !== 'automatic' && (
-              <div className="bg-gray-800 p-4 rounded-lg mb-4">
-                <h3 className="font-bold mb-3 text-center text-white">🃏 Add Card</h3>
-                <div className="flex gap-3 max-w-md mx-auto">
-                  <input
-                    type="text"
-                    value={cardInput}
-                    onChange={(e) => setCardInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addCard()}
-                    placeholder="e.g., AH, KS, 9D"
-                    className="flex-1 p-3 border rounded-lg text-center font-mono text-lg bg-gray-700 text-white"
-                    disabled={!connected || gameState.autoDealingInProgress}
-                  />
-                  <button 
-                    onClick={addCard}
-                    disabled={!connected || gameState.nextCardGoesTo === 'complete' || gameState.autoDealingInProgress}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-600 font-semibold"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            )}
-            {/* Burn Card Buttons for live and vip modes */}
-            {(mode === 'live' || mode === 'vip') && (
-              <div className="flex gap-4 mb-4 justify-center">
-                <button
-                  onClick={() => sendMessage({ action: 'start_burn_card' })}
-                  disabled={
-                    !connected ||
-                    !gameState.burnAvailable ||
-                    gameState.burnMode === 'active' ||
-                    gameState.burnMode === 'completed' ||
-                    gameState.autoDealingInProgress ||
-                    (gameState.playerCards && gameState.playerCards.length >= 1)
-                  }
-                  className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-400 font-semibold"
-                >
-                  Start Burn Card
-                </button>
-                <button
-                  onClick={() => sendMessage({ action: 'end_burn_card' })}
-                  disabled={
-                    !connected ||
-                    gameState.burnMode !== 'active' ||
-                    gameState.autoDealingInProgress ||
-                    (gameState.playerCards && gameState.playerCards.length >= 1)
-                  }
-                  className="px-6 py-3 bg-orange-700 text-white rounded-lg hover:bg-orange-800 disabled:bg-gray-400 font-semibold"
-                >
-                  End Burn Card
-                </button>
-              </div>
-            )}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Game Board */}
-              <div className="lg:col-span-2">
-                <GameBoard gameState={gameState} hideCards={mode === 'vip' && !gameState.cards_revealed} />
-              </div>
-            </div>
-
-            {/* Control buttons for non-manual modes */}
-            <div className={`grid grid-cols-2 ${mode === 'live' || mode === 'vip' ? 'md:grid-cols-5' : 'md:grid-cols-5'} gap-4 mt-4`}>
-              <button onClick={() => handleGameAction('start_new_game')} disabled={!connected || gameState.autoDealingInProgress} className="p-3 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:bg-gray-600 font-semibold">New Game</button>
-              
-              {mode === 'automatic' ? (
-                <>
-                  <button onClick={() => handleGameAction('shuffle_cards')} disabled={!connected || !gameState.canShuffle || gameState.autoDealingInProgress} className="p-3 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-600 font-semibold">🔀 Shuffle</button>
-                  <button onClick={() => handleGameAction('auto_deal')} disabled={!connected || gameState.autoDealingInProgress || gameState.playerCards.length > 0 || gameState.bankerCards.length > 0} className="p-3 bg-indigo-600 text-black rounded-lg hover:bg-indigo-700 disabled:bg-gray-600 font-semibold">🤖 Auto Deal</button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => handleGameAction('undo')} disabled={!connected || !gameState.canUndo || gameState.autoDealingInProgress} className="p-3 bg-purple-600 text-black rounded-lg hover:bg-purple-700 disabled:bg-gray-600 font-semibold">↩️ Undo</button>
-                  <button onClick={() => handleGameAction('delete_last_entry')} disabled={!connected || !canUndoLastWin || gameState.autoDealingInProgress} className="p-3 bg-purple-800 text-white rounded-lg hover:bg-purple-900 disabled:bg-gray-600 font-semibold">⏪ Undo Last Win</button>
-                  <button onClick={() => handleGameAction('reset_game')} disabled={!connected || gameState.autoDealingInProgress} className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 font-semibold">🗑️ Reset All</button>
-                  {(mode === 'live' || mode === 'vip') && (
-                    <button
-                      onClick={() => sendMessage({ action: 'shuffle_cards' })}
-                      disabled={!connected || gameState.autoDealingInProgress}
-                      className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold"
-                    >
-                      🔀 Shuffle
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Manual Mode Content */}
-        {mode === 'manual' && (
-          <div>
-            <div className="bg-yellow-100 p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-bold mb-4 text-black">Manual Result Entry</h3>
-              <form onSubmit={handleManualSubmit} className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center text-black">
-                <div className="md:col-span-4">
-                  <label className="font-semibold text-black mr-2">Winner:</label>
-                  <select value={manualWinner} onChange={e => setManualWinner(e.target.value)} className="p-2 rounded border text-black bg-white">
-                    <option value="player">Player</option>
-                    <option value="banker">Banker</option>
-                    <option value="tie">Tie</option>
-                  </select>
-                </div>
-                <label className="text-black flex items-center gap-2"><input type="checkbox" checked={manualPlayerPair} onChange={e => setManualPlayerPair(e.target.checked)} /> Player Pair</label>
-                <label className="text-black flex items-center gap-2"><input type="checkbox" checked={manualBankerPair} onChange={e => setManualBankerPair(e.target.checked)} /> Banker Pair</label>
-                <label className="text-black flex items-center gap-2"><input type="checkbox" checked={manualPlayerNatural} onChange={e => setManualPlayerNatural(e.target.checked)} /> Player Natural</label>
-                <label className="text-black flex items-center gap-2"><input type="checkbox" checked={manualBankerNatural} onChange={e => setManualBankerNatural(e.target.checked)} /> Banker Natural</label>
-                <label className="text-black flex items-center gap-2"><input type="checkbox" checked={manualSuperSix} onChange={e => setManualSuperSix(e.target.checked)} /> Super Six</label>
-                <div className="md:col-span-4 mt-4">
-                  <button type="submit" disabled={manualSubmitting} className="w-full px-6 py-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 font-semibold text-lg">Submit Result</button>
-                </div>
-              </form>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                <button onClick={() => handleGameAction('delete_last_entry')} disabled={!connected || !canUndoLastWin || gameState.autoDealingInProgress} className="p-4 text-lg bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-600 font-semibold">⏪ Delete Last Win</button>
-                <button onClick={() => handleGameAction('reset_game')} disabled={!connected || gameState.autoDealingInProgress} className="p-4 text-lg bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 font-semibold">🗑️ Delete All Wins</button>
-            </div>
-          </div>
-        )}
+      <div className="h-[80vh] w-[95vw] m-4 bg-midRed border-4 border-yellow-500 grid grid-cols-12 grid-rows-12">
+        <div className="col-start-5 col-end-9 row-start-1 row-end-3 z-50" style={{transform: "translateY(-25%)"}}>
+          <img src="/assets/golden_design.png" alt="" className=""/>
+        </div>
+        <div className="col-start-5 col-end-9 row-start-2 row-end-4" style={{transform: "translateX(1px)"}}>
+          <img src="/assets/red_design.png" alt="" className="z-10"/>
+        </div>
+        <div className={`${gameState.bankerCards.length === 3 ? 'col-start-2 col-end-7' : 'col-start-4 col-end-7'} row-start-4 row-end-10 flex justify-end m-2`}>
+          <GameBoard gameState={gameState} hideCards={mode === 'vip' && !gameState.cards_revealed} isBanker={true} extraWide={gameState.bankerCards.length === 3}/>
+        </div>
+        <div className={`${gameState.playerCards.length === 3 ? 'col-start-7 col-end-12' : 'col-start-7 col-end-10'} row-start-4 row-end-10 flex justify-start m-2`}>
+          <GameBoard gameState={gameState} hideCards={mode === 'vip' && !gameState.cards_revealed} isBanker={false} extraWide={gameState.playerCards.length === 3}/>
+        </div>
+        <div className="col-start-5 col-end-9 row-start-10 row-end-12" style={{transform: "translateX(1/2px)"}}>
+          <img src="/assets/red_design.png" alt="" className="rotate-180"/>
+        </div>
+        <div className="col-start-5 col-end-9 row-start-11 row-end-13 z-50 flex flex-col justify-start" style={{transform: "translateY(25%) translateX(1px)"}}>
+          <img src="/assets/golden_design.png" alt="" className="rotate-180"/>
+        </div>
       </div>
     </div>
   );

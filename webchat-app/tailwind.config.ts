@@ -14,6 +14,7 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        'vdarkRed' : "#450A03",
         'darkRed': "#741003",
         'midRed' : "#911606",
         'vlightRed' : "#A42210",

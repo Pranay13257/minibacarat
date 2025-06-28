@@ -550,6 +550,13 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                   >
                     Enter table number
                   </button>
+                  <button
+                    className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
+                    style={{ width: 250, height: 49, backgroundColor: '#fff', color: '#741003' }}
+                    onClick={() => sendMessage({ action: 'vip_reveal', player_id: gameState.vip_revealer })}
+                  >
+                    Reveal Cards
+                  </button>
                 </div>
               </div>
               {/* Third column */}
