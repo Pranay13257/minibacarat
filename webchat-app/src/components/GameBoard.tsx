@@ -34,9 +34,11 @@ interface GameBoardProps {
     // Add any other new fields from server.py here
   };
   hideCards?: boolean;
+  isBanker: boolean;
+  extraWide?: boolean;
 }
 
-const GameBoard = ({ gameState, hideCards = false }: GameBoardProps) => {
+const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false }: GameBoardProps) => {
   const [cardInput, setCardInput] = useState("");
 
   const renderCard = (card: string) => {
@@ -45,7 +47,7 @@ const GameBoard = ({ gameState, hideCards = false }: GameBoardProps) => {
         <img
           src={`/cards/${card.toLowerCase()}.png`}
           alt={`Card ${card}`}
-          className="w-24 h-36 border rounded shadow-lg"
+          className="w-24 h-36 object-contain"
         />
       </div>
     );
@@ -82,14 +84,13 @@ const GameBoard = ({ gameState, hideCards = false }: GameBoardProps) => {
     return reasons.join(", ");
   };
 
-  if (!gameState) return null;
 
-  if (hideCards) {
+  if (hideCards || !gameState) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center min-h-[300px]">
         <div className="flex gap-8 mb-6">
           {[0,1,2].map(i => (
-            <img key={i} src="/cards/back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70" />
+            <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70" />
           ))}
         </div>
         <div className="text-xl font-bold text-gray-700 text-center">Cards are hidden until revealed by the VIP revealer.</div>
@@ -98,57 +99,21 @@ const GameBoard = ({ gameState, hideCards = false }: GameBoardProps) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      {/* Game Info */}
-      <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
-        <div className="bg-gray-100 p-2 rounded">
-          <div className="text-gray-600">Round</div>
-          <div className="font-bold text-black">{gameState.round}</div>
+    <div className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit`}>
+      <div className="flex flex-col items-center">
+        <h2 className="text-xl mb-4 text-white">{isBanker ? 'Banker Cards' : 'Player Cards'}</h2>
+        <div className="flex gap-4 w-fit">
+          {isBanker
+            ? gameState.bankerCards.map(renderCard)
+            : gameState.playerCards.map(renderCard)}
         </div>
       </div>
-
-      {/* Player Cards */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4 text-black">Player Cards</h2>
-        <div className="flex gap-4">
-          {gameState.playerCards.map(renderCard)}
-        </div>
-        <div className="mt-2 text-lg font-semibold text-black">
-          Total: {gameState.playerTotal}
-          {gameState.playerPair && <span className="ml-2">(Pair)</span>}
-        </div>
+      <div
+        className="absolute bottom-0 text-lg text-white border-2 border-yellow-500 py-2 px-6 bg-darkRed rounded-3xl font-bold shadow-lg"
+        style={{ zIndex: 10, transform: "translateY(50%)" }}
+      >
+        Total: {isBanker ? gameState.bankerTotal : gameState.playerTotal}
       </div>
-
-      {/* Banker Cards */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4 text-black">Banker Cards</h2>
-        <div className="flex gap-4">
-          {gameState.bankerCards.map(renderCard)}
-        </div>
-        <div className="mt-2 text-lg font-semibold text-black">
-          Total: {gameState.bankerTotal}
-          {gameState.bankerPair && <span className="ml-2">(Pair)</span>}
-        </div>
-      </div>
-
-      {/* Game Result */}
-      {gameState.gamePhase === 'finished' && (
-        <div className="mt-8 text-center">
-          <div className="text-2xl font-bold text-black mb-2">
-            {getWinnerText()}
-          </div>
-          <div className="text-lg text-black">
-            {getWinReason()}
-          </div>
-        </div>
-      )}
-
-      {gameState.lastGameResult && (
-        <div className="mt-4 p-2 bg-yellow-100 rounded text-yellow-800">
-          <div className="font-bold">Last Game Undo Info:</div>
-          <pre className="text-xs">{JSON.stringify(gameState.lastGameResult, null, 2)}</pre>
-        </div>
-      )}
     </div>
   );
 };

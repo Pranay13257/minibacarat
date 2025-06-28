@@ -28,6 +28,7 @@ module.exports = {
         glow: 'glow 2s infinite',
       },
       colors: {
+        'vdarkRed' : "#450A03",
         'darkRed': "#741003",
         'midRed' : "#911606",
         'vlightRed' : "#A42210",

@@ -1,40 +1,51 @@
-import { useState, useEffect } from "react";
+import React from "react";
 
-const Header = ({ socket, table }: { socket: WebSocket | null; table: string | null }) => {
-  const [tableNumber, setTableNumber] = useState<string | null>(table);
+interface HeaderProps {
+  onMenuClick?: () => void;
+  activePlayers: string[];
+  onTogglePlayer: (playerId: string) => void;
+}
 
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      console.log("Received WebSocket message:", event.data);
-      try {
-        const data = JSON.parse(event.data);
-        if (data.action === "table_number_set") {
-          setTableNumber(data.tableNumber); // ✅ Update table number state
-        }
-      } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
-      }
-    };
-
-    socket.addEventListener("message", handleMessage);
-    return () => {
-      socket.removeEventListener("message", handleMessage);
-    };
-  }, [socket]); // ✅ Re-run when `socket` changes
-
+const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePlayer }) => {
   return (
-    <div className="flex justify-between items-center bg-black relative font-questrial">
-      <img src="/assets/ocean7.png" alt="ocean7" className="w-20 h-20 p-1" />
-      <img
-        src="/assets/logo.png"
-        alt="logo"
-        className="absolute left-1/2 z-20 transform -translate-x-1/2 h-40"
-      />
-      <div className="text-6xl font-ramaraja text-yellow-300 text-center">
-        TABLE NUMBER <br />
-        FT{tableNumber ?? "Waiting..."} {/* Show table number or default text */}
+    <div className="flex items-center justify-between w-full h-[15vh] font-questrial px-4 overflow-hidden" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      {/* Optional: Black overlay for contrast */}
+      
+      {/* Left: Image + Table Number */}
+      <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 mb-2">
+        <img
+          src="/assets/mini_baccarat.png"
+          alt="Mini Baccarat"
+          className="h-14 w-auto mb-2 object-contain"
+        />
+        <span className="text-yellow-300 text-lg font-bold text-center">Table: 1234</span>
+      </div>
+
+      {/* Center: 6 Hats for Players */}
+      <div className="flex-1 flex justify-center items-center gap-4 z-10 mb-2">
+        {[1,2,3,4,5,6].map((num) => {
+          const playerId = `player${num}`;
+          const isActive = activePlayers.includes(playerId);
+          return (
+            <img
+              key={playerId}
+              src={isActive ? "/assets/whitehat.png" : "/assets/redhat.png"}
+              alt={isActive ? "White Hat (Active)" : "Red Hat (Inactive)"}
+              className="h-14 w-auto object-contain cursor-pointer transition-transform hover:scale-110"
+              onClick={() => onTogglePlayer(playerId)}
+            />
+          );
+        })}
+      </div>
+
+      {/* Right: Menu */}
+      <div className="flex items-center justify-end h-full min-w-[60px] z-10 mb-2">
+        <img
+          src="/assets/menu.png"
+          alt="Menu"
+          className="h-16 w-auto object-contain mr-2 cursor-pointer"
+          onClick={onMenuClick}
+        />
       </div>
     </div>
   );
