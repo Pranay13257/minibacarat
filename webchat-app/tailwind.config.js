@@ -27,6 +27,14 @@ module.exports = {
       animation: {
         glow: 'glow 2s infinite',
       },
+      colors: {
+        'darkRed': "#741003",
+        'midRed' : "#911606",
+        'vlightRed' : "#A42210",
+        'lightBrown' : "#F0DEAD",
+        'darkBrown' : "#DEBE83",
+        'randomBrown' : "#915A14",
+      },
     },
   },
   plugins: [],
