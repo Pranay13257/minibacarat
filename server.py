@@ -542,8 +542,8 @@ async def calculate_result():
     is_natural = game_state["natural_win"]
     natural_type = game_state["natural_type"]
     # UPDATED: Separate natural detection
-    player_natural = is_natural and player_score == 8
-    banker_natural = is_natural and banker_score == 8
+    player_natural = is_natural and player_score >= 8 and player_score > banker_score
+    banker_natural = is_natural and banker_score >= 8 and banker_score > player_score
     previous_state = {
         "round": game_state["round"]
     }
