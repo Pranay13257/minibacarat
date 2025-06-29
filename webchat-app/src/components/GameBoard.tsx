@@ -33,14 +33,19 @@ interface GameBoardProps {
     lastGameResult?: any;
     game_mode?: string;
     cards_revealed?: boolean;
+    vip_revealer?: string | null;
     // Add any other new fields from server.py here
   };
   hideCards?: boolean;
   isBanker: boolean;
   extraWide?: boolean;
+  playerId?: string;
+  vipRevealer?: string | null;
+  connected?: boolean;
+  onVipReveal?: () => void;
 }
 
-const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false }: GameBoardProps) => {
+const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, playerId, vipRevealer, connected, onVipReveal }: GameBoardProps) => {
   const [cardInput, setCardInput] = useState("");
 
   const renderCard = (card: string) => {
@@ -98,12 +103,12 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false }
             if (cards.length === 0) {
               // No cards dealt: show 2 card backs
               return [0,1].map(i => (
-                <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70" />
+                <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2" />
               ));
             } else if (isVipMode && !cardsRevealed) {
               // VIP mode, cards dealt but not revealed: show BR.png for each card
               return cards.map((_, i) => (
-                <img key={i} src="/cards/BR.png" alt="VIP Hidden Card" className="w-24 h-36 border rounded shadow-lg opacity-70" />
+                <img key={i} src="/cards/BR.png" alt="VIP Hidden Card" className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2" />
               ));
             } else {
               // Normal: show actual cards
@@ -111,6 +116,27 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false }
             }
           })()}
         </div>
+        {/* VIP Reveal Button for Player - under cards, above total */}
+        {!isBanker && (() => {
+          const isVipMode = gameState.game_mode === 'vip';
+          const cardsRevealed = !!gameState.cards_revealed;
+          const isRevealer = isVipMode && vipRevealer && playerId && vipRevealer === playerId;
+          const cards = gameState.playerCards;
+          if (isVipMode && isRevealer && !cardsRevealed && cards.length > 0) {
+            return (
+              <div className="my-4 text-center">
+                <button
+                  className="px-6 py-3 bg-darkRed text-white rounded-lg font-semibold text-xl"
+                  onClick={onVipReveal}
+                  disabled={!connected}
+                >
+                  Reveal Cards
+                </button>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
       <div
         className="absolute bottom-0 text-lg text-white border-2 border-yellow-500 py-2 px-6 bg-darkRed rounded-3xl font-bold shadow-lg"

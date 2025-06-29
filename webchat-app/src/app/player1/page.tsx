@@ -211,6 +211,12 @@ const Player1Page = () => {
   const isRevealer = isVipMode && gameState.vip_revealer === PLAYER_ID;
   const cardsRevealed = !!gameState.cards_revealed;
 
+  const sendMessage = (msg: any) => {
+    if (socket && connected) {
+      socket.send(JSON.stringify(msg));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-vdarkRed flex flex-col justify-between items-center">
       {/* Header */}
@@ -222,7 +228,7 @@ const Player1Page = () => {
             alt="Mini Baccarat"
             className="h-14 w-auto mb-2 object-contain"
             />
-            <span className="text-yellow-300 text-lg font-bold text-center">Table: 1234</span>
+            <span className="text-yellow-300 text-lg font-bold text-center">Table: {gameState.table_number}</span>
           </div>
           <img
               src="/assets/ocean7.png"
@@ -259,7 +265,16 @@ const Player1Page = () => {
         </div>
         {/* Player GameBoard (bottom, starts at row 7) */}
         <div className="col-start-4 col-end-10 row-start-7 row-end-11 flex justify-center items-start m-6">
-          <GameBoard gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={false} extraWide={gameState.playerCards.length === 3} />
+          <GameBoard
+            gameState={gameState}
+            hideCards={isVipMode && !cardsRevealed}
+            isBanker={false}
+            extraWide={gameState.playerCards.length === 3}
+            playerId={PLAYER_ID}
+            vipRevealer={gameState.vip_revealer}
+            connected={connected}
+            onVipReveal={() => sendMessage({ action: 'vip_reveal', player_id: PLAYER_ID })}
+          />
         </div>
         <div className="col-start-9 col-end-12 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
           <img

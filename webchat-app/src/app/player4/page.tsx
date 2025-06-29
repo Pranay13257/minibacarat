@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import GameBoard from "../../components/GameBoard";
 
 const PLAYER_ID = 'player4';
 
@@ -210,167 +211,93 @@ const Player4Page = () => {
   const isRevealer = isVipMode && gameState.vip_revealer === PLAYER_ID;
   const cardsRevealed = !!gameState.cards_revealed;
 
+  const sendMessage = (msg: any) => {
+    if (socket && connected) {
+      socket.send(JSON.stringify(msg));
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-vdarkRed flex flex-col justify-between items-center">
       {/* Header */}
-      <div className="bg-gray-900 text-white p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-4">
-            <h1 className="text-3xl font-bold mb-2">🎰 Mini Baccarat - Player 4</h1>
-            <div className="flex justify-center items-center gap-4">
-              <div className={`text-lg font-semibold ${connected ? 'text-green-400' : 'text-red-400'}`}>{connected ? '🟢' : '🔴'} {connectionStatus}</div>
-              <div className={`text-lg font-semibold ${isActive ? 'text-green-400' : 'text-red-400'}`}>{isActive ? '🟢' : '🔴'} {isActive ? 'Active' : 'Inactive'}</div>
-            </div>
+      <div className="w-full h-[12vh]" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="flex flex-row items-center justify-between ">
+          <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 ml-4 mr-4 mt-2 mb-4">
+            <img
+            src="/assets/mini_baccarat.png"
+            alt="Mini Baccarat"
+            className="h-14 w-auto mb-2 object-contain"
+            />
+            <span className="text-yellow-300 text-lg font-bold text-center">Table: {gameState.table_number}</span>
           </div>
-          <div className="flex flex-wrap gap-4 mb-4 justify-center">
-            <div className="font-semibold">Table Number: <span className="text-green-300">{gameState.table_number}</span></div>
-            <div className="font-semibold">Max Bet: <span className="text-green-300">{gameState.max_bet}</span></div>
-            <div className="font-semibold">Min Bet: <span className="text-green-300">{gameState.min_bet}</span></div>
-          </div>
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4 text-sm">
-            <div className="bg-blue-900 p-3 rounded text-center">
-              <div className="text-blue-300 text-xs">PLAYER WINS</div>
-              <div className="font-bold text-lg text-blue-200">{stats.player_wins}</div>
-            </div>
-            <div className="bg-red-900 p-3 rounded text-center">
-              <div className="text-red-300 text-xs">BANKER WINS</div>
-              <div className="font-bold text-lg text-red-200">{stats.banker_wins}</div>
-            </div>
-            <div className="bg-gray-800 p-3 rounded text-center">
-              <div className="text-gray-400 text-xs">TIES</div>
-              <div className="font-bold text-lg">{stats.ties}</div>
-            </div>
-            <div className="bg-blue-800 p-3 rounded text-center">
-              <div className="text-blue-200 text-xs">PLAYER PAIRS</div>
-              <div className="font-bold text-lg">{stats.player_pairs}</div>
-            </div>
-            <div className="bg-red-800 p-3 rounded text-center">
-              <div className="text-red-200 text-xs">BANKER PAIRS</div>
-              <div className="font-bold text-lg">{stats.banker_pairs}</div>
-            </div>
-            <div className="bg-green-900 p-3 rounded text-center">
-              <div className="text-green-300 text-xs">PLAYER NATURALS</div>
-              <div className="font-bold text-lg text-green-200">{stats.player_naturals}</div>
-            </div>
-            <div className="bg-green-800 p-3 rounded text-center">
-              <div className="text-green-200 text-xs">BANKER NATURALS</div>
-              <div className="font-bold text-lg">{stats.banker_naturals}</div>
-            </div>
+          <img
+              src="/assets/ocean7.png"
+              className="h-14 w-auto object-contain scale-150"
+            />
+            <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 ml-4 mr-4 mt-2 mb-4">
+            <span className="text-yellow-300 text-lg font-bold text-center">Bet:</span>
+            <span className="text-yellow-300 text-lg font-bold text-center">Max: {gameState.max_bet}</span>
+            <span className="text-yellow-300 text-lg font-bold text-center">Min: {gameState.min_bet}</span>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Game Board */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              {/* VIP Reveal Logic */}
-              {isVipMode && !cardsRevealed ? (
-                isRevealer ? (
-                  <div className="mb-8 text-center">
-                    <button
-                      className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-xl"
-                      onClick={() => socket?.send(JSON.stringify({ action: 'vip_reveal', player_id: PLAYER_ID }))}
-                      disabled={!connected}
-                    >
-                      👁️ Reveal Cards
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mb-8 text-center text-purple-700 text-xl font-bold">
-                    Waiting for revealer to reveal cards...
-                  </div>
-                )
-              ) : (
-                <>
-                  {/* Player Section */}
-                  <div className="mb-8 bg-blue-50 p-4 rounded-lg">
-                    <h2 className="text-2xl font-bold mb-4 text-blue-900">Player</h2>
-                    <div className="flex gap-4">
-                      {gameState.playerCards.map((card, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={`/cards/${card.toLowerCase()}.png`}
-                            alt={`Card ${card}`}
-                            className="w-24 h-36 border rounded shadow-lg"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-xl font-semibold text-blue-900">
-                      Total: {gameState.playerTotal}
-                      {gameState.playerPair && <span className="ml-2">(Pair)</span>}
-                    </div>
-                  </div>
-                  {/* Banker Section */}
-                  <div className="mb-8 bg-red-50 p-4 rounded-lg">
-                    <h2 className="text-2xl font-bold mb-4 text-red-900">Banker</h2>
-                    <div className="flex gap-4">
-                      {gameState.bankerCards.map((card, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={`/cards/${card.toLowerCase()}.png`}
-                            alt={`Card ${card}`}
-                            className="w-24 h-36 border rounded shadow-lg"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-xl font-semibold text-red-900">
-                      Total: {gameState.bankerTotal}
-                      {gameState.bankerPair && <span className="ml-2">(Pair)</span>}
-                    </div>
-                  </div>
-                  {/* Game Result */}
-                  {gameState.gamePhase === 'finished' && (
-                    <div className="mt-8 text-center">
-                      <div className="text-3xl font-bold text-gray-900 mb-2">
-                        {gameState.winMessage || (gameState.playerTotal > gameState.bankerTotal ? `Player Wins by ${gameState.playerTotal}` : 
-                         gameState.bankerTotal > gameState.playerTotal ? `Banker Wins by ${gameState.bankerTotal}` : "Tie")}
-                      </div>
-                      <div className="text-xl text-gray-700">
-                        {[
-                          gameState.playerPair && "Player Pair",
-                          gameState.bankerPair && "Banker Pair",
-                          gameState.naturalWin && `Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`,
-                          gameState.isSuperSix && "Super Six"
-                        ].filter(Boolean).join(", ")}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+      <div className="h-[75vh] w-[95vw] border-4 border-yellow-500 bg-midRed m-4 grid grid-cols-12 grid-rows-12">
 
-          {/* Game Info Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-4">
-              <h3 className="text-xl font-bold mb-4 text-gray-900">Game Info</h3>
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-600 text-sm">Remaining Cards</div>
-                  <div className="font-bold text-lg">{gameState.remainingCards}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-600 text-sm">Used Cards</div>
-                  <div className="font-bold text-lg">{gameState.usedCards}</div>
-                </div>
-                {gameState.burnCard && (
-                  <div className="bg-gray-50 p-3 rounded">
-                    <div className="text-gray-600 text-sm">Burn Card</div>
-                    <div className="font-bold text-lg">{gameState.burnCard}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="col-start-2 col-end-5 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
+          <img
+            src="/assets/red_design.png"
+            alt=""
+            className="absolute left-1/2 top-1/2"
+            style={{
+              transform: "translate(-50%, -50%) rotate(-90deg)",
+              width: "40vh",
+              height: "auto",
+              maxWidth: "none",
+              maxHeight: "40vw",
+            }}
+          />
+        </div>
+        {/* Banker GameBoard (top, ends at row 7) */}
+        <div className="col-start-4 col-end-10 row-start-3 row-end-7 flex justify-center items-end m-6">
+          <GameBoard gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={true} extraWide={gameState.bankerCards.length === 3} />
+        </div>
+        {/* Player GameBoard (bottom, starts at row 7) */}
+        <div className="col-start-4 col-end-10 row-start-7 row-end-11 flex justify-center items-start m-6">
+          <GameBoard
+            gameState={gameState}
+            hideCards={isVipMode && !cardsRevealed}
+            isBanker={false}
+            extraWide={gameState.playerCards.length === 3}
+            playerId={PLAYER_ID}
+            vipRevealer={gameState.vip_revealer}
+            connected={connected}
+            onVipReveal={() => sendMessage({ action: 'vip_reveal', player_id: PLAYER_ID })}
+          />
+        </div>
+        <div className="col-start-9 col-end-12 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
+          <img
+            src="/assets/red_design.png"
+            alt=""
+            className="absolute left-1/2 top-1/2"
+            style={{
+              transform: "translate(-50%, -50%) rotate(90deg)",
+              width: "40vh",
+              height: "auto",
+              maxWidth: "none",
+              maxHeight: "40vw",
+            }}
+          />
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="h-[12vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      </div>
     </div>
+
+    
   );
 };
 
