@@ -212,7 +212,6 @@ const DealerPage = () => {
 
         websocket.onerror = (error) => {
           setConnectionStatus('Connection Error');
-          console.error('WebSocket error:', error);
         };
 
       } catch (error) {
