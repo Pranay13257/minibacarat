@@ -62,21 +62,24 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
 
   const getWinnerText = () => {
     if (!gameState || gameState.gamePhase !== 'finished') return null;
-    if (gameState.winMessage) {
-      return gameState.winMessage;
-    }
-    if (gameState.playerTotal > gameState.bankerTotal) {
-      if (gameState.naturalWin && (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')) {
-        return `Player Wins by Natural ${gameState.naturalType === 'natural_8' ? '8' : '9'}`;
+    
+    const playerScore = gameState.playerTotal;
+    const bankerScore = gameState.bankerTotal;
+    
+    if (playerScore > bankerScore) {
+      if (gameState.naturalWin && gameState.playerPair) {
+        return `Player wins by Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`;
       }
-      return `Player Wins by ${gameState.playerTotal}`;
-    } else if (gameState.bankerTotal > gameState.playerTotal) {
-      if (gameState.naturalWin && (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')) {
-        return `Banker Wins by Natural ${gameState.naturalType === 'natural_8' ? '8' : '9'}`;
+      return `Player wins by ${playerScore}`;
+    } else if (bankerScore > playerScore) {
+      if (gameState.isSuperSix) {
+        return `Banker wins by Super Six`;
+      } else if (gameState.naturalWin && gameState.bankerPair) {
+        return `Banker wins by Natural ${gameState.naturalType === 'natural_9' ? '9' : '8'}`;
       }
-      return `Banker Wins by ${gameState.bankerTotal}`;
+      return `Banker wins by ${bankerScore}`;
     } else {
-      return "Tie";
+      return `Tie on ${playerScore}`;
     }
   };
 
@@ -138,25 +141,37 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
           return null;
         })()}
       </div>
-      <div
-        className="absolute bottom-0 text-lg text-white border-2 border-yellow-500 py-2 px-6 bg-darkRed rounded-3xl font-bold shadow-lg"
-        style={{ zIndex: 10, transform: "translateY(50%)" }}
-      >
-        Total: {(() => {
-          const isVipMode = gameState.game_mode === 'vip';
-          const cardsRevealed = !!gameState.cards_revealed;
-          const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
-          if (isVipMode && cards.length > 0 && !cardsRevealed) {
-            return '--';
-          }
-          return isBanker ? gameState.bankerTotal : gameState.playerTotal;
-        })()}
-        {((!gameState.game_mode || gameState.game_mode !== 'vip' || gameState.cards_revealed) && (
-          isBanker && gameState.bankerPair && <span className="ml-2">(Pair)</span>
-        ))}
-        {((!gameState.game_mode || gameState.game_mode !== 'vip' || gameState.cards_revealed) && (
-          !isBanker && gameState.playerPair && <span className="ml-2">(Pair)</span>
-        ))}
+
+      {/* Player Cards */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4 text-black">Player Cards</h2>
+        <div className="flex gap-4">
+          {gameState.playerCards.map(renderCard)}
+        </div>
+        <div className="mt-2 text-lg font-semibold text-black">
+          Total: {gameState.playerTotal}
+        </div>
+        {gameState.playerPair && (
+          <div className="mt-1 text-sm font-bold text-red-600">
+            PAIR
+          </div>
+        )}
+      </div>
+
+      {/* Banker Cards */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4 text-black">Banker Cards</h2>
+        <div className="flex gap-4">
+          {gameState.bankerCards.map(renderCard)}
+        </div>
+        <div className="mt-2 text-lg font-semibold text-black">
+          Total: {gameState.bankerTotal}
+        </div>
+        {gameState.bankerPair && (
+          <div className="mt-1 text-sm font-bold text-red-600">
+            PAIR
+          </div>
+        )}
       </div>
     </div>
   );

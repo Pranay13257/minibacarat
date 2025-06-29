@@ -15,42 +15,24 @@ interface Players {
   player6: boolean;
 }
 
-interface Suit {
-  symbol: string;
-  value: string;
-}
-
 type GameMode = "manual" | "automatic" | "live";
 type PlayerKey = keyof Players;
 
 const GameMenu = ({ socket }: GameMenuProps) => {
   // Game state
-  const [cardInput, setCardInput] = useState("");
-  const [joker, setJoker] = useState<string | null>(null);
-  const [selectedFace, setSelectedFace] = useState<string | null>(null);
-  const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
-  const [mode, setMode] = useState<GameMode>("manual");
-  const [gamesCount, setGamesCount] = useState(0);
-  
-  // UI state
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
-  const [winner, setWinner] = useState<number | null>(null);
-  const [showTableModal, setShowTableModal] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupMessage, setPopupMessage] = useState("");
+  const [winner, setWinner] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  
-  // Betting state
-  const [minBet, setMinBet] = useState(100);
-  const [maxBet, setMaxBet] = useState(10000);
-  const [newMinBet, setNewMinBet] = useState(minBet);
-  const [newMaxBet, setNewMaxBet] = useState(maxBet);
-  
-  // Table and players state
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mode, setMode] = useState<GameMode>("manual");
+  const [newMaxBet, setNewMaxBet] = useState(10000);
+  const [newMinBet, setNewMinBet] = useState(100);
   const [tableNumber, setTableNumber] = useState("1234");
-  const [table, setTable] = useState<string>("1234");
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [gamesCount, setGamesCount] = useState(0);
   const [players, setPlayers] = useState<Players>({
     player1: false,
     player2: false,
@@ -60,22 +42,35 @@ const GameMenu = ({ socket }: GameMenuProps) => {
     player6: false,
   });
 
-  // Constants
-  const suits: Suit[] = [
-    { symbol: "♠", value: "S" },
-    { symbol: "♦", value: "D" },
-    { symbol: "♣", value: "C" },
-    { symbol: "♥", value: "H" },
-  ];
+  const sendSocketMessage = useCallback((message: any) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message));
+    }
+  }, [socket]);
 
-  const cardFaces = ["A", "2", "3", "J", "4", "5", "6", "Q", "7", "8", "9", "K", "T"];
+  // WebSocket message handler
+  useEffect(() => {
+    if (!socket) return;
 
-  // Utility functions
-  const showPopupMessage = useCallback((message: string) => {
-    setPopupMessage(message);
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 3000);
-  }, []);
+    const handleMessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data);
+      console.log("Received:", data);
+
+      if (data.action === "update_players") {
+        console.log(data.players, "players");
+      } else if (data.action === "game_won") {
+        setGamesCount(prev => prev + 1);
+      } else if (data.action === "delete_all_wins") {
+        setGamesCount(0);
+      }
+    };
+
+    socket.addEventListener("message", handleMessage);
+
+    return () => {
+      socket.removeEventListener("message", handleMessage);
+    };
+  }, [socket]);
 
   const showErrorMessage = useCallback((message: string) => {
     setErrorMessage(message);
@@ -83,164 +78,62 @@ const GameMenu = ({ socket }: GameMenuProps) => {
     setTimeout(() => setShowError(false), 3000);
   }, []);
 
-  const sendSocketMessage = useCallback((data: any) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(data));
-    } else {
-      showErrorMessage("Connection lost. Please refresh the page.");
-    }
-  }, [socket, showErrorMessage]);
+  const showSuccessMessage = useCallback((message: string) => {
+    setPopupMessage(message);
+    setShowPopup(true);
+    setTimeout(() => setShowPopup(false), 3000);
+  }, []);
 
-  // WebSocket message handler
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        switch (data.action) {
-          case "set_joker":
-            setJoker(data.joker);
-            break;
-          case "update_players":
-            setPlayers(data.players);
-            console.log(data, " for players");
-            break;
-          case "bet_changed":
-            console.log("Bet Changed", data);
-            setMinBet(data.minBet);
-            setMaxBet(data.maxBet);
-            break;
-          case "table_number_set":
-            console.log("Table Number Updated in player board", data);
-            setTable(String(data.tableNumber ?? ""));
-            setTableNumber(String(data.tableNumber ?? ""));
-            break;
-          case "duplicate_card":
-            console.log("Duplicate Card", data);
-            handleDuplicateCard();
-            break;
-          case "game_won":
-            console.log("game won, calling reset function", data);
-            setTimeout(() => {
-              resetGame();
-            }, 5000);
-            break;
-          default:
-            console.log("Unknown action:", data.action);
-        }
-      } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
-      }
-    };
-
-    socket.addEventListener("message", handleMessage);
-    return () => socket.removeEventListener("message", handleMessage);
-  }, [socket]);
-
-  // Game actions
-  const togglePlayer = useCallback((player: PlayerKey) => {
-    if (joker) {
-      showErrorMessage("Cannot add new player while game is in progress");
-      return;
-    }
-    sendSocketMessage({ action: "toggle_player", player });
-    console.log("toggle player", player);
-  }, [joker, sendSocketMessage, showErrorMessage]);
-
-  const handleAddCard = useCallback(() => {
-    const card = selectedFace && selectedSuit ? `${selectedFace}${selectedSuit}` : cardInput.trim().toUpperCase();
-    
-    if (!card) {
-      showErrorMessage("Please select a card or enter card manually");
-      return;
-    }
-
-    sendSocketMessage({ action: "add_card", card });
-    setCardInput("");
-    setSelectedFace(null);
-    setSelectedSuit(null);
-  }, [selectedFace, selectedSuit, cardInput, sendSocketMessage, showErrorMessage]);
-
-  const handleBurnCard = useCallback(() => {
-    const card = selectedFace && selectedSuit ? `${selectedFace}${selectedSuit}` : cardInput.trim().toUpperCase();
-    
-    if (!card) {
-      showErrorMessage("Please select a card or enter card manually");
-      return;
-    }
-
-    sendSocketMessage({ action: "burn_card", card });
-    setCardInput("");
-    setSelectedFace(null);
-    setSelectedSuit(null);
-  }, [selectedFace, selectedSuit, cardInput, sendSocketMessage, showErrorMessage]);
-
-  const handleWinner = useCallback((winnerIndex: number) => {
-    setWinner(winnerIndex);
-    setMenuOpen(false);
+  const handleWinner = useCallback((winnerType: string) => {
+    setWinner(winnerType);
     setShowWinnerModal(true);
+    sendSocketMessage({ action: "game_won", winner: winnerType });
     
+    // Auto-hide modal after 5 seconds
     setTimeout(() => {
       setShowWinnerModal(false);
+      setWinner(null);
     }, 5000);
-
-    sendSocketMessage({ action: "game_won", winner: winnerIndex });
-    setGamesCount(prev => prev + 1);
   }, [sendSocketMessage]);
 
   const resetGame = useCallback(() => {
     sendSocketMessage({ action: "reset_game" });
-    setJoker(null);
-    setSelectedFace(null);
-    setSelectedSuit(null);
-  }, [sendSocketMessage]);
+    showSuccessMessage("Game reset successfully");
+  }, [sendSocketMessage, showSuccessMessage]);
 
   const changeBets = useCallback(() => {
-    if (newMinBet >= newMaxBet) {
-      showErrorMessage("Minimum bet must be less than maximum bet");
+    if (newMaxBet < newMinBet) {
+      showErrorMessage("Max bet cannot be less than min bet");
       return;
     }
-    
-    sendSocketMessage({ action: "bet_changed", minBet: newMinBet, maxBet: newMaxBet });
-    setMinBet(newMinBet);
-    setMaxBet(newMaxBet);
-    showPopupMessage("Bets changed successfully!");
-  }, [newMinBet, newMaxBet, sendSocketMessage, showPopupMessage, showErrorMessage]);
+    sendSocketMessage({ action: "bets_changed", maxBet: newMaxBet, minBet: newMinBet });
+    showSuccessMessage("Bets updated successfully");
+  }, [newMaxBet, newMinBet, sendSocketMessage, showErrorMessage, showSuccessMessage]);
 
   const sendTableNumber = useCallback(() => {
-    if (!tableNumber.trim()) {
+    if (tableNumber.trim()) {
+      sendSocketMessage({ action: "table_number_set", tableNumber: tableNumber.trim() });
+      setShowTableModal(false);
+      showSuccessMessage("Table number updated successfully");
+    } else {
       showErrorMessage("Please enter a valid table number");
-      return;
     }
-    
-    sendSocketMessage({ action: "table_number_set", tableNumber });
-    setShowTableModal(false);
-    showPopupMessage("Table number updated successfully!");
-  }, [tableNumber, sendSocketMessage, showErrorMessage, showPopupMessage]);
+  }, [tableNumber, sendSocketMessage, showSuccessMessage, showErrorMessage]);
 
   const deleteLastWin = useCallback(() => {
     sendSocketMessage({ action: "delete_win" });
-    showPopupMessage("Last win deleted successfully!");
-  }, [sendSocketMessage, showPopupMessage]);
+    showSuccessMessage("Last win deleted successfully");
+  }, [sendSocketMessage, showSuccessMessage]);
 
   const deleteAllWins = useCallback(() => {
     sendSocketMessage({ action: "delete_all_wins" });
-    setGamesCount(0);
-    showPopupMessage("All wins deleted successfully!");
-  }, [sendSocketMessage, showPopupMessage]);
-
-  const handleDuplicateCard = useCallback(() => {
-    sendSocketMessage({ action: "duplicate_card" });
-    showPopupMessage("Duplicate card detected!");
-  }, [sendSocketMessage, showPopupMessage]);
+    showSuccessMessage("All wins deleted successfully");
+  }, [sendSocketMessage, showSuccessMessage]);
 
   const startAutomatic = useCallback(() => {
     sendSocketMessage({ action: "start_automatic" });
   }, [sendSocketMessage]);
 
-  // Component JSX remains the same but with improved event handlers
   return (
     <>
       <WinnerModal 
@@ -344,16 +237,22 @@ const GameMenu = ({ socket }: GameMenuProps) => {
                           {/* Win Buttons */}
                           <div className="gap-4">
                             <button
-                              onClick={() => handleWinner(0)}
-                              className="bg-blue-700 h-1/3 text-white text-2xl font-bold rounded-lg p-6 hover:bg-blue-800 transition mb-1 w-full"
+                              onClick={() => handleWinner("player")}
+                              className="bg-green-700 h-1/3 text-white text-2xl font-bold rounded-lg p-6 hover:bg-green-800 transition mb-1 w-full"
                             >
-                              ANDAR WINS
+                              PLAYER WINS
                             </button>
                             <button
-                              onClick={() => handleWinner(1)}
-                              className="bg-red-500 h-1/3 text-white text-2xl font-bold rounded-lg p-6 hover:bg-red-600 transition w-full"
+                              onClick={() => handleWinner("banker")}
+                              className="bg-purple-600 h-1/3 text-white text-2xl font-bold rounded-lg p-6 hover:bg-purple-700 transition mb-1 w-full"
                             >
-                              BAHAR WINS
+                              BANKER WINS
+                            </button>
+                            <button
+                              onClick={() => handleWinner("tie")}
+                              className="bg-blue-500 h-1/3 text-white text-2xl font-bold rounded-lg p-6 hover:bg-blue-600 transition w-full"
+                            >
+                              TIE
                             </button>
                           </div>
 
@@ -414,58 +313,6 @@ const GameMenu = ({ socket }: GameMenuProps) => {
                                 className="bg-black text-white rounded-lg p-3 hover:bg-gray-800 transition"
                               >
                                 DELETE ALL WINS
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Card Selection */}
-                          <div>
-                            <div className="grid grid-cols-4 gap-2 mb-4">
-                              {cardFaces.map((face) => (
-                                <button
-                                  key={face}
-                                  className={`rounded-lg aspect-square flex items-center justify-center text-2xl font-bold transition p-2 ${
-                                    selectedFace === face 
-                                      ? "bg-green-500 text-white" 
-                                      : "bg-black text-white hover:bg-gray-800"
-                                  }`}
-                                  onClick={() => setSelectedFace(selectedFace === face ? null : face)}
-                                >
-                                  {face}
-                                </button>
-                              ))}
-                            </div>
-
-                            <div className="grid grid-cols-4 gap-2 mb-4">
-                              {suits.map((suit) => (
-                                <button
-                                  key={suit.value}
-                                  className={`rounded-lg aspect-square flex items-center justify-center text-3xl font-bold transition p-2 ${
-                                    selectedSuit === suit.value 
-                                      ? "bg-yellow-500 text-black" 
-                                      : "bg-gray-800 text-white hover:bg-gray-700"
-                                  }`}
-                                  onClick={() => setSelectedSuit(selectedSuit === suit.value ? null : suit.value)}
-                                >
-                                  {suit.symbol}
-                                </button>
-                              ))}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                              <button
-                                onClick={handleAddCard}
-                                className="bg-green-600 text-white rounded-lg p-3 text-xl hover:bg-green-700 transition"
-                                disabled={!selectedFace || !selectedSuit}
-                              >
-                                SEND CARD
-                              </button>
-                              <button
-                                onClick={handleBurnCard}
-                                className="bg-red-600 text-white rounded-lg p-3 text-xl hover:bg-red-700 transition"
-                                disabled={!selectedFace || !selectedSuit}
-                              >
-                                BURN CARD
                               </button>
                             </div>
                           </div>

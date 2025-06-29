@@ -9,9 +9,24 @@ interface WinnerModalProps {
   isLuckySix?: boolean;
   isNatural?: boolean;
   naturalType?: string | null;
+  playerNatural?: boolean;
+  bankerNatural?: boolean;
+  playerTotal?: number;
+  bankerTotal?: number;
 }
 
-const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType }: WinnerModalProps) => {
+const WinnerModal = ({ 
+  show, 
+  onClose, 
+  winner, 
+  isLuckySix, 
+  isNatural, 
+  naturalType,
+  playerNatural,
+  bankerNatural,
+  playerTotal = 0,
+  bankerTotal = 0
+}: WinnerModalProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -40,20 +55,36 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
     }
   }, [show, onClose]);
 
-  if (!show) return null;
-
   const getWinnerText = () => {
     if (!winner) return '';
-    if (winner === 'tie') return 'Tie Game!';
-    return `${winner.charAt(0).toUpperCase() + winner.slice(1)} Wins!`;
+    
+    if (winner === 'tie') {
+      return `Tie on ${playerTotal}`;
+    }
+    
+    if (winner === 'player') {
+      if (playerNatural) {
+        return `Player wins by Natural ${naturalType === 'natural_9' ? '9' : '8'}`;
+      } else {
+        return `Player wins by ${playerTotal}`;
+      }
+    }
+    
+    if (winner === 'banker') {
+      if (isLuckySix) {
+        return `Banker wins by Super Six`;
+      } else if (bankerNatural) {
+        return `Banker wins by Natural ${naturalType === 'natural_9' ? '9' : '8'}`;
+      } else {
+        return `Banker wins by ${bankerTotal}`;
+      }
+    }
+    
+    return '';
   };
 
-  const getSpecialWinText = () => {
-    if (isLuckySix) return 'Lucky Six!';
-    if (isNatural) {
-      return `Natural ${naturalType === 'natural_9' ? '9' : '8'}!`;
-    }
-    return '';
+  const getScoreText = () => {
+    return `Player ${playerTotal} - Banker ${bankerTotal}`;
   };
 
   return (
@@ -73,28 +104,8 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
             <div className="text-4xl font-bold text-gray-800 text-center mb-4">
               {getWinnerText()}
             </div>
-            {getSpecialWinText() && (
-              <div className="text-2xl font-bold text-yellow-600 text-center mb-4">
-                {getSpecialWinText()}
-              </div>
-            )}
-            <div className="flex items-center justify-center">
-              {winner === '0' && (
-                <>
-                <img src="/assets/blue_a.png" alt="Andar Wins" className="w-24 h-24 mr-4" />
-                <div className="text-4xl font-bold text-gray-800 text-center mb-4 w-full">
-              BANKER WINS!!
-              </div>
-              </>
-              )}
-              {winner === '1' && (
-                <>
-                <img src="/assets/red_b.png" alt="Bahar Wins" className="w-24 h-24 mr-4" />
-                <div className="text-4xl font-bold text-gray-800 text-center mb-4 w-full">
-              PLAYER WINS!!
-              </div>
-                </>
-              )}
+            <div className="text-lg text-gray-600 text-center mb-4">
+              {getScoreText()}
             </div>
             <button
               onClick={onClose}
