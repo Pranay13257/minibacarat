@@ -454,16 +454,42 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                   >
                     Make someone VIP
                   </button>
-              {[1,2,3,4,5,6].map(num => (
-                  <button
-                    key={num}
-                    className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
-                    style={{ width: 250, height: 60, backgroundColor: '#911606', color: '#fff' }}
-                    onClick={() => sendMessage({ action: 'set_vip_revealer', player_id: `player${num}` })}
-                  >
-                    Player {num}
-                  </button>
-                ))}
+              {gameState.activePlayers && gameState.activePlayers.length > 0 ? (
+                [...gameState.activePlayers]
+                  .sort((a: string, b: string) => {
+                    // Extract player numbers for sorting
+                    const numA = parseInt(a.replace(/[^0-9]/g, ''));
+                    const numB = parseInt(b.replace(/[^0-9]/g, ''));
+                    return numA - numB;
+                  })
+                  .map((pid: string) => {
+                    // Format as 'Player 1', 'Player 2', etc.
+                    const match = pid.match(/player(\d+)/i);
+                    const label = match ? `Player ${match[1]}` : pid;
+                    return (
+                      <button
+                        key={pid}
+                        className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
+                        style={{ width: 250, height: 60, backgroundColor: '#911606', color: '#fff' }}
+                        onClick={() => sendMessage({ action: 'set_vip_revealer', player_id: pid })}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })
+              ) : (
+                <div className="text-gray-500">No active players</div>
+              )}
+              {/* Reveal Card button for dealer */}
+              {gameState.vip_revealer && !gameState.cards_revealed && (
+                <button
+                  className="mt-4 rounded-lg shadow text-xl font-bold flex items-center justify-center"
+                  style={{ width: 250, height: 49, backgroundColor: '#911606', color: '#fff' }}
+                  onClick={() => sendMessage({ action: 'vip_reveal', player_id: gameState.vip_revealer })}
+                >
+                  Reveal Cards
+                </button>
+              )}
               </div>
               {/* Second column */}
               <div className="flex-1 flex flex-col h-full min-h-full">
