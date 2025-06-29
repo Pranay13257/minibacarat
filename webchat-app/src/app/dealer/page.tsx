@@ -471,7 +471,7 @@ const DealerPage = () => {
       )} */}
       {/* Main Content Area */}
       <div className="h-[80vh] w-[95vw] m-4 bg-midRed border-4 border-yellow-500 grid grid-cols-12 grid-rows-12">
-        <div className="col-start-5 col-end-9 row-start-1 row-end-3 z-50" style={{transform: "translateY(-25%)"}}>
+        <div className="col-start-5 col-end-9 row-start-1 row-end-3 z-40" style={{transform: "translateY(-25%)"}}>
           <img src="/assets/golden_design.png" alt="" className=""/>
         </div>
         <div className="col-start-5 col-end-9 row-start-2 row-end-4" style={{transform: "translateX(1px)"}}>
@@ -486,7 +486,7 @@ const DealerPage = () => {
         <div className="col-start-5 col-end-9 row-start-10 row-end-12" style={{transform: "translateX(1/2px)"}}>
           <img src="/assets/red_design.png" alt="" className="rotate-180"/>
         </div>
-        <div className="col-start-5 col-end-9 row-start-11 row-end-13 z-50 flex flex-col justify-start" style={{transform: "translateY(25%) translateX(1px)"}}>
+        <div className="col-start-5 col-end-9 row-start-11 row-end-13 z-40 flex flex-col justify-start" style={{transform: "translateY(25%) translateX(1px)"}}>
           <img src="/assets/golden_design.png" alt="" className="rotate-180"/>
         </div>
       </div>

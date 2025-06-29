@@ -31,6 +31,8 @@ interface GameBoardProps {
     naturalType?: string | null;
     isSuperSix?: boolean;
     lastGameResult?: any;
+    game_mode?: string;
+    cards_revealed?: boolean;
     // Add any other new fields from server.py here
   };
   hideCards?: boolean;
@@ -84,35 +86,45 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false }
     return reasons.join(", ");
   };
 
-
-  if (hideCards || !gameState) {
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center min-h-[300px]">
-        <div className="flex gap-8 mb-6">
-          {[0,1,2].map(i => (
-            <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70" />
-          ))}
-        </div>
-        <div className="text-xl font-bold text-gray-700 text-center">Cards are hidden until revealed by the VIP revealer.</div>
-      </div>
-    );
-  }
-
   return (
     <div className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit`}>
       <div className="flex flex-col items-center">
         <h2 className="text-xl mb-4 text-white">{isBanker ? 'Banker Cards' : 'Player Cards'}</h2>
         <div className="flex gap-4 w-fit">
-          {isBanker
-            ? gameState.bankerCards.map(renderCard)
-            : gameState.playerCards.map(renderCard)}
+          {(() => {
+            const isVipMode = gameState.game_mode === 'vip';
+            const cardsRevealed = !!gameState.cards_revealed;
+            const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+            if (cards.length === 0) {
+              // No cards dealt: show 2 card backs
+              return [0,1].map(i => (
+                <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70" />
+              ));
+            } else if (isVipMode && !cardsRevealed) {
+              // VIP mode, cards dealt but not revealed: show BR.png for each card
+              return cards.map((_, i) => (
+                <img key={i} src="/cards/BR.png" alt="VIP Hidden Card" className="w-24 h-36 border rounded shadow-lg opacity-70" />
+              ));
+            } else {
+              // Normal: show actual cards
+              return cards.map(renderCard);
+            }
+          })()}
         </div>
       </div>
       <div
         className="absolute bottom-0 text-lg text-white border-2 border-yellow-500 py-2 px-6 bg-darkRed rounded-3xl font-bold shadow-lg"
         style={{ zIndex: 10, transform: "translateY(50%)" }}
       >
-        Total: {isBanker ? gameState.bankerTotal : gameState.playerTotal}
+        Total: {(() => {
+          const isVipMode = gameState.game_mode === 'vip';
+          const cardsRevealed = !!gameState.cards_revealed;
+          const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+          if (isVipMode && cards.length > 0 && !cardsRevealed) {
+            return '--';
+          }
+          return isBanker ? gameState.bankerTotal : gameState.playerTotal;
+        })()}
       </div>
     </div>
   );
