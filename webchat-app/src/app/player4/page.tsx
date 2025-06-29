@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 
+const PLAYER_ID = 'player4';
+
 interface GameState {
   playerCards: string[];
   bankerCards: string[];
@@ -199,13 +201,13 @@ const Player4Page = () => {
           cards_revealed: data.cards_revealed || false,
         };
         setGameState(newGameState);
-        setIsActive(newGameState.activePlayers.includes('player4'));
+        setIsActive(newGameState.activePlayers.includes(PLAYER_ID));
         break;
     }
   };
 
   const isVipMode = gameState.game_mode === 'vip';
-  const isRevealer = isVipMode && gameState.vip_revealer === 'player4';
+  const isRevealer = isVipMode && gameState.vip_revealer === PLAYER_ID;
   const cardsRevealed = !!gameState.cards_revealed;
 
   return (
@@ -271,7 +273,7 @@ const Player4Page = () => {
                   <div className="mb-8 text-center">
                     <button
                       className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-xl"
-                      onClick={() => socket?.send(JSON.stringify({ action: 'vip_reveal', player_id: 'player4' }))}
+                      onClick={() => socket?.send(JSON.stringify({ action: 'vip_reveal', player_id: PLAYER_ID }))}
                       disabled={!connected}
                     >
                       👁️ Reveal Cards
