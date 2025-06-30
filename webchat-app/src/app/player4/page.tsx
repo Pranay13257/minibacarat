@@ -95,6 +95,7 @@ const Player4Page = () => {
     banker_naturals: 0,
   });
   const [canUndoLastWin, setCanUndoLastWin] = useState(false);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   useEffect(() => {
     const connectWebSocket = () => {
@@ -164,6 +165,14 @@ const Player4Page = () => {
     socket.addEventListener('message', handleStats);
     return () => socket.removeEventListener('message', handleStats);
   }, [socket]);
+
+  useEffect(() => {
+    if (gameState.gamePhase === "finished") {
+      setShowWinnerModal(true);
+    } else {
+      setShowWinnerModal(false);
+    }
+  }, [gameState.gamePhase]);
 
   const handleMessage = (data: any) => {
     switch(data.action) {
@@ -302,9 +311,9 @@ const Player4Page = () => {
         </div>
 
         {/* Winner Modal */}
-        {gameState.showWinnerModal && (
+        {showWinnerModal && (
           <WinnerModal
-            show={gameState.showWinnerModal}
+            show={showWinnerModal}
             winner={
               gameState.playerTotal > gameState.bankerTotal
                 ? "Player"
@@ -315,7 +324,7 @@ const Player4Page = () => {
             isLuckySix={gameState.isSuperSix}
             isNatural={gameState.naturalWin}
             naturalType={gameState.naturalType}
-            onClose={() => setGameState(prev => ({ ...prev, showWinnerModal: false }))}
+            onClose={() => setShowWinnerModal(false)}
           />
         )}
       </div>

@@ -151,8 +151,12 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
           }
           return isBanker ? gameState.bankerTotal : gameState.playerTotal;
         })()}
-        {isBanker && gameState.bankerPair && <span className="ml-2">(Pair)</span>}
-        {!isBanker && gameState.playerPair && <span className="ml-2">(Pair)</span>}
+        {((!gameState.game_mode || gameState.game_mode !== 'vip' || gameState.cards_revealed) && (
+          isBanker && gameState.bankerPair && <span className="ml-2">(Pair)</span>
+        ))}
+        {((!gameState.game_mode || gameState.game_mode !== 'vip' || gameState.cards_revealed) && (
+          !isBanker && gameState.playerPair && <span className="ml-2">(Pair)</span>
+        ))}
       </div>
     </div>
   );

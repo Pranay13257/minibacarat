@@ -454,16 +454,30 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                   >
                     Make someone VIP
                   </button>
-              {[1,2,3,4,5,6].map(num => (
-                  <button
-                    key={num}
-                    className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
-                    style={{ width: 250, height: 60, backgroundColor: '#911606', color: '#fff' }}
-                    onClick={() => sendMessage({ action: 'set_vip_revealer', player_id: `player${num}` })}
-                  >
-                    Player {num}
-                  </button>
-                ))}
+                {Array.isArray(gameState.activePlayers) && [...gameState.activePlayers]
+                  .sort((a: string, b: string) => {
+                    // Extract the number from 'player1', 'player2', etc.
+                    const numA = parseInt(a.replace(/[^0-9]/g, ''));
+                    const numB = parseInt(b.replace(/[^0-9]/g, ''));
+                    return numA - numB;
+                  })
+                  .map((playerId: string) => (
+                    <button
+                      key={playerId}
+                      className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
+                      style={{ width: 250, height: 60, backgroundColor: '#911606', color: '#fff' }}
+                      onClick={() => sendMessage({ action: 'set_vip_revealer', player_id: playerId })}
+                    >
+                      {(() => {
+                        // Convert 'player1' to 'Player 1'
+                        const match = playerId.match(/^(player)(\d+)$/i);
+                        if (match) {
+                          return `Player ${match[2]}`;
+                        }
+                        return playerId.charAt(0).toUpperCase() + playerId.slice(1);
+                      })()}
+                    </button>
+                  ))}
               </div>
               {/* Second column */}
               <div className="flex-1 flex flex-col h-full min-h-full">
