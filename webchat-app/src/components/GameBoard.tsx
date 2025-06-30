@@ -151,6 +151,8 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
           }
           return isBanker ? gameState.bankerTotal : gameState.playerTotal;
         })()}
+        {isBanker && gameState.bankerPair && <span className="ml-2">(Pair)</span>}
+        {!isBanker && gameState.playerPair && <span className="ml-2">(Pair)</span>}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import GameBoard from "../../components/GameBoard";
+import WinnerModal from "../../components/WinnerModal";
 
 const PLAYER_ID = 'player1';
 
@@ -92,6 +93,7 @@ const Player1Page = () => {
     banker_naturals: 0,
   });
   const [canUndoLastWin, setCanUndoLastWin] = useState(false);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   useEffect(() => {
     const connectWebSocket = () => {
@@ -161,6 +163,14 @@ const Player1Page = () => {
     socket.addEventListener('message', handleStats);
     return () => socket.removeEventListener('message', handleStats);
   }, [socket]);
+
+  useEffect(() => {
+    if (gameState.gamePhase === "finished") {
+      setShowWinnerModal(true);
+    } else {
+      setShowWinnerModal(false);
+    }
+  }, [gameState.gamePhase]);
 
   const handleMessage = (data: any) => {
     switch(data.action) {
@@ -293,8 +303,26 @@ const Player1Page = () => {
       </div>
 
       {/* Footer */}
-      <div className="h-[12vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="h-[10vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       </div>
+
+      {/* Winner Modal */}
+      {showWinnerModal && (
+        <WinnerModal
+          show={showWinnerModal}
+          winner={
+            gameState.playerTotal > gameState.bankerTotal
+              ? "Player"
+              : gameState.bankerTotal > gameState.playerTotal
+              ? "Banker"
+              : "tie"
+          }
+          isLuckySix={gameState.isSuperSix}
+          isNatural={gameState.naturalWin}
+          naturalType={gameState.naturalType}
+          onClose={() => setShowWinnerModal(false)}
+        />
+      )}
     </div>
 
     

@@ -83,7 +83,7 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
                 <>
                 <img src="/assets/blue_a.png" alt="Andar Wins" className="w-24 h-24 mr-4" />
                 <div className="text-4xl font-bold text-gray-800 text-center mb-4 w-full">
-              ANDAR WINS!!
+              BANKER WINS!!
               </div>
               </>
               )}
@@ -91,14 +91,14 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
                 <>
                 <img src="/assets/red_b.png" alt="Bahar Wins" className="w-24 h-24 mr-4" />
                 <div className="text-4xl font-bold text-gray-800 text-center mb-4 w-full">
-              BAHAR WINS!!
+              PLAYER WINS!!
               </div>
                 </>
               )}
             </div>
             <button
               onClick={onClose}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg text-xl font-bold hover:bg-blue-700"
+              className="bg-darkRed text-white px-6 py-2 rounded-lg text-xl font-bold hover:bg-blue-700"
             >
               Close
             </button>
