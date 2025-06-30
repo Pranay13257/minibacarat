@@ -228,104 +228,111 @@ const Player1Page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-vdarkRed flex flex-col justify-between items-center">
-      {/* Header */}
-      <div className="w-full h-[12vh]" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="flex flex-row items-center justify-between ">
-          <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 ml-4 mr-4 mt-2 mb-4">
-            <img
-            src="/assets/mini_baccarat.png"
-            alt="Mini Baccarat"
-            className="h-14 w-auto mb-2 object-contain"
-            />
-            <span className="text-yellow-300 text-lg font-bold text-center">Table: {gameState.table_number}</span>
-          </div>
-          <img
-              src="/assets/ocean7.png"
-              className="h-14 w-auto object-contain scale-150"
-            />
+    isActive ? (
+      <div className="min-h-screen bg-vdarkRed flex flex-col justify-between items-center">
+        {/* Header */}
+        <div className="w-full h-[12vh]" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <div className="flex flex-row items-center justify-between ">
             <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 ml-4 mr-4 mt-2 mb-4">
-            <span className="text-yellow-300 text-lg font-bold text-center">Bet:</span>
-            <span className="text-yellow-300 text-lg font-bold text-center">Max: {gameState.max_bet}</span>
-            <span className="text-yellow-300 text-lg font-bold text-center">Min: {gameState.min_bet}</span>
+              <img
+              src="/assets/mini_baccarat.png"
+              alt="Mini Baccarat"
+              className="h-14 w-auto mb-2 object-contain"
+              />
+              <span className="text-yellow-300 text-lg font-bold text-center">Table: {gameState.table_number}</span>
+            </div>
+            <img
+                src="/assets/ocean7.png"
+                className="h-14 w-auto object-contain scale-150"
+              />
+              <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 ml-4 mr-4 mt-2 mb-4">
+              <span className="text-yellow-300 text-lg font-bold text-center">Bet:</span>
+              <span className="text-yellow-300 text-lg font-bold text-center">Max: {gameState.max_bet}</span>
+              <span className="text-yellow-300 text-lg font-bold text-center">Min: {gameState.min_bet}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="h-[75vh] w-[95vw] border-4 border-yellow-500 bg-midRed m-4 grid grid-cols-12 grid-rows-12">
+        {/* Main Content */}
+        <div className="h-[75vh] w-[95vw] border-4 border-yellow-500 bg-midRed m-4 grid grid-cols-12 grid-rows-12">
 
-        <div className="col-start-2 col-end-5 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
-          <img
-            src="/assets/red_design.png"
-            alt=""
-            className="absolute left-1/2 top-1/2"
-            style={{
-              transform: "translate(-50%, -50%) rotate(-90deg)",
-              width: "40vh",
-              height: "auto",
-              maxWidth: "none",
-              maxHeight: "40vw",
-            }}
+          <div className="col-start-2 col-end-5 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
+            <img
+              src="/assets/red_design.png"
+              alt=""
+              className="absolute left-1/2 top-1/2"
+              style={{
+                transform: "translate(-50%, -50%) rotate(-90deg)",
+                width: "40vh",
+                height: "auto",
+                maxWidth: "none",
+                maxHeight: "40vw",
+              }}
+            />
+          </div>
+          {/* Banker GameBoard (top, ends at row 7) */}
+          <div className="col-start-4 col-end-10 row-start-3 row-end-7 flex justify-center items-end m-6">
+            <GameBoard gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={true} extraWide={gameState.bankerCards.length === 3} />
+          </div>
+          {/* Player GameBoard (bottom, starts at row 7) */}
+          <div className="col-start-4 col-end-10 row-start-7 row-end-11 flex justify-center items-start m-6">
+            <GameBoard
+              gameState={gameState}
+              hideCards={isVipMode && !cardsRevealed}
+              isBanker={false}
+              extraWide={gameState.playerCards.length === 3}
+              playerId={PLAYER_ID}
+              vipRevealer={gameState.vip_revealer}
+              connected={connected}
+              onVipReveal={() => sendMessage({ action: 'vip_reveal', player_id: PLAYER_ID })}
+            />
+          </div>
+          <div className="col-start-9 col-end-12 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
+            <img
+              src="/assets/red_design.png"
+              alt=""
+              className="absolute left-1/2 top-1/2"
+              style={{
+                transform: "translate(-50%, -50%) rotate(90deg)",
+                width: "40vh",
+                height: "auto",
+                maxWidth: "none",
+                maxHeight: "40vw",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="h-[10vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        </div>
+
+        {/* Winner Modal */}
+        {showWinnerModal && (
+          <WinnerModal
+            show={showWinnerModal}
+            winner={
+              gameState.playerTotal > gameState.bankerTotal
+                ? "Player"
+                : gameState.bankerTotal > gameState.playerTotal
+                ? "Banker"
+                : "tie"
+            }
+            isLuckySix={gameState.isSuperSix}
+            isNatural={gameState.naturalWin}
+            naturalType={gameState.naturalType}
+            onClose={() => setShowWinnerModal(false)}
           />
-        </div>
-        {/* Banker GameBoard (top, ends at row 7) */}
-        <div className="col-start-4 col-end-10 row-start-3 row-end-7 flex justify-center items-end m-6">
-          <GameBoard gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={true} extraWide={gameState.bankerCards.length === 3} />
-        </div>
-        {/* Player GameBoard (bottom, starts at row 7) */}
-        <div className="col-start-4 col-end-10 row-start-7 row-end-11 flex justify-center items-start m-6">
-          <GameBoard
-            gameState={gameState}
-            hideCards={isVipMode && !cardsRevealed}
-            isBanker={false}
-            extraWide={gameState.playerCards.length === 3}
-            playerId={PLAYER_ID}
-            vipRevealer={gameState.vip_revealer}
-            connected={connected}
-            onVipReveal={() => sendMessage({ action: 'vip_reveal', player_id: PLAYER_ID })}
-          />
-        </div>
-        <div className="col-start-9 col-end-12 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
-          <img
-            src="/assets/red_design.png"
-            alt=""
-            className="absolute left-1/2 top-1/2"
-            style={{
-              transform: "translate(-50%, -50%) rotate(90deg)",
-              width: "40vh",
-              height: "auto",
-              maxWidth: "none",
-              maxHeight: "40vw",
-            }}
-          />
-        </div>
+        )}
       </div>
-
-      {/* Footer */}
-      <div className="h-[10vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    ) : (
+      <div className="flex justify-center items-center h-screen w-screen bg-black">
+        <video autoPlay loop muted className="w-full h-full object-cover">
+          <source src="/assets/ocean7vid.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </div>
-
-      {/* Winner Modal */}
-      {showWinnerModal && (
-        <WinnerModal
-          show={showWinnerModal}
-          winner={
-            gameState.playerTotal > gameState.bankerTotal
-              ? "Player"
-              : gameState.bankerTotal > gameState.playerTotal
-              ? "Banker"
-              : "tie"
-          }
-          isLuckySix={gameState.isSuperSix}
-          isNatural={gameState.naturalWin}
-          naturalType={gameState.naturalType}
-          onClose={() => setShowWinnerModal(false)}
-        />
-      )}
-    </div>
-
-    
+    )
   );
 };
 
