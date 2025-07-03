@@ -137,216 +137,77 @@ export default function MiniBaccaratDashboard() {
   }, [updateBeadPlate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-100 to-yellow-200 p-4">
-      {/* Main Container with Gold Border */}
-      <div className="max-w-7xl mx-auto bg-gradient-to-br from-red-800 to-red-900 border-8 border-yellow-400 rounded-lg shadow-2xl overflow-hidden">
-        {/* Ornate Header Section */}
-        <div className="relative bg-gradient-to-r from-red-900 via-red-800 to-red-900 border-b-4 border-yellow-400">
-          {/* Top Row with Legend, Game Info, and Result Legend */}
-          <div className="grid grid-cols-3 gap-4 p-4">
-            {/* Player/Banker Legend (Top Left) */}
-            <div className="bg-red-800 border-2 border-yellow-400 rounded-lg p-4">
-              <div className="text-yellow-400 font-bold text-lg mb-3 text-center">Player Banker</div>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Player Column */}
-                <div className="space-y-3">
-                  <div className="text-yellow-300 text-sm font-semibold text-center">Player</div>
-                  <div className="flex flex-col items-center gap-2">
-                    {/* Solid Circle */}
-                    <div className="w-5 h-5 bg-green-500 rounded-full border border-yellow-400"></div>
-                    {/* Hollow Circle */}
-                    <div className="w-5 h-5 border-2 border-green-500 rounded-full bg-transparent"></div>
-                    {/* Line */}
-                    <div className="w-6 h-1 bg-green-500 border border-yellow-400"></div>
-                  </div>
-                </div>
-
-                {/* Banker Column */}
-                <div className="space-y-3">
-                  <div className="text-yellow-300 text-sm font-semibold text-center">Banker</div>
-                  <div className="flex flex-col items-center gap-2">
-                    {/* Solid Circle */}
-                    <div className="w-5 h-5 bg-purple-600 rounded-full border border-yellow-400"></div>
-                    {/* Hollow Circle */}
-                    <div className="w-5 h-5 border-2 border-purple-600 rounded-full bg-transparent"></div>
-                    {/* Line */}
-                    <div className="w-6 h-1 bg-purple-600 border border-yellow-400"></div>
-                  </div>
-                </div>
-              </div>
+    <div className="min-h-screen bg-darkBrown flex flex-col justify-center items-center">
+      <div className="h-[95vh] w-[97vw] m-4 border-[1rem] border-randomBrown bg-midRed grid grid-cols-12 grid-rows-12">
+        <div
+          className="col-start-1 col-end-13 row-start-1 row-end-4 flex justify-center items-center"
+          style={{
+            backgroundImage: "url('/assets/wood.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center"
+          }}
+        >
+          <img src="/assets/mini_baccarat.png" className="relative top-[-5vh] h-[20vh]"/>
+        </div>
+        <div className="col-start-3 col-end-5 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tl-3xl rounded-br-3xl m-0.5">
+          <div className="flex flex-row justify-around items-center p-4">
+            <div className="flex flex-col">
+              <div className="text-3xl text-yellow-500">Player</div>
             </div>
-
-            {/* Game Info (Top Center) */}
-            <div className="text-center">
-              {/* Main Title */}
-              <div className="bg-red-900 border-4 border-yellow-400 rounded-lg px-8 py-4 mb-4 shadow-lg">
-                <h1 className="text-4xl font-serif font-bold text-yellow-400 tracking-wider drop-shadow-lg">
-                  MINI BACCARAT
-                </h1>
-              </div>
-
-              {/* Games Counter */}
-              <div className="text-yellow-400 text-2xl font-bold mb-2">Games</div>
-              <div className="text-yellow-300 text-3xl font-bold mb-2">{games}</div>
-              {/* Bets and Table Number */}
-              <div className="flex flex-col items-center gap-1">
-                <div className="text-yellow-400 text-lg font-bold">Table: <span className="text-yellow-300">{gameState.table_number || "-"}</span></div>
-                <div className="text-yellow-400 text-lg font-bold">Max: <span className="text-yellow-300">{gameState.max_bet || "-"}</span></div>
-                <div className="text-yellow-400 text-lg font-bold">Min: <span className="text-yellow-300">{gameState.min_bet || "-"}</span></div>
-              </div>
-            </div>
-
-            {/* Result Legend (Top Right) */}
-            <div className="bg-red-800 border-2 border-yellow-400 rounded-lg p-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-yellow-300">Player Wins :{stats.player_wins}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-                  <span className="text-yellow-300">Banker Wins :{stats.banker_wins}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-yellow-300">Tie :{stats.ties}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <span className="text-yellow-300">Naturals :{naturals}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                  <span className="text-yellow-300">Player Pair :{stats.player_pairs}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-700 rounded-full"></div>
-                  <span className="text-yellow-300">Banker Pair :{stats.banker_pairs}</span>
-                </div>
-              </div>
+            <div className="flex flex-col">
+              <div className="text-3xl text-yellow-500">Banker</div>
             </div>
           </div>
         </div>
-
-        {/* Main Grid Section */}
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-6 h-[600px]">
-            {/* Left Column */}
-            <div className="grid grid-rows-2 gap-6">
-              {/* Bead Plate */}
-              <div className="bg-red-800 border-4 border-yellow-400 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-                  <h2 className="text-yellow-400 font-bold text-2xl tracking-wider drop-shadow-lg">BEAD PLATE</h2>
-                </div>
-                <div className="mt-12 h-full">
-                  {/* Bead Plate Grid */}
-                  <div className="grid grid-cols-6 gap-2 h-full">
-                    {Array.from({ length: 6 }).map((_, colIdx) => (
-                      <div key={colIdx} className="flex flex-col items-center">
-                        {Array.from({ length: 6 }).map((_, rowIdx) => {
-                          const game = beadPlate[colIdx]?.[rowIdx];
-                          let color = "", label = "";
-                          if (game) {
-                            if (game.winner === "player") {
-                              color = "bg-green-500";
-                              label = "P";
-                            } else if (game.winner === "banker") {
-                              color = "bg-purple-600";
-                              label = "B";
-                            } else if (game.winner === "tie") {
-                              color = "bg-blue-500";
-                              label = "T";
-                            }
-                          }
-                          return (
-                            <div key={rowIdx} className="w-8 h-8 border border-yellow-400/30 rounded-full flex items-center justify-center text-white font-bold text-lg mb-1" style={{ backgroundColor: game ? undefined : "rgba(185,28,28,0.2)" }}>
-                              {game ? <span className={`${color} w-full h-full flex items-center justify-center rounded-full`}>{label}</span> : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Big Road */}
-              <div className="bg-red-800 border-4 border-yellow-400 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-                  <h2 className="text-yellow-400 font-bold text-2xl tracking-wider drop-shadow-lg">BIG ROAD</h2>
-                </div>
-                <div className="mt-12 h-full">
-                  {/* Placeholder for WebSocket data */}
-                  <div className="grid grid-cols-8 gap-1 h-full">
-                    {/* useEffect hook will populate this with streak patterns */}
-                    {Array.from({ length: 48 }).map((_, i) => (
-                      <div key={i} className="w-6 h-6 border border-yellow-400/30 rounded bg-red-700/50"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="grid grid-rows-3 gap-6">
-              {/* Big Eye Boy */}
-              <div className="bg-red-800 border-4 border-yellow-400 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-                  <h2 className="text-yellow-400 font-bold text-xl tracking-wider drop-shadow-lg">BIG EYE BOY</h2>
-                </div>
-                <div className="mt-10 h-full">
-                  {/* Placeholder for WebSocket data */}
-                  <div className="grid grid-cols-6 gap-1 h-full">
-                    {/* useEffect hook will populate this with pattern analysis */}
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <div key={i} className="w-4 h-4 border border-yellow-400/30 rounded-full bg-red-700/50"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Small Road */}
-              <div className="bg-red-800 border-4 border-yellow-400 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-                  <h2 className="text-yellow-400 font-bold text-xl tracking-wider drop-shadow-lg">SMALL ROAD</h2>
-                </div>
-                <div className="mt-10 h-full">
-                  {/* Placeholder for WebSocket data */}
-                  <div className="grid grid-cols-6 gap-1 h-full">
-                    {/* useEffect hook will populate this with small road patterns */}
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <div key={i} className="w-4 h-4 border border-yellow-400/30 rounded bg-red-700/50"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Cockroach Pig */}
-              <div className="bg-red-800 border-4 border-yellow-400 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-                  <h2 className="text-yellow-400 font-bold text-xl tracking-wider drop-shadow-lg">COCKROACH PIG</h2>
-                </div>
-                <div className="mt-10 h-full">
-                  {/* Placeholder for WebSocket data */}
-                  <div className="grid grid-cols-6 gap-1 h-full">
-                    {/* useEffect hook will populate this with cockroach pig patterns */}
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <div key={i} className="w-4 h-4 border border-yellow-400/30 rounded bg-red-700/50"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="col-start-5 col-end-7 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-br-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center">
+          <div className="text-3xl text-yellow-500">
+            Games
+          </div>
+          <div className="text-3xl text-yellow-500">
+            {games}
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="bg-gradient-to-r from-red-900 via-red-800 to-red-900 border-t-4 border-yellow-400 p-4">
-          <p className="text-center text-yellow-300 text-sm font-medium">
-            This is the result display screen. All table results and management's decision will be final.
-          </p>
+        <div className="col-start-7 col-end-9 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-bl-3xl rounded-br-3xl m-0.5 flex flex-col justify-center items-center">
+          <div className="text-3xl text-yellow-500">
+            Bets
+          </div>
+          <div className="text-3xl text-yellow-500">
+            Max: {gameState.max_bet}
+          </div>
+          <div className="text-3xl text-yellow-500">
+            Min: {gameState.min_bet}
+          </div>
+        </div>
+        <div className="col-start-9 col-end-11 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tr-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center">
+          <div className="flex flex-col justify-center items-start gap-2">
+            <div className="flex flex-row gap-4">
+              <img src="/assets/gc.png" className="w-8 h-8"/>
+              <div className="text-2xl text-yellow-500">Player Wins :{stats.player_wins}</div>
+            </div>
+            <div className="flex flex-row gap-4">
+              <img src="/assets/pc.png" className="w-8 h-8"/>
+              <div className="text-2xl text-yellow-500">Banker Wins :{stats.banker_wins}</div>
+            </div>
+            <div className="flex flex-row gap-4">
+              <img src="/assets/rc.png" className="w-8 h-8"/>
+              <div className="text-2xl text-yellow-500">Tie :{stats.ties}</div>
+            </div>
+            <div className="flex flex-row gap-4">
+              <img src="/assets/yc.png" className="w-8 h-8"/>
+              <div className="text-2xl text-yellow-500">Naturals :{naturals}</div>
+            </div>
+            <div className="flex flex-row gap-4">
+              <img src="/assets/ppc.png" className="w-8 h-8"/>
+              <div className="text-2xl text-yellow-500">Player pair :{stats.player_pairs}</div>
+            </div>
+            <div className="flex flex-row gap-4">
+              <img src="/assets/bpc.png" className="w-8 h-8"/>
+              <div className="text-2xl text-yellow-500">Banker pair :{stats.banker_pairs}</div>
+            </div>
+          </div>
         </div>
       </div>
+      <span className="absolute bottom-0 text-black">This is the display screen. All tables results and management decisions will be final</span>
     </div>
   )
 }
