@@ -19,6 +19,7 @@ export default function MiniBaccaratDashboard() {
     table_number: "",
   });
   const [beadPlate, setBeadPlate] = useState<any[][]>([]);
+  const [bigRoad, setBigRoad] = useState<any[][]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Derived values
@@ -31,12 +32,12 @@ export default function MiniBaccaratDashboard() {
       console.log("Updating bead plate...");
       const res = await fetch("/api/get-wins");
       const data = await res.json();
-      console.log("Bead plate data:", data.length, "games");
+      console.log(data);
       
       // Reverse to oldest to newest
       const ordered = [...data].reverse();
       // Fill column-wise, 6 rows per column
-      const maxRows = 6;
+      const maxRows = 5;
       const grid: any[][] = [];
       let col = 0, row = 0;
       ordered.forEach((game: any) => {
@@ -136,78 +137,173 @@ export default function MiniBaccaratDashboard() {
     };
   }, [updateBeadPlate]);
 
+  function BigRoad() {
+    const maxRows = 5;
+    // Flatten beadPlate into a single array of games in order
+    const results = [];
+    for (let col = 0; col < beadPlate.length; col++) {
+      for (let row = 0; row < beadPlate[col].length; row++) {
+        const game = beadPlate[col][row];
+        if (game) results.push(game);
+      }
+    }
+
+    let col = 0;
+    let row = 0;
+    let prevWinner = null;
+    const beads = [];
+
+    results.forEach((game, idx) => {
+      const winner = game.winner;
+      if (winner === prevWinner) {
+        row++;
+        if (row >= maxRows) {
+          col++;
+          row = 0;
+        }
+      } else {
+        col++;
+        row = 0;
+      }
+      let imgSrc = "";
+      if (winner === "player") imgSrc = "/assets/ghc.png";
+      else if (winner === "banker") imgSrc = "/assets/phc.png";
+      else if (winner === "tie") imgSrc = "/assets/rc.png";
+      beads.push(
+        <div
+          key={`${col}-${row}-BigRoad`}
+          className={`col-start-${col} col-end-${col+1} row-start-${row+1} row-end-${row+2} flex justify-center items-center`}
+        >
+          {imgSrc ? (<img src={imgSrc} className="w-24 h-24"/>) : null}
+        </div>
+      );
+      prevWinner = winner;
+    });
+
+    return beads;
+  }
+
   return (
     <div className="min-h-screen bg-darkBrown flex flex-col justify-center items-center">
       <div className="h-[95vh] w-[97vw] m-4 border-[1rem] border-randomBrown bg-midRed grid grid-cols-12 grid-rows-12">
         <div
-          className="col-start-1 col-end-13 row-start-1 row-end-4 flex justify-center items-center"
+          className="col-start-1 col-end-13 row-start-1 row-end-4 flex justify-center items-center relative z-15"
           style={{
             backgroundImage: "url('/assets/wood.png')",
             backgroundSize: "cover",
             backgroundPosition: "center"
           }}
         >
-          <img src="/assets/mini_baccarat.png" className="relative top-[-5vh] h-[20vh]"/>
+          <img src="/assets/mini_baccarat.png" className="relative top-[-5vh] h-[20vh] z-50"/>
         </div>
-        <div className="col-start-3 col-end-5 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tl-3xl rounded-br-3xl m-0.5">
-          <div className="flex flex-row justify-around items-center p-4">
-            <div className="flex flex-col">
-              <div className="text-3xl text-yellow-500">Player</div>
-            </div>
-            <div className="flex flex-col">
-              <div className="text-3xl text-yellow-500">Banker</div>
-            </div>
+
+
+        <div className="col-start-3 col-end-5 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tl-3xl rounded-br-3xl m-0.5 flex flex-row justify-around items-center p-4 relative z-10">
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-5xl text-yellow-500">Player</div>
+            <img src="/assets/gc.png" className="w-20 h-20"/>
+            <img src="/assets/ghc.png" className="w-18 h-18"/>
+            <img src="/assets/gdc.png" className="w-18 h-18"/>
+          </div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-5xl text-yellow-500">Banker</div>
+            <img src="/assets/pc.png" className="w-20 h-20"/>
+            <img src="/assets/phc.png" className="w-18 h-18"/>
+            <img src="/assets/pdc.png" className="w-18 h-18"/>
           </div>
         </div>
-        <div className="col-start-5 col-end-7 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-br-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center">
-          <div className="text-3xl text-yellow-500">
+        <div className="col-start-5 col-end-7 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-br-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
+          <div className="text-6xl text-yellow-500">
             Games
           </div>
-          <div className="text-3xl text-yellow-500">
+          <div className="text-6xl text-yellow-500">
             {games}
           </div>
         </div>
-        <div className="col-start-7 col-end-9 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-bl-3xl rounded-br-3xl m-0.5 flex flex-col justify-center items-center">
-          <div className="text-3xl text-yellow-500">
+        <div className="col-start-7 col-end-9 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-bl-3xl rounded-br-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
+          <div className="text-6xl text-yellow-500">
             Bets
           </div>
-          <div className="text-3xl text-yellow-500">
+          <div className="text-6xl text-yellow-500">
             Max: {gameState.max_bet}
           </div>
-          <div className="text-3xl text-yellow-500">
+          <div className="text-6xl text-yellow-500">
             Min: {gameState.min_bet}
           </div>
         </div>
-        <div className="col-start-9 col-end-11 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tr-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center">
+        <div className="col-start-9 col-end-11 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tr-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
           <div className="flex flex-col justify-center items-start gap-2">
             <div className="flex flex-row gap-4">
-              <img src="/assets/gc.png" className="w-8 h-8"/>
-              <div className="text-2xl text-yellow-500">Player Wins :{stats.player_wins}</div>
+              <img src="/assets/gc.png" className="w-12 h-12"/>
+              <div className="text-4xl text-yellow-500">Player Wins :{stats.player_wins}</div>
             </div>
             <div className="flex flex-row gap-4">
-              <img src="/assets/pc.png" className="w-8 h-8"/>
-              <div className="text-2xl text-yellow-500">Banker Wins :{stats.banker_wins}</div>
+              <img src="/assets/pc.png" className="w-12 h-12"/>
+              <div className="text-4xl text-yellow-500">Banker Wins :{stats.banker_wins}</div>
             </div>
             <div className="flex flex-row gap-4">
-              <img src="/assets/rc.png" className="w-8 h-8"/>
-              <div className="text-2xl text-yellow-500">Tie :{stats.ties}</div>
+              <img src="/assets/rc.png" className="w-12 h-12"/>
+              <div className="text-4xl text-yellow-500">Tie :{stats.ties}</div>
             </div>
             <div className="flex flex-row gap-4">
-              <img src="/assets/yc.png" className="w-8 h-8"/>
-              <div className="text-2xl text-yellow-500">Naturals :{naturals}</div>
+              <img src="/assets/yc.png" className="w-12 h-12"/>
+              <div className="text-4xl text-yellow-500">Naturals :{naturals}</div>
             </div>
             <div className="flex flex-row gap-4">
-              <img src="/assets/ppc.png" className="w-8 h-8"/>
-              <div className="text-2xl text-yellow-500">Player pair :{stats.player_pairs}</div>
+              <img src="/assets/ppc.png" className="w-12 h-12"/>
+              <div className="text-4xl text-yellow-500">Player pair :{stats.player_pairs}</div>
             </div>
             <div className="flex flex-row gap-4">
-              <img src="/assets/bpc.png" className="w-8 h-8"/>
-              <div className="text-2xl text-yellow-500">Banker pair :{stats.banker_pairs}</div>
+              <img src="/assets/bpc.png" className="w-12 h-12"/>
+              <div className="text-4xl text-yellow-500">Banker pair :{stats.banker_pairs}</div>
             </div>
           </div>
         </div>
+
+
+        <img src="/assets/golden_d.png" className="col-start-5 col-end-9 row-start-4 row-end-7 relative z-5"/>
+
+
+        <div className="col-start-1 col-end-7 row-start-5 row-end-13 pl-2 pb-2 pt-2 grid grid-rows-2 h-full z-50">
+          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
+            <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
+              <div className="text-6xl opacity-50">Bead Plate</div>
+            </div>
+            {Array.from({length:11}).map((_,colIdx) => (
+              Array.from({length:5}).map((_,rowIdx) => {
+                const game = beadPlate[colIdx]?.[rowIdx];
+                let imgSrc = "";
+                if (game?.winner === "player") {
+                  imgSrc = "/assets/gc.png";
+                } else if (game?.winner === "banker") {
+                  imgSrc = "/assets/pc.png";
+                } else if (game?.winner === "tie") {
+                  imgSrc = "/assets/rc.png";
+                }
+                return (
+                  <div key={`${colIdx}-${rowIdx}`} className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} flex justify-center items-center`}>
+                    {imgSrc ? (<img src={imgSrc} className="w-24 h-24"/>) : null}
+                  </div>
+                )
+              })
+            ))}
+          </div>
+          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
+            <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
+              <div className="text-6xl opacity-50">Big Road</div>
+            </div>
+            {BigRoad()}
+          </div>
+        </div>
+
+        
+        <div className="col-start-7 col-end-13 row-start-5 row-end-13 pr-2 pb-2 pt-2 grid grid-rows-3 h-full z-50">
+          <div className="border-4 border-yellow-500"></div>
+          <div className="border-4 border-yellow-500"></div>
+          <div className="border-4 border-yellow-500"></div>
+        </div>
       </div>
-      <span className="absolute bottom-0 text-black">This is the display screen. All tables results and management decisions will be final</span>
+      <span className="absolute bottom-0 text-black text-4xl">This is the display screen. All tables results and management decisions will be final</span>
     </div>
   )
 }
