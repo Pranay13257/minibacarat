@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import GameBoard from "@/components/GameBoard";
 import ControlPanelPopup from "@/components/ControlPanelPopup";
 import Header from "@/components/Header";
+import WinnerModal from "@/components/WinnerModal";
 
 interface GameState {
   playerCards: string[];
@@ -130,9 +131,18 @@ const DealerPage = () => {
   const [manualBankerNatural, setManualBankerNatural] = useState(false);
   const [manualSuperSix, setManualSuperSix] = useState(false);
   const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   // VIP mode revealer selection state
   const [selectedRevealer, setSelectedRevealer] = useState('');
+
+  useEffect(() => {
+    if (gameState.gamePhase === "finished") {
+      setShowWinnerModal(true);
+    } else {
+      setShowWinnerModal(false);
+    }
+  }, [gameState.gamePhase]);
 
   // Update mode from gameState
   useEffect(() => {
@@ -437,6 +447,7 @@ const DealerPage = () => {
         onMenuClick={() => setIsControlPanelOpen(true)}
         activePlayers={gameState.activePlayers}
         onTogglePlayer={togglePlayer}
+        tableNumber={gameState.table_number}
       />
       {/* Control Panel Button and Popup */}
       <ControlPanelPopup 
@@ -489,6 +500,34 @@ const DealerPage = () => {
         <div className="col-start-5 col-end-9 row-start-11 row-end-13 z-40 flex flex-col justify-start" style={{transform: "translateY(25%) translateX(1px)"}}>
           <img src="/assets/golden_design.png" alt="" className="rotate-180"/>
         </div>
+        {showWinnerModal && (
+          <WinnerModal
+            show={showWinnerModal}
+            winner={
+              gameState.playerTotal > gameState.bankerTotal
+                ? "Player"
+                : gameState.bankerTotal > gameState.playerTotal
+                ? "Banker"
+                : "tie"
+            }
+            isLuckySix={gameState.isSuperSix}
+            isNatural={gameState.naturalWin}
+            naturalType={gameState.naturalType}
+            playerTotal={gameState.playerTotal}
+            bankerTotal={gameState.bankerTotal}
+            playerNatural={!!(
+              gameState.naturalWin &&
+              (gameState.playerTotal > gameState.bankerTotal) &&
+              (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')
+            )}
+            bankerNatural={!!(
+              gameState.naturalWin &&
+              (gameState.bankerTotal > gameState.playerTotal) &&
+              (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')
+            )}
+            onClose={() => setShowWinnerModal(false)}
+          />
+        )}
       </div>
     </div>
   );

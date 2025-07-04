@@ -9,9 +9,13 @@ interface WinnerModalProps {
   isLuckySix?: boolean;
   isNatural?: boolean;
   naturalType?: string | null;
+  playerTotal: number;
+  bankerTotal: number;
+  playerNatural: boolean;
+  bankerNatural: boolean;
 }
 
-const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType }: WinnerModalProps) => {
+const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType, playerTotal, bankerTotal, playerNatural, bankerNatural }: WinnerModalProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -49,9 +53,24 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
   };
 
   const getSpecialWinText = () => {
-    if (isLuckySix) return 'Lucky Six!';
-    if (isNatural) {
-      return `Natural ${naturalType === 'natural_9' ? '9' : '8'}!`;
+    if (winner === 'tie') {
+      return `Tie on ${playerTotal}`;
+    }
+    if (winner === 'Player' || winner === 'player') {
+      if (playerNatural) {
+        return `Player wins by Natural ${naturalType === 'natural_9' ? '9' : '8'}`;
+      } else {
+        return `Player wins by ${playerTotal}`;
+      }
+    }
+    if (winner === 'Banker' || winner === 'banker') {
+      if (isLuckySix) {
+        return `Banker wins by Super Six`;
+      } else if (bankerNatural) {
+        return `Banker wins by Natural ${naturalType === 'natural_9' ? '9' : '8'}`;
+      } else {
+        return `Banker wins by ${bankerTotal}`;
+      }
     }
     return '';
   };
@@ -78,30 +97,6 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
                 {getSpecialWinText()}
               </div>
             )}
-            <div className="flex items-center justify-center">
-              {winner === '0' && (
-                <>
-                <img src="/assets/blue_a.png" alt="Andar Wins" className="w-24 h-24 mr-4" />
-                <div className="text-4xl font-bold text-gray-800 text-center mb-4 w-full">
-              BANKER WINS!!
-              </div>
-              </>
-              )}
-              {winner === '1' && (
-                <>
-                <img src="/assets/red_b.png" alt="Bahar Wins" className="w-24 h-24 mr-4" />
-                <div className="text-4xl font-bold text-gray-800 text-center mb-4 w-full">
-              PLAYER WINS!!
-              </div>
-                </>
-              )}
-            </div>
-            <button
-              onClick={onClose}
-              className="bg-darkRed text-white px-6 py-2 rounded-lg text-xl font-bold hover:bg-blue-700"
-            >
-              Close
-            </button>
           </motion.div>
         </div>
       )}

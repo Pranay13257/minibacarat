@@ -287,7 +287,7 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                 </div>
                 <div className="flex flex-col items-center gap-2 mt-8">
                   <button
-                    className="rounded-lg shadow text-xl font-bold flex items-center justify-center bg-[darkRed] text-white disabled:bg-[white] disabled:text-[darkRed]]"
+                    className="rounded-lg shadow text-xl font-bold flex items-center justify-center bg-[darkRed] text-white disabled:bg-[white] disabled:text-[darkRed]"
                     style={{ width: 250, height: 49}}
                     onClick={() => sendMessage({ action: 'start_burn_card' })}
                     disabled={

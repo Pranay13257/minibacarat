@@ -324,6 +324,18 @@ const Player2Page = () => {
             isLuckySix={gameState.isSuperSix}
             isNatural={gameState.naturalWin}
             naturalType={gameState.naturalType}
+            playerTotal={gameState.playerTotal}
+            bankerTotal={gameState.bankerTotal}
+            playerNatural={!!(
+              gameState.naturalWin &&
+              (gameState.playerTotal > gameState.bankerTotal) &&
+              (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')
+            )}
+            bankerNatural={!!(
+              gameState.naturalWin &&
+              (gameState.bankerTotal > gameState.playerTotal) &&
+              (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')
+            )}
             onClose={() => setShowWinnerModal(false)}
           />
         )}

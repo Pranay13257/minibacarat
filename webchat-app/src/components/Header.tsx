@@ -4,9 +4,10 @@ interface HeaderProps {
   onMenuClick?: () => void;
   activePlayers: string[];
   onTogglePlayer: (playerId: string) => void;
+  tableNumber?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePlayer }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePlayer, tableNumber }) => {
   return (
     <div className="flex items-center justify-between w-full h-[15vh] font-questrial px-4 overflow-hidden" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Optional: Black overlay for contrast */}
@@ -18,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePla
           alt="Mini Baccarat"
           className="h-14 w-auto mb-2 object-contain"
         />
-        <span className="text-yellow-300 text-lg font-bold text-center">Table: 1234</span>
+        <span className="text-yellow-300 text-lg font-bold text-center">Table: {tableNumber || '-'}</span>
       </div>
 
       {/* Center: 6 Hats for Players */}
