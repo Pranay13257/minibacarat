@@ -137,6 +137,7 @@ export default function MiniBaccaratDashboard() {
     };
   }, [updateBeadPlate]);
 
+
   function BigRoad() {
     const maxRows = 5;
     // Flatten beadPlate into a single array of games in order
@@ -144,40 +145,84 @@ export default function MiniBaccaratDashboard() {
     for (let col = 0; col < beadPlate.length; col++) {
       for (let row = 0; row < beadPlate[col].length; row++) {
         const game = beadPlate[col][row];
+        console.log(game);
         if (game) results.push(game);
       }
     }
 
     let col = 0;
     let row = 0;
-    let prevWinner = null;
-    const beads = [];
+    let prevWinner: string | null = null;
+    const beads: React.JSX.Element[] = [];
+    let tieCount = 0; // Track consecutive ties
+
+    let prevPlayerPair = false;
+    let prevBankerPair = false;
+    let prevNatural = false;
 
     results.forEach((game, idx) => {
       const winner = game.winner;
-      if (winner === prevWinner) {
-        row++;
-        if (row >= maxRows) {
+      
+      // Always update previous states for every game
+      prevPlayerPair = game.player_pair || prevPlayerPair || false;
+      prevBankerPair = game.banker_pair || prevBankerPair || false;
+      prevNatural = (game.banker_natural || game.player_natural) || prevNatural || false;
+      
+      // Reset tie count when new winner (non-tie) occurs
+      if (winner !== "tie") {
+        tieCount = 0;
+      } else {
+        tieCount++;
+      }
+      
+      if(winner !== "tie"){
+        if (winner === prevWinner) {
+          row++;
+          if (row >= maxRows) {
+            col++;
+            row = 0;
+          }
+        } else {
           col++;
           row = 0;
         }
-      } else {
-        col++;
-        row = 0;
       }
+      
+      
       let imgSrc = "";
-      if (winner === "player") imgSrc = "/assets/ghc.png";
-      else if (winner === "banker") imgSrc = "/assets/phc.png";
-      else if (winner === "tie") imgSrc = "/assets/rc.png";
+      if (winner === "player") imgSrc = "/assets/ghcz.png";
+      else if (winner === "banker") imgSrc = "/assets/phcz.png";
+      
       beads.push(
         <div
-          key={`${col}-${row}-BigRoad`}
-          className={`col-start-${col} col-end-${col+1} row-start-${row+1} row-end-${row+2} flex justify-center items-center z-50`}
+          key={`${col}-${row}-${tieCount}-BigRoad`}
+          className={`col-start-${col} col-end-${col+1} row-start-${row+1} row-end-${row+2} z-50 relative`}
         >
-          {imgSrc ? (<img src={imgSrc} className="w-24 h-24"/>) : null}
+          {imgSrc ? (
+            <img src={imgSrc} className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-1"/>
+            ) : null}
+          {winner === "tie" && tieCount >= 1 && tieCount <= 8 ? (
+            Array.from({ length: tieCount }, (_, index) => (
+              <img 
+                key={`line${index + 1}`}
+                src={`/assets/line${index + 1}.png`} 
+                className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+              />
+            ))
+          ) : null}
+          {(winner !== "tie" ? game.player_pair : prevPlayerPair) ? (
+            <img src="/assets/player.png" className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+          ) : null}
+          {(winner !== "tie" ? game.banker_pair : prevBankerPair) ? (
+            <img src="/assets/banker.png" className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+          ) : null}
+          {(winner !== "tie" ? (game.banker_natural || game.player_natural) : prevNatural) ? (
+            <img src="/assets/natural.png" className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
+          ) : null}
         </div>
       );
-      prevWinner = winner;
+      if(winner !== "tie")
+        prevWinner = winner;
     });
 
     return beads;
@@ -281,8 +326,8 @@ export default function MiniBaccaratDashboard() {
                   imgSrc = "/assets/rc.png";
                 }
                 return (
-                  <div key={`${colIdx}-${rowIdx}`} className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} flex justify-center items-center z-50`}>
-                    {imgSrc ? (<img src={imgSrc} className="w-24 h-24"/>) : null}
+                  <div key={`${colIdx}-${rowIdx}`} className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} z-50 relative `}>
+                    {imgSrc ? (<img src={imgSrc} className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"/>) : null}
                   </div>
                 )
               })
@@ -307,3 +352,4 @@ export default function MiniBaccaratDashboard() {
     </div>
   )
 }
+

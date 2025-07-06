@@ -5,9 +5,10 @@ interface HeaderProps {
   activePlayers: string[];
   onTogglePlayer: (playerId: string) => void;
   tableNumber?: string;
+  handleGameAction: (action: string) => void
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePlayer, tableNumber }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePlayer, tableNumber, handleGameAction }) => {
   return (
     <div className="flex items-center justify-between w-full h-[15vh] font-questrial px-4 overflow-hidden" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Optional: Black overlay for contrast */}
@@ -40,13 +41,20 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, activePlayers, onTogglePla
       </div>
 
       {/* Right: Menu */}
-      <div className="flex items-center justify-end h-full min-w-[60px] z-10 mb-2">
+      <div className="flex flex-col items-center justify-end h-full min-w-[60px] z-10 pb-6 gap-0.5">
         <img
           src="/assets/menu.png"
           alt="Menu"
           className="h-16 w-auto object-contain mr-2 cursor-pointer"
           onClick={onMenuClick}
         />
+        <button
+          className="rounded-lg shadow text-xl font-bold flex items-center justify-center text-wrap mr-1"
+          style={{ width: 140, height: 35, backgroundColor: '#741003', color: '#fff' }}
+          onClick={() => handleGameAction('start_new_game')}
+        >
+          New game
+        </button>
       </div>
     </div>
   );

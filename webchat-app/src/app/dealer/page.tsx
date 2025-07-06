@@ -448,6 +448,7 @@ const DealerPage = () => {
         activePlayers={gameState.activePlayers}
         onTogglePlayer={togglePlayer}
         tableNumber={gameState.table_number}
+        handleGameAction={handleGameAction}
       />
       {/* Control Panel Button and Popup */}
       <ControlPanelPopup 
