@@ -406,22 +406,104 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
           ) : selectedMode === 'manual' ? (
             <div className="flex flex-col items-center justify-center w-full h-full mt-4">
               {/* Manual Result Entry Form */}
-              <div className="p-6 rounded-lg shadow-md mb-6" style={{ backgroundColor: '#D6AB5D' }}>
-                <h3 className="text-xl font-bold mb-4" style={{ color: '#911606' }}>Manual Result Entry</h3>
-                <form onSubmit={handleManualSubmit} className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center" style={{ color: '#741003' }}>
+              <div className="p-6 rounded-lg">
+                {/* <h3 className="text-xl font-bold mb-4" style={{ color: '#911606' }}>Manual Result Entry</h3> */}
+                <form onSubmit={handleManualSubmit} className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center" >
                   <div className="md:col-span-4">
-                    <label className="font-semibold mr-2" style={{ color: '#911606' }}>Winner:</label>
-                    <select value={manualWinner} onChange={e => setManualWinner(e.target.value)} className="p-2 rounded border" style={{ color: '#741003', backgroundColor: '#F0DEAD', borderColor: '#911606' }}>
-                      <option value="player">Player</option>
-                      <option value="banker">Banker</option>
-                      <option value="tie">Tie</option>
-                    </select>
+                    {/* <label className="font-semibold mr-2" style={{ color: '#911606' }}>Winner:</label> */}
+                    <div className="flex gap-2 mt-2 justify-center items-center">
+                      <button
+                        type="button"
+                        onClick={() => setManualWinner('player')}
+                        className={`px-4 py-2 rounded border font-semibold transition-colors min-w-[7vw] ${
+                          manualWinner === 'player' 
+                            ? 'bg-[#911606] text-[#F0DEAD]' 
+                            : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                        }`}
+                      >
+                        Player
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setManualWinner('banker')}
+                        className={`px-4 py-2 rounded border font-semibold transition-colors min-w-[7vw] ${
+                          manualWinner === 'banker' 
+                            ? 'bg-[#911606] text-[#F0DEAD]' 
+                            : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                        }`}
+                      >
+                        Banker
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setManualWinner('tie')}
+                        className={`px-4 py-2 rounded border font-semibold transition-colors min-w-[7vw] ${
+                          manualWinner === 'tie' 
+                            ? 'bg-[#911606] text-[#F0DEAD]' 
+                            : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                        }`}
+                      >
+                        Tie
+                      </button>
+                    </div>
                   </div>
-                  <label className="flex items-center gap-2" style={{ color: '#741003' }}><input type="checkbox" checked={manualPlayerPair} onChange={e => setManualPlayerPair(e.target.checked)} className="accent-[#911606]" /> Player Pair</label>
-                  <label className="flex items-center gap-2" style={{ color: '#741003' }}><input type="checkbox" checked={manualBankerPair} onChange={e => setManualBankerPair(e.target.checked)} className="accent-[#911606]" /> Banker Pair</label>
-                  <label className="flex items-center gap-2" style={{ color: '#741003' }}><input type="checkbox" checked={manualPlayerNatural} onChange={e => setManualPlayerNatural(e.target.checked)} className="accent-[#911606]" /> Player Natural</label>
-                  <label className="flex items-center gap-2" style={{ color: '#741003' }}><input type="checkbox" checked={manualBankerNatural} onChange={e => setManualBankerNatural(e.target.checked)} className="accent-[#911606]" /> Banker Natural</label>
-                  <label className="flex items-center gap-2" style={{ color: '#741003' }}><input type="checkbox" checked={manualSuperSix} onChange={e => setManualSuperSix(e.target.checked)} className="accent-[#911606]" /> Super Six</label>
+                  <div className="md:col-span-4 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setManualPlayerPair(!manualPlayerPair)}
+                      className={`px-4 py-2 rounded border font-semibold transition-colors ${
+                        manualPlayerPair 
+                          ? 'bg-[#911606] text-[#F0DEAD]' 
+                          : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                      }`}
+                    >
+                      Player Pair
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManualBankerPair(!manualBankerPair)}
+                      className={`px-4 py-2 rounded border font-semibold transition-colors ${
+                        manualBankerPair 
+                          ? 'bg-[#911606] text-[#F0DEAD]' 
+                          : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                      }`}
+                    >
+                      Banker Pair
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManualPlayerNatural(!manualPlayerNatural)}
+                      className={`px-4 py-2 rounded border font-semibold transition-colors ${
+                        manualPlayerNatural 
+                          ? 'bg-[#911606] text-[#F0DEAD]' 
+                          : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                      }`}
+                    >
+                      Player Natural
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManualBankerNatural(!manualBankerNatural)}
+                      className={`px-4 py-2 rounded border font-semibold transition-colors ${
+                        manualBankerNatural 
+                          ? 'bg-[#911606] text-[#F0DEAD]' 
+                          : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                      }`}
+                    >
+                      Banker Natural
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManualSuperSix(!manualSuperSix)}
+                      className={`px-4 py-2 rounded border font-semibold transition-colors ${
+                        manualSuperSix 
+                          ? 'bg-[#911606] text-[#F0DEAD]' 
+                          : 'bg-[#F0DEAD] text-[#741003] border-[#911606]'
+                      }`}
+                    >
+                      Super Six
+                    </button>
+                  </div>
                   <div className="md:col-span-4 mt-4">
                     <button type="submit" disabled={manualSubmitting} className="w-full px-6 py-3 rounded-lg font-semibold text-lg transition-colors" style={{ backgroundColor: manualSubmitting ? '#DEBE83' : '#911606', color: '#F0DEAD' }}>Submit Result</button>
                   </div>
