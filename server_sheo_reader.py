@@ -1039,8 +1039,8 @@ async def main():
     print(f"Initialized with {len(remaining_cards)} cards")
     
     # Run both WebSocket server and serial reader concurrently
-    server = websockets.serve(handle_client, "localhost", 6789)
-    print("WebSocket server running on ws://localhost:6789")
+    server = websockets.serve(handle_client, "0.0.0.0", 6789)
+    print("WebSocket server running on ws://0.0.0.0:6789")
     
     if ser:
         print(f"Connected to shoe reader on {ser.name}")

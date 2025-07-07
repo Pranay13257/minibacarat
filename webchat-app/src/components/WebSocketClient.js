@@ -1,5 +1,5 @@
 "use client";
-
+import { IP } from "@/app/ip";
 import { useState, useEffect } from "react";
 
 export default function WebSocketClient({ pageName }) {
@@ -10,7 +10,7 @@ export default function WebSocketClient({ pageName }) {
   const [receivedCard, setReceivedCard] = useState("");
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:6789");
+    const ws = new WebSocket(`ws://${IP}:6789`);
 
     ws.onopen = () => console.log(`✅ Connected to WebSocket as ${pageName}`);
 

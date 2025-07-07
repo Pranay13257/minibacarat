@@ -1,0 +1,1 @@
+export const IP="10.19.184.106"; //pranay's IP
