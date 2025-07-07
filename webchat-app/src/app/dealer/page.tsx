@@ -190,7 +190,7 @@ const DealerPage = () => {
     const connectWebSocket = () => {
       try {
         setConnectionStatus('Connecting...');
-        const websocket = new WebSocket('ws://localhost:6789');
+        const websocket = new WebSocket(`ws://${IP}:6789`);
         websocketRef.current = websocket;
         
         websocket.onopen = () => {
