@@ -4,6 +4,7 @@ import GameBoard from "@/components/GameBoard";
 import ControlPanelPopup from "@/components/ControlPanelPopup";
 import Header from "@/components/Header";
 import WinnerModal from "@/components/WinnerModal";
+import { IP } from "../ip";
 
 interface GameState {
   playerCards: string[];

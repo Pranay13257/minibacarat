@@ -1,6 +1,7 @@
 "use client";
 import WinsList from "@/components/WinsList";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { IP } from "./ip";
 
 export default function MiniBaccaratDashboard() {
   // Live stats and game state
@@ -66,7 +67,7 @@ export default function MiniBaccaratDashboard() {
     let reconnectTimeout: NodeJS.Timeout | null = null;
 
     function connect() {
-      ws = new WebSocket("ws://localhost:6789");
+      ws = new WebSocket(`ws://${IP}:6789`);
       wsRef.current = ws;
       
       ws.onopen = () => {
