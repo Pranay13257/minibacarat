@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import GameBoard from "../../components/GameBoard";
 import WinnerModal from "../../components/WinnerModal";
+import { IP } from "../ip";
 
 const PLAYER_ID = 'player2';
 
@@ -101,7 +102,7 @@ const Player2Page = () => {
     const connectWebSocket = () => {
       try {
         setConnectionStatus('Connecting...');
-        const websocket = new WebSocket('ws://localhost:6789');
+        const websocket = new WebSocket(`ws://${IP}:6789`);
         
         websocket.onopen = () => {
           setConnected(true);
