@@ -41,21 +41,21 @@ export default function WebSocketTester() {
   };
 
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '2em', maxWidth: 500, margin: 'auto' }}>
-      <h2>WebSocket Connection Tester</h2>
-      <label>
+    <div style={{ fontFamily: 'sans-serif', padding: '2em', maxWidth: 500, margin: 'auto', backgroundColor: 'white' }}>
+      <h2 style={{ color: 'black' }}>WebSocket Connection Tester</h2>
+      <label style={{ color: 'black' }}>
         WebSocket URL:
         <input
           type="text"
           value={url}
           onChange={e => setUrl(e.target.value)}
-          style={{ width: '100%', marginBottom: 8, color:"black"}}
+          style={{ width: '100%', marginBottom: 8, color: 'black', backgroundColor: 'white', border: '1px solid #ccc' }}
         />
       </label>
-      <button onClick={testWS} style={{ marginBottom: 16, display: 'block',color:"white" }}>Test Connection</button>
-      <div style={{ fontWeight: 'bold', marginBottom: 8, color:"white"}}>{status}</div>
+      <button onClick={testWS} style={{ marginBottom: 16, display: 'block', color: 'white', backgroundColor: 'black', border: 'none', padding: '8px 16px', borderRadius: 4 }}>Test Connection</button>
+      <div style={{ fontWeight: 'bold', marginBottom: 8, color: 'black' }}>{status}</div>
       <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>
-      <div style={{ fontSize: '0.9em', color:"white" }}>{log}</div>
+      <div style={{ fontSize: '0.9em', color: 'black', backgroundColor: 'white', border: '1px solid #eee', padding: 8, borderRadius: 4 }}>{log}</div>
     </div>
   );
 }
