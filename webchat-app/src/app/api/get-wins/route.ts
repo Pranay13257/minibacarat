@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
 import { IP } from "../../ip";
 
-const MONGO_URI = `mongodb://${IP}:27017`;
+const MONGO_URI = `mongodb://localhost:27017`;
 const DB_NAME = "game_db";
 const COLLECTION_NAME = "game_results";
 
