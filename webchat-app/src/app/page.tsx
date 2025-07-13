@@ -191,8 +191,8 @@ export default function MiniBaccaratDashboard() {
       
       
       let imgSrc = "";
-      if (winner === "player") imgSrc = "/assets/ghcz.png";
-      else if (winner === "banker") imgSrc = "/assets/phcz.png";
+      if (winner === "player") imgSrc = "/assets/bhcz.png";
+      else if (winner === "banker") imgSrc = "/assets/rhcz.png";
       
       beads.push(
         <div
@@ -200,25 +200,25 @@ export default function MiniBaccaratDashboard() {
           className={`col-start-${col} col-end-${col+1} row-start-${row+1} row-end-${row+2} z-50 relative`}
         >
           {imgSrc ? (
-            <img src={imgSrc} className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-1"/>
+            <img src={imgSrc} className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-1"/>
             ) : null}
           {winner === "tie" && tieCount >= 1 && tieCount <= 8 ? (
             Array.from({ length: tieCount }, (_, index) => (
               <img 
                 key={`line${index + 1}`}
                 src={`/assets/line${index + 1}.png`} 
-                className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
               />
             ))
           ) : null}
           {(winner !== "tie" ? game.player_pair : prevPlayerPair) ? (
-            <img src="/assets/player.png" className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+            <img src="/assets/player (2).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
           ) : null}
           {(winner !== "tie" ? game.banker_pair : prevBankerPair) ? (
-            <img src="/assets/banker.png" className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+            <img src="/assets/banker (1).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
           ) : null}
           {(winner !== "tie" ? (game.banker_natural || game.player_natural) : prevNatural) ? (
-            <img src="/assets/natural.png" className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
+            <img src="/assets/natural.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
           ) : null}
         </div>
       );
@@ -231,7 +231,7 @@ export default function MiniBaccaratDashboard() {
 
   return (
     <div className="min-h-screen bg-darkBrown flex flex-col justify-center items-center">
-      <div className="h-[95vh] w-[97vw] m-4 border-[1rem] border-randomBrown bg-midRed grid grid-cols-12 grid-rows-12">
+      <div className="h-[95vh] w-[97vw] m-4 border-[1rem] border-randomBrown bg-[#EFE6D3] grid grid-cols-12 grid-rows-12">
         <div
           className="col-start-1 col-end-13 row-start-1 row-end-4 flex justify-center items-center relative z-15"
           style={{
@@ -245,63 +245,63 @@ export default function MiniBaccaratDashboard() {
 
 
         <div className="col-start-3 col-end-5 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tl-3xl rounded-br-3xl m-0.5 flex flex-row justify-around items-center p-4 relative z-10">
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-5xl text-yellow-500">Player</div>
-            <img src="/assets/gc.png" className="w-20 h-20"/>
-            <img src="/assets/ghc.png" className="w-18 h-18"/>
-            <img src="/assets/gdc.png" className="w-18 h-18"/>
+          <div className="flex flex-col items-center gap-2">
+            <div className="text-3xl text-yellow-500">Player</div>
+            <img src="/assets/box_bc.png" className="w-10 h-10"/>
+            <img src="/assets/box_bhc.png" className="w-10 h-10"/>
+            <img src="/assets/box_blc.png" className="w-10 h-10"/>
           </div>
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-5xl text-yellow-500">Banker</div>
-            <img src="/assets/pc.png" className="w-20 h-20"/>
-            <img src="/assets/phc.png" className="w-18 h-18"/>
-            <img src="/assets/pdc.png" className="w-18 h-18"/>
+          <div className="flex flex-col items-center gap-2">
+            <div className="text-3xl text-yellow-500">Banker</div>
+            <img src="/assets/box_rc.png" className="w-10 h-10"/>
+            <img src="/assets/box_rhc.png" className="w-10 h-10"/>
+            <img src="/assets/box_rlc.png" className="w-10 h-10"/>
           </div>
         </div>
         <div className="col-start-5 col-end-7 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-br-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
-          <div className="text-6xl text-yellow-500">
+          <div className="text-3xl text-yellow-500">
             Games
           </div>
-          <div className="text-6xl text-yellow-500">
+          <div className="text-3xl text-yellow-500">
             {games}
           </div>
         </div>
         <div className="col-start-7 col-end-9 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-bl-3xl rounded-br-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
-          <div className="text-6xl text-yellow-500">
+          <div className="text-3xl text-yellow-500">
             Bets
           </div>
-          <div className="text-6xl text-yellow-500">
+          <div className="text-3xl text-yellow-500">
             Max: {gameState.max_bet}
           </div>
-          <div className="text-6xl text-yellow-500">
+          <div className="text-3xl text-yellow-500">
             Min: {gameState.min_bet}
           </div>
         </div>
         <div className="col-start-9 col-end-11 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tr-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
-          <div className="flex flex-col justify-center items-start gap-2">
-            <div className="flex flex-row gap-4">
-              <img src="/assets/gc.png" className="w-12 h-12"/>
-              <div className="text-4xl text-yellow-500">Player Wins :{stats.player_wins}</div>
+          <div className="flex flex-col justify-center items-start mt-1">
+            <div className="flex flex-row gap-4 justify-center items-center">
+              <img src="/assets/c1.png" className="w-6 h-6"/>
+              <div className="text-2xl text-yellow-500">Player Wins : {stats.player_wins}</div>
             </div>
-            <div className="flex flex-row gap-4">
-              <img src="/assets/pc.png" className="w-12 h-12"/>
-              <div className="text-4xl text-yellow-500">Banker Wins :{stats.banker_wins}</div>
+            <div className="flex flex-row gap-4 justify-center items-center">
+              <img src="/assets/c2.png" className="w-6 h-6"/>
+              <div className="text-2xl text-yellow-500">Banker Wins : {stats.banker_wins}</div>
             </div>
-            <div className="flex flex-row gap-4">
-              <img src="/assets/rc.png" className="w-12 h-12"/>
-              <div className="text-4xl text-yellow-500">Tie :{stats.ties}</div>
+            <div className="flex flex-row gap-4 justify-center items-center">
+              <img src="/assets/c3.png" className="w-6 h-6"/>
+              <div className="text-2xl text-yellow-500">Tie : {stats.ties}</div>
             </div>
-            <div className="flex flex-row gap-4">
-              <img src="/assets/yc.png" className="w-12 h-12"/>
-              <div className="text-4xl text-yellow-500">Naturals :{naturals}</div>
+            <div className="flex flex-row gap-4 justify-center items-center">
+              <img src="/assets/c4.png" className="w-6 h-6"/>
+              <div className="text-2xl text-yellow-500">Naturals : {naturals}</div>
             </div>
-            <div className="flex flex-row gap-4">
-              <img src="/assets/ppc.png" className="w-12 h-12"/>
-              <div className="text-4xl text-yellow-500">Player pair :{stats.player_pairs}</div>
+            <div className="flex flex-row gap-4 justify-center items-center">
+              <img src="/assets/c5.png" className="w-6 h-6"/>
+              <div className="text-2xl text-yellow-500">Player pair : {stats.player_pairs}</div>
             </div>
-            <div className="flex flex-row gap-4">
-              <img src="/assets/bpc.png" className="w-12 h-12"/>
-              <div className="text-4xl text-yellow-500">Banker pair :{stats.banker_pairs}</div>
+            <div className="flex flex-row gap-4 justify-center items-center">
+              <img src="/assets/c6.png" className="w-6 h-6"/>
+              <div className="text-2xl text-yellow-500">Banker pair : {stats.banker_pairs}</div>
             </div>
           </div>
         </div>
@@ -313,22 +313,22 @@ export default function MiniBaccaratDashboard() {
         <div className="col-start-1 col-end-7 row-start-5 row-end-13 pl-2 pb-2 pt-2 grid grid-rows-2 h-full z-50">
           <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
             <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
-              <div className="text-6xl opacity-50 z-20">Bead Plate</div>
+              <div className="text-6xl opacity-50 z-20 text-[#915A14]">Bead Plate</div>
             </div>
             {Array.from({length:11}).map((_,colIdx) => (
               Array.from({length:5}).map((_,rowIdx) => {
                 const game = beadPlate[colIdx]?.[rowIdx];
                 let imgSrc = "";
                 if (game?.winner === "player") {
-                  imgSrc = "/assets/gc.png";
+                  imgSrc = "/assets/c1.png";
                 } else if (game?.winner === "banker") {
-                  imgSrc = "/assets/pc.png";
+                  imgSrc = "/assets/c2.png";
                 } else if (game?.winner === "tie") {
-                  imgSrc = "/assets/rc.png";
+                  imgSrc = "/assets/c6.png";
                 }
                 return (
                   <div key={`${colIdx}-${rowIdx}`} className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} z-50 relative `}>
-                    {imgSrc ? (<img src={imgSrc} className="w-24 h-24 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"/>) : null}
+                    {imgSrc ? (<img src={imgSrc} className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"/>) : null}
                   </div>
                 )
               })
@@ -336,7 +336,7 @@ export default function MiniBaccaratDashboard() {
           </div>
           <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
             <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
-              <div className="text-6xl opacity-50">Big Road</div>
+              <div className="text-6xl opacity-50 text-[#915A14]">Big Road</div>
             </div>
             {BigRoad()}
           </div>
