@@ -2,6 +2,7 @@
 import WinsList from "@/components/WinsList";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { IP } from "./ip";
+import { div } from "framer-motion/client";
 
 export default function MiniBaccaratDashboard() {
   // Live stats and game state
@@ -137,6 +138,74 @@ export default function MiniBaccaratDashboard() {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
   }, [updateBeadPlate]);
+
+
+  useEffect(() => {
+    const results = [];
+    for (let col = 0; col < beadPlate.length; col++) {
+      for (let row = 0; row < beadPlate[col].length; row++) {
+        const game = beadPlate[col][row];
+        if (game) results.push(game);
+      }
+    }
+
+    let currBigRoad = [];
+    let tempcol: Array<{
+      winner: string;
+      tie_count: number;
+      is_super_six?: boolean;
+      player_pair?: boolean;
+      banker_pair?: boolean;
+      player_natural?: boolean;
+      banker_natural?: boolean;
+    }> = [];
+
+    let currWinner: string|null;
+    results.forEach((game,idx) => {
+      if(!currWinner) currWinner = game.winner;
+      if(game.winner == currWinner){
+        tempcol.push({
+          'winner' : game.winner,
+          'tie_count':0,
+          'is_super_six' : game.is_super_six,
+          'player_pair' : game.player_pair,
+          'banker_pair' : game.banker_pair,
+          'player_natural' : game.player_natural,
+          'banker_natural' : game.banker_natural
+        })
+      }
+      else if(game.winner == 'tie'){
+        if (tempcol.length > 0) {
+          tempcol[tempcol.length - 1].tie_count += 1;
+        }
+      }
+      else{
+        currBigRoad.push(tempcol);
+        tempcol = [];
+        currWinner = game.winner;
+        tempcol.push({
+          'winner' : game.winner,
+          'tie_count':0,
+          'is_super_six' : game.is_super_six,
+          'player_pair' : game.player_pair,
+          'banker_pair' : game.banker_pair,
+          'player_natural' : game.player_natural,
+          'banker_natural' : game.banker_natural
+        })
+      }
+    })
+
+    if(tempcol.length > 0){
+      currBigRoad.push(tempcol);
+      tempcol = [];
+    }
+
+    setBigRoad(currBigRoad);
+  }, [beadPlate])
+
+  useEffect(() => {
+    console.log("bigRoad updated:", bigRoad);
+  }, [bigRoad]);
 
 
   function BigRoad() {
@@ -334,11 +403,54 @@ export default function MiniBaccaratDashboard() {
               })
             ))}
           </div>
+
+
           <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
             <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
               <div className="text-6xl opacity-50 text-[#915A14]">Big Road</div>
             </div>
-            {BigRoad()}
+            {bigRoad.map((col, colIdx) =>
+              col.map((cell, rowIdx) => {
+                let imgSrc = "";
+                if (cell.winner === "player") imgSrc = "/assets/bhcz.png";
+                else if (cell.winner === "banker") imgSrc = "/assets/rhcz.png";
+
+                return (
+                  <div 
+                    key={`${colIdx}-${rowIdx}-${cell.tie_count}-BigRoad`}
+                    className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} z-50 relative`}
+                  >
+                    {imgSrc && (
+                      <img
+                        src={imgSrc}
+                        className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        alt={cell.winner}
+                      />
+                    )}
+                    {/* Render tie lines if tie_count >= 1 */}
+                    {cell.tie_count >= 1 && cell.tie_count <= 8 && (
+                      Array.from({ length: cell.tie_count }, (_, index) => (
+                        <img
+                          key={`line${index + 1}`}
+                          src={`/assets/line${index + 1}.png`}
+                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                          alt={`tie-line-${index + 1}`}
+                        />
+                      ))
+                    )}
+                    {cell.player_pair ? (
+                      <img src="/assets/player (2).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+                    ) : null}
+                    {cell.banker_pair ? (
+                      <img src="/assets/banker (1).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+                    ) : null}
+                    {(cell.banker_natural || cell.player_natural) ? (
+                      <img src="/assets/natural.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -349,7 +461,7 @@ export default function MiniBaccaratDashboard() {
           <div className="border-4 border-yellow-500"></div>
         </div>
       </div>
-      <span className="absolute bottom-0 text-black text-4xl">This is the display screen. All tables results and management decisions will be final</span>
+      <span className="absolute bottom-0 text-black text-xl">This is the display screen. All tables results and management decisions will be final</span>
     </div>
   )
 }
