@@ -22,6 +22,7 @@ export default function MiniBaccaratDashboard() {
   });
   const [beadPlate, setBeadPlate] = useState<any[][]>([]);
   const [bigRoad, setBigRoad] = useState<any[][]>([]);
+  const [brDragonTail,setBrDragonTain] = useState<any[]>([]); 
   const wsRef = useRef<WebSocket | null>(null);
 
   // Derived values
@@ -409,16 +410,39 @@ export default function MiniBaccaratDashboard() {
             <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
               <div className="text-6xl opacity-50 text-[#915A14]">Big Road</div>
             </div>
-            {bigRoad.map((col, colIdx) =>
-              col.map((cell, rowIdx) => {
+            {/* Classic dragon tail display logic start */}
+            {(() => {
+              const maxRows = 5;
+              let positions = [];
+              let col = 0;
+              for (let streakIdx = 0; streakIdx < bigRoad.length; streakIdx++) {
+                const streak = bigRoad[streakIdx];
+                if (streak.length <= maxRows) {
+                  for (let i = 0; i < streak.length; i++) {
+                    positions.push({ bead: streak[i], col, row: i });
+                  }
+                  col++; // Next streak starts in next column
+                } else {
+                  // Fill the column vertically
+                  for (let i = 0; i < maxRows; i++) {
+                    positions.push({ bead: streak[i], col, row: i });
+                  }
+                  // Remaining beads go to the right, all at the bottom row
+                  for (let i = maxRows; i < streak.length; i++) {
+                    positions.push({ bead: streak[i], col: col + (i - maxRows) + 1, row: maxRows - 1 });
+                  }
+                  // Next streak starts in the next column after the last used
+                  col++;
+                }
+              }
+              return positions.map(({ bead: cell, col, row }, idx) => {
                 let imgSrc = "";
                 if (cell.winner === "player") imgSrc = "/assets/bhcz.png";
                 else if (cell.winner === "banker") imgSrc = "/assets/rhcz.png";
-
                 return (
-                  <div 
-                    key={`${colIdx}-${rowIdx}-${cell.tie_count}-BigRoad`}
-                    className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} z-50 relative`}
+                  <div
+                    key={`${col}-${row}-${cell.tie_count || 0}-BigRoad`}
+                    className={`col-start-${col+1} col-end-${col+2} row-start-${row+1} row-end-${row+2} z-50 relative`}
                   >
                     {imgSrc && (
                       <img
@@ -427,7 +451,6 @@ export default function MiniBaccaratDashboard() {
                         alt={cell.winner}
                       />
                     )}
-                    {/* Render tie lines if tie_count >= 1 */}
                     {cell.tie_count >= 1 && cell.tie_count <= 8 && (
                       Array.from({ length: cell.tie_count }, (_, index) => (
                         <img
@@ -449,8 +472,9 @@ export default function MiniBaccaratDashboard() {
                     ) : null}
                   </div>
                 );
-              })
-            )}
+              });
+            })()}
+            {/* Classic dragon tail display logic end */}
           </div>
         </div>
 
