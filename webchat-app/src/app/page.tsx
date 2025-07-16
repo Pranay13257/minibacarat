@@ -387,6 +387,7 @@ export default function MiniBaccaratDashboard() {
             </div>
             {Array.from({length:11}).map((_,colIdx) => (
               Array.from({length:5}).map((_,rowIdx) => {
+                console.log(beadPlate);
                 const game = beadPlate[colIdx]?.[rowIdx];
                 let imgSrc = "";
                 if (game?.winner === "player") {
@@ -410,29 +411,65 @@ export default function MiniBaccaratDashboard() {
             <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
               <div className="text-6xl opacity-50 text-[#915A14]">Big Road</div>
             </div>
-            {/* Classic dragon tail display logic start */}
+            {/* Dragon tail logic with diagonal up-right slide for collisions start */}
             {(() => {
               const maxRows = 5;
               let positions = [];
+              let grid: Record<string, boolean> = {};
               let col = 0;
               for (let streakIdx = 0; streakIdx < bigRoad.length; streakIdx++) {
                 const streak = bigRoad[streakIdx];
                 if (streak.length <= maxRows) {
                   for (let i = 0; i < streak.length; i++) {
-                    positions.push({ bead: streak[i], col, row: i });
+                    let targetCol = col;
+                    let targetRow = i;
+                    // Slide diagonally up-right if collision
+                    while (grid[`${targetCol},${targetRow}`]) {
+                      targetCol++;
+                      targetRow--;
+                      if (targetRow < 0) break;
+                    }
+                    if (targetRow >= 0) {
+                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
+                      grid[`${targetCol},${targetRow}`] = true;
+                    }
                   }
                   col++; // Next streak starts in next column
                 } else {
                   // Fill the column vertically
                   for (let i = 0; i < maxRows; i++) {
-                    positions.push({ bead: streak[i], col, row: i });
+                    let targetCol = col;
+                    let targetRow = i;
+                    // Slide diagonally up-right if collision
+                    while (grid[`${targetCol},${targetRow}`]) {
+                      targetCol++;
+                      targetRow--;
+                      if (targetRow < 0) break;
+                    }
+                    if (targetRow >= 0) {
+                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
+                      grid[`${targetCol},${targetRow}`] = true;
+                    }
                   }
                   // Remaining beads go to the right, all at the bottom row
+                  let tailCol = col + 1;
+                  let tailRow = maxRows - 1;
                   for (let i = maxRows; i < streak.length; i++) {
-                    positions.push({ bead: streak[i], col: col + (i - maxRows) + 1, row: maxRows - 1 });
+                    let targetCol = tailCol;
+                    let targetRow = tailRow;
+                    // Slide diagonally up-right if collision
+                    while (grid[`${targetCol},${targetRow}`]) {
+                      targetCol++;
+                      targetRow--;
+                      if (targetRow < 0) break;
+                    }
+                    if (targetRow >= 0) {
+                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
+                      grid[`${targetCol},${targetRow}`] = true;
+                    }
+                    tailCol = targetCol + 1;
                   }
-                  // Next streak starts in the next column after the last used
-                  col++;
+                  col++; // Next streak starts in next column
                 }
               }
               return positions.map(({ bead: cell, col, row }, idx) => {
@@ -474,7 +511,7 @@ export default function MiniBaccaratDashboard() {
                 );
               });
             })()}
-            {/* Classic dragon tail display logic end */}
+            {/* Dragon tail logic with diagonal up-right slide for collisions end */}
           </div>
         </div>
 
