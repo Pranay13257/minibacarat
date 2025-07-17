@@ -22,6 +22,7 @@ export default function MiniBaccaratDashboard() {
   });
   const [beadPlate, setBeadPlate] = useState<any[][]>([]);
   const [bigRoad, setBigRoad] = useState<any[][]>([]);
+  const [smallRoad, setSmallRoad] = useState<any[][]>([]);
   const [brDragonTail,setBrDragonTain] = useState<any[]>([]); 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -208,6 +209,61 @@ export default function MiniBaccaratDashboard() {
     console.log("bigRoad updated:", bigRoad);
   }, [bigRoad]);
 
+  useEffect(() => {
+    let tempSR = [];
+    let tempStore = [];
+
+    for(let i=0;i<bigRoad.length;i++){
+      for(let j=0;j<bigRoad[i].length;j++){
+        if(i < 2) continue;
+        if(j == 0){
+          if(bigRoad[i-1].length == bigRoad[i-2].length){
+            tempStore.push({tempo:"stable"});
+          }
+          else{
+            tempStore.push({tempo:"unstable"});
+          }
+        }
+        else{
+          if(bigRoad[i-1].length == j){
+            tempStore.push({tempo:"unstable"})
+          }
+          else{
+            tempStore.push({tempo:"stable"});
+          }
+        }
+      }
+    }
+
+    console.log("tempstore:" + tempStore);
+    let prev = '';
+    let tempCol = [];
+    for(let i=0;i<tempStore.length;i++){
+      if(!prev){
+        prev = tempStore[i].tempo;
+      }
+      if(tempStore[i].tempo == prev){
+        tempCol.push(tempStore[i]);
+      }
+      else{
+        tempSR.push(tempCol);
+        tempCol = [];
+        tempCol.push(tempStore[i]);
+        prev = tempStore[i].tempo;
+      }
+    }
+
+    if(tempCol.length > 0){
+      tempSR.push(tempCol);
+      tempCol = [];
+    }
+
+    setSmallRoad(tempSR);
+  },[bigRoad])
+
+  useEffect(() => {
+    console.log("SmallRoad updated:", smallRoad);
+  }, [smallRoad]);
 
   function BigRoad() {
     const maxRows = 5;
@@ -387,7 +443,7 @@ export default function MiniBaccaratDashboard() {
             </div>
             {Array.from({length:11}).map((_,colIdx) => (
               Array.from({length:5}).map((_,rowIdx) => {
-                console.log(beadPlate);
+                // console.log(beadPlate);
                 const game = beadPlate[colIdx]?.[rowIdx];
                 let imgSrc = "";
                 if (game?.winner === "player") {
@@ -517,7 +573,60 @@ export default function MiniBaccaratDashboard() {
 
         
         <div className="col-start-7 col-end-13 row-start-5 row-end-13 pr-2 pb-2 pt-2 grid grid-rows-3 h-full z-50">
-          <div className="border-4 border-yellow-500"></div>
+          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-4">
+            <div className="col-start-5 col-end-8 row-start-2 row-end-4 flex justify-center items-center">
+              <div className="text-4xl opacity-50 z-20 text-[#915A14]">Big Eye Boy</div>
+            </div>
+            {(() => {
+              const maxRow = 4;
+              let positions = [];
+              let grid: Record<string, boolean> = {};
+              for(let i=0; i<=11;i++){
+                grid[`${i},${5}`] = true;
+                grid[`${i},${6}`] = true;
+                grid[`${i},${7}`] = true;
+                grid[`${i},${8}`] = true;
+                grid[`${i},${9}`] = true;
+                grid[`${i},${10}`] = true;
+                grid[`${i},${11}`] = true;
+                grid[`${i},${12}`] = true;
+                grid[`${i},${13}`] = true;
+                grid[`${i},${14}`] = true;
+                grid[`${i},${15}`] = true;
+                grid[`${i},${16}`] = true;
+              }
+              for(let col=0;col < smallRoad.length;col++){
+                for(let row=0;row < smallRoad[col].length;row++){
+                  let tempRow = row+1;
+                  let tempCol = col+1;
+                  while(grid[`${tempCol},${tempRow}`]){
+                    tempCol++;
+                    tempRow--;
+                  }
+                  positions.push({tempo:smallRoad[col][row].tempo, col:tempCol, row:tempRow});
+                  grid[`${tempCol},${tempRow}`] = true;
+                }
+              }
+              return positions.map(({ tempo, col, row }, idx) => {
+                let imgSrc = "";
+                if (tempo === "stable") imgSrc = "/assets/bhcz.png";
+                else if (tempo === "unstable") imgSrc = "/assets/rhcz.png";
+                return (
+                  <div
+                    key={`${col}-${row}-${tempo}-BigRoad`}
+                    className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
+                  >
+                    {imgSrc && (
+                      <img
+                        src={imgSrc}
+                        className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      />
+                    )}
+                  </div>
+                );
+              });
+            })()}
+          </div>
           <div className="border-4 border-yellow-500"></div>
           <div className="border-4 border-yellow-500"></div>
         </div>
