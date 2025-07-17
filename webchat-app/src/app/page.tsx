@@ -22,7 +22,9 @@ export default function MiniBaccaratDashboard() {
   });
   const [beadPlate, setBeadPlate] = useState<any[][]>([]);
   const [bigRoad, setBigRoad] = useState<any[][]>([]);
+  const [BEB, setBEB] = useState<any[][]>([]);
   const [smallRoad, setSmallRoad] = useState<any[][]>([]);
+  const [cp, setCP] = useState<any[][]>([]);
   const [brDragonTail,setBrDragonTain] = useState<any[]>([]); 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -210,7 +212,7 @@ export default function MiniBaccaratDashboard() {
   }, [bigRoad]);
 
   useEffect(() => {
-    let tempSR = [];
+    let tempBEB = [];
     let tempStore = [];
 
     for(let i=0;i<bigRoad.length;i++){
@@ -246,7 +248,7 @@ export default function MiniBaccaratDashboard() {
         tempCol.push(tempStore[i]);
       }
       else{
-        tempSR.push(tempCol);
+        tempBEB.push(tempCol);
         tempCol = [];
         tempCol.push(tempStore[i]);
         prev = tempStore[i].tempo;
@@ -254,16 +256,128 @@ export default function MiniBaccaratDashboard() {
     }
 
     if(tempCol.length > 0){
-      tempSR.push(tempCol);
+      tempBEB.push(tempCol);
       tempCol = [];
     }
 
-    setSmallRoad(tempSR);
+    setBEB(tempBEB);
   },[bigRoad])
 
   useEffect(() => {
-    console.log("SmallRoad updated:", smallRoad);
+    console.log("BEB updated:", BEB);
+  }, [BEB]);
+
+  useEffect(() => {
+    let tempSmallRoad = [];
+    let tempStore = [];
+
+    for(let i=0;i<bigRoad.length;i++){
+      for(let j=0;j<bigRoad[i].length;j++){
+        if(i < 3) continue;
+        if(j == 0){
+          if(bigRoad[i-1].length == bigRoad[i-3].length){
+            tempStore.push({tempo:"stable"});
+          }
+          else{
+            tempStore.push({tempo:"unstable"});
+          }
+        }
+        else{
+          if(bigRoad[i-2].length == j){
+            tempStore.push({tempo:"unstable"})
+          }
+          else{
+            tempStore.push({tempo:"stable"});
+          }
+        }
+      }
+    }
+
+    console.log("tempstore:" + tempStore);
+    let prev = '';
+    let tempCol = [];
+    for(let i=0;i<tempStore.length;i++){
+      if(!prev){
+        prev = tempStore[i].tempo;
+      }
+      if(tempStore[i].tempo == prev){
+        tempCol.push(tempStore[i]);
+      }
+      else{
+        tempSmallRoad.push(tempCol);
+        tempCol = [];
+        tempCol.push(tempStore[i]);
+        prev = tempStore[i].tempo;
+      }
+    }
+
+    if(tempCol.length > 0){
+      tempSmallRoad.push(tempCol);
+      tempCol = [];
+    }
+
+    setSmallRoad(tempSmallRoad);
+  },[bigRoad])
+
+  useEffect(() => {
+    console.log("smallRoad updated:", smallRoad);
   }, [smallRoad]);
+
+  useEffect(() => {
+    let tempCP = [];
+    let tempStore = [];
+
+    for(let i=0;i<bigRoad.length;i++){
+      for(let j=0;j<bigRoad[i].length;j++){
+        if(i < 4) continue;
+        if(j == 0){
+          if(bigRoad[i-1].length == bigRoad[i-4].length){
+            tempStore.push({tempo:"stable"});
+          }
+          else{
+            tempStore.push({tempo:"unstable"});
+          }
+        }
+        else{
+          if(bigRoad[i-3].length == j){
+            tempStore.push({tempo:"unstable"})
+          }
+          else{
+            tempStore.push({tempo:"stable"});
+          }
+        }
+      }
+    }
+
+    console.log("tempstore:" + tempStore);
+    let prev = '';
+    let tempCol = [];
+    for(let i=0;i<tempStore.length;i++){
+      if(!prev){
+        prev = tempStore[i].tempo;
+      }
+      if(tempStore[i].tempo == prev){
+        tempCol.push(tempStore[i]);
+      }
+      else{
+        tempCP.push(tempCol);
+        tempCol = [];
+        tempCol.push(tempStore[i]);
+        prev = tempStore[i].tempo;
+      }
+    }
+
+    if(tempCol.length > 0){
+      tempCP.push(tempCol);
+      tempCol = [];
+    }
+
+    setCP(tempCP);
+  },[bigRoad])
+
+  useEffect(() => {
+    console.log("CP updated:", cp);
+  }, [cp]);
 
   function BigRoad() {
     const maxRows = 5;
@@ -595,15 +709,15 @@ export default function MiniBaccaratDashboard() {
                 grid[`${i},${15}`] = true;
                 grid[`${i},${16}`] = true;
               }
-              for(let col=0;col < smallRoad.length;col++){
-                for(let row=0;row < smallRoad[col].length;row++){
+              for(let col=0;col < BEB.length;col++){
+                for(let row=0;row < BEB[col].length;row++){
                   let tempRow = row+1;
                   let tempCol = col+1;
                   while(grid[`${tempCol},${tempRow}`]){
                     tempCol++;
                     tempRow--;
                   }
-                  positions.push({tempo:smallRoad[col][row].tempo, col:tempCol, row:tempRow});
+                  positions.push({tempo:BEB[col][row].tempo, col:tempCol, row:tempRow});
                   grid[`${tempCol},${tempRow}`] = true;
                 }
               }
@@ -627,8 +741,114 @@ export default function MiniBaccaratDashboard() {
               });
             })()}
           </div>
-          <div className="border-4 border-yellow-500"></div>
-          <div className="border-4 border-yellow-500"></div>
+          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-4">
+            <div className="col-start-5 col-end-8 row-start-2 row-end-4 flex justify-center items-center">
+                <div className="text-4xl opacity-50 z-20 text-[#915A14]">Small Road</div>
+            </div>
+            {(() => {
+                const maxRow = 4;
+                let positions = [];
+                let grid: Record<string, boolean> = {};
+                for(let i=0; i<=11;i++){
+                  grid[`${i},${5}`] = true;
+                  grid[`${i},${6}`] = true;
+                  grid[`${i},${7}`] = true;
+                  grid[`${i},${8}`] = true;
+                  grid[`${i},${9}`] = true;
+                  grid[`${i},${10}`] = true;
+                  grid[`${i},${11}`] = true;
+                  grid[`${i},${12}`] = true;
+                  grid[`${i},${13}`] = true;
+                  grid[`${i},${14}`] = true;
+                  grid[`${i},${15}`] = true;
+                  grid[`${i},${16}`] = true;
+                }
+                for(let col=0;col < smallRoad.length;col++){
+                  for(let row=0;row < smallRoad[col].length;row++){
+                    let tempRow = row+1;
+                    let tempCol = col+1;
+                    while(grid[`${tempCol},${tempRow}`]){
+                      tempCol++;
+                      tempRow--;
+                    }
+                    positions.push({tempo:smallRoad[col][row].tempo, col:tempCol, row:tempRow});
+                    grid[`${tempCol},${tempRow}`] = true;
+                  }
+                }
+                return positions.map(({ tempo, col, row }, idx) => {
+                  let imgSrc = "";
+                  if (tempo === "stable") imgSrc = "/assets/box_rcz.png";
+                  else if (tempo === "unstable") imgSrc = "/assets/box_bcz.png";
+                  return (
+                    <div
+                      key={`${col}-${row}-${tempo}-BigRoad`}
+                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
+                    >
+                      {imgSrc && (
+                        <img
+                          src={imgSrc}
+                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        />
+                      )}
+                    </div>
+                  );
+                });
+            })()}
+          </div>
+          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-4">
+            <div className="col-start-5 col-end-8 row-start-2 row-end-4 flex justify-center items-center">
+                <div className="text-4xl opacity-50 z-20 text-[#915A14]">Cockroach Pig</div>
+            </div>
+            {(() => {
+                const maxRow = 4;
+                let positions = [];
+                let grid: Record<string, boolean> = {};
+                for(let i=0; i<=11;i++){
+                  grid[`${i},${5}`] = true;
+                  grid[`${i},${6}`] = true;
+                  grid[`${i},${7}`] = true;
+                  grid[`${i},${8}`] = true;
+                  grid[`${i},${9}`] = true;
+                  grid[`${i},${10}`] = true;
+                  grid[`${i},${11}`] = true;
+                  grid[`${i},${12}`] = true;
+                  grid[`${i},${13}`] = true;
+                  grid[`${i},${14}`] = true;
+                  grid[`${i},${15}`] = true;
+                  grid[`${i},${16}`] = true;
+                }
+                for(let col=0;col < cp.length;col++){
+                  for(let row=0;row < cp[col].length;row++){
+                    let tempRow = row+1;
+                    let tempCol = col+1;
+                    while(grid[`${tempCol},${tempRow}`]){
+                      tempCol++;
+                      tempRow--;
+                    }
+                    positions.push({tempo:cp[col][row].tempo, col:tempCol, row:tempRow});
+                    grid[`${tempCol},${tempRow}`] = true;
+                  }
+                }
+                return positions.map(({ tempo, col, row }, idx) => {
+                  let imgSrc = "";
+                  if (tempo === "stable") imgSrc = "/assets/box_rlcz.png";
+                  else if (tempo === "unstable") imgSrc = "/assets/box_blcz.png";
+                  return (
+                    <div
+                      key={`${col}-${row}-${tempo}-BigRoad`}
+                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
+                    >
+                      {imgSrc && (
+                        <img
+                          src={imgSrc}
+                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        />
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+          </div>
         </div>
       </div>
       <span className="absolute bottom-0 text-black text-xl">This is the display screen. All tables results and management decisions will be final</span>
