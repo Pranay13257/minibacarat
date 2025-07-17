@@ -754,7 +754,7 @@ async def handle_auto_deal(websocket):
         if len(remaining_cards) < 52:
             await shuffle_deck()
             await broadcast_game_state()
-            await asyncio.sleep(0.25)
+            await asyncio.sleep(2.5)
         card_count = 0
         while True:
             recipient = get_next_card_recipient()
@@ -769,7 +769,7 @@ async def handle_auto_deal(websocket):
             card_count += 1
             logging.info(f"Auto-deal progress: {card_count} cards dealt ({card} to {recipient})")
             await broadcast_game_state()
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(2.5)
         if get_next_card_recipient() == "complete":
             await calculate_result()
             await broadcast_game_state()
