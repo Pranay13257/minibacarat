@@ -53,8 +53,7 @@ def start_servers():
     global node_proc, python_proc
     if node_proc is None or node_proc.poll() is not None:
         node_proc = subprocess.Popen(
-            "npx next dev --port 3000 --hostname 0.0.0.0", #change the cmd to your frontend cmd
-            cwd=os.getcwd(),
+            'cd /d "webchat-app" && npx next dev --port 3000 --hostname 0.0.0.0',
             shell=True
         )
     if python_proc is None or python_proc.poll() is not None:
