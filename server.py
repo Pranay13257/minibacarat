@@ -559,6 +559,7 @@ async def calculate_result():
         is_super_six, player_pair, banker_pair, 
         player_natural, banker_natural
     )
+    game_state["winner"] = winner
     last_game_result = {
         "winner": winner,
         "is_super_six": is_super_six,
@@ -809,6 +810,8 @@ async def handle_manual_result(websocket, data):
             player_natural, banker_natural
         )
         
+        game_state["game_phase"] = "finished"
+
         await send_success(websocket, f"Manual result saved: {winner} wins (Round {game_state['round']})")
         await broadcast_refresh_stats()
         await broadcast_game_state()

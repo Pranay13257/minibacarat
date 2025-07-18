@@ -42,7 +42,8 @@ game_state = {
     "min_bet": 10000,
     "game_mode": "manual",
     "vip_revealer": None,
-    "cards_revealed": False
+    "cards_revealed": False,
+    "winner": None
 }
 
 remaining_cards = None
@@ -503,6 +504,8 @@ async def calculate_result():
         is_super_six, player_pair, banker_pair, 
         player_natural, banker_natural
     )
+    game_state["winner"] = winner
+    
     last_game_result = {
         "winner": winner,
         "is_super_six": is_super_six,
@@ -734,6 +737,7 @@ async def handle_auto_deal(websocket):
 
 async def handle_manual_result(websocket, data):
     """Handle manual game result entry"""
+    game_state["game_phase"] = "waiting"
     try:
         winner = data.get("winner")
         is_super_six = data.get("is_super_six", False)
@@ -753,6 +757,8 @@ async def handle_manual_result(websocket, data):
             player_natural, banker_natural
         )
         
+        game_state["game_phase"] = "finished"
+
         await send_success(websocket, f"Manual result saved: {winner} wins (Round {game_state['round']})")
         await broadcast_refresh_stats()
         await broadcast_game_state()
