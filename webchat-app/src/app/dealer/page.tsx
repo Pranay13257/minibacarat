@@ -505,13 +505,7 @@ const DealerPage = () => {
         {showWinnerModal && (
           <WinnerModal
             show={showWinnerModal}
-            winner={
-              gameState.playerTotal > gameState.bankerTotal
-                ? "Player"
-                : gameState.bankerTotal > gameState.playerTotal
-                ? "Banker"
-                : "tie"
-            }
+            winner={gameState.winner}
             isLuckySix={gameState.isSuperSix}
             isNatural={gameState.naturalWin}
             naturalType={gameState.naturalType}
@@ -528,6 +522,7 @@ const DealerPage = () => {
               (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')
             )}
             onClose={() => setShowWinnerModal(false)}
+            gameMode={gameState.game_mode}
           />
         )}
       </div>

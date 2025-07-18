@@ -13,9 +13,10 @@ interface WinnerModalProps {
   bankerTotal: number;
   playerNatural: boolean;
   bankerNatural: boolean;
+  gameMode: string;
 }
 
-const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType, playerTotal, bankerTotal, playerNatural, bankerNatural }: WinnerModalProps) => {
+const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType, playerTotal, bankerTotal, playerNatural, bankerNatural, gameMode }: WinnerModalProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -47,12 +48,14 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
   if (!show) return null;
 
   const getWinnerText = () => {
+    console.log(winner);
     if (!winner) return '';
     if (winner === 'tie') return 'Tie Game!';
     return `${winner.charAt(0).toUpperCase() + winner.slice(1)} Wins!`;
   };
 
   const getSpecialWinText = () => {
+    if(gameMode == "manual") return null;
     if (winner === 'tie') {
       return `Tie on ${playerTotal}`;
     }

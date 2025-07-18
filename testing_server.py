@@ -355,7 +355,8 @@ async def broadcast_game_state():
         "min_bet": game_state["min_bet"],
         "game_mode": game_state["game_mode"],
         "vip_revealer": game_state["vip_revealer"],
-        "cards_revealed": game_state["cards_revealed"]
+        "cards_revealed": game_state["cards_revealed"],
+        "winner": game_state["winner"]
     }
     websockets_to_remove = set()
     for websocket in connected_clients:
