@@ -285,7 +285,6 @@ const DealerPage = () => {
         console.log('=== RECEIVED GAME STATE ===');
         console.log('Raw data:', data);
         console.log('data.is_super_six:', data.is_super_six);
-        console.log('data.isSuperSix:', data.isSuperSix);
         console.log('===========================');
         const newGameState: GameState = {
           playerCards: data.playerCards || [],
@@ -324,7 +323,8 @@ const DealerPage = () => {
           vip_revealer: data.vip_revealer || null,
           cards_revealed: data.cards_revealed || false,
           burnAvailable: typeof data.burnAvailable !== 'undefined' ? data.burnAvailable : false,
-          burnMode: typeof data.burnMode !== 'undefined' ? data.burnMode : 'inactive'
+          burnMode: typeof data.burnMode !== 'undefined' ? data.burnMode : 'inactive',
+          winner: data.winner || null
         };
         
         setGameState(newGameState);

@@ -207,6 +207,7 @@ def new_round():
     game_results["is_super_six"] = False
     global burned_cards
     burned_cards = []
+    game_state["winner"] = None
     
     is_vip_mode = game_state.get("game_mode") == "vip"
 
@@ -217,7 +218,8 @@ def new_round():
         "auto_dealing": False,
         "vip_revealer": None,  # Reset revealer every game
         "cards_revealed": not is_vip_mode,  # Default to True unless in VIP mode
-        "can_manage_players": True
+        "can_manage_players": True,
+        "winner": None
     })
 
 async def broadcast_refresh_stats():
@@ -397,7 +399,8 @@ async def broadcast_game_state():
         "min_bet": game_state["min_bet"],
         "game_mode": game_state["game_mode"],
         "vip_revealer": game_state["vip_revealer"],
-        "cards_revealed": game_state["cards_revealed"]
+        "cards_revealed": game_state["cards_revealed"],
+        "winner": game_state["winner"]
     }
     websockets_to_remove = set()
     for websocket in connected_clients:
@@ -772,9 +775,7 @@ async def handle_auto_deal(websocket):
             logging.info(f"Auto-deal progress: {card_count} cards dealt ({card} to {recipient})")
             await broadcast_game_state()
             await asyncio.sleep(2.5)
-        if get_next_card_recipient() == "complete":
-            await calculate_result()
-            await broadcast_game_state()
+        
         game_state["auto_dealing"] = False
         game_state["game_phase"] = "finished"
         # Mark last_game_result as auto_deal for undo restriction
@@ -792,6 +793,8 @@ async def handle_auto_deal(websocket):
 
 async def handle_manual_result(websocket, data):
     """Handle manual game result entry"""
+    new_round()
+    await broadcast_game_state()
     try:
         winner = data.get("winner")
         is_super_six = data.get("is_super_six", False)
@@ -812,6 +815,7 @@ async def handle_manual_result(websocket, data):
         )
         
         game_state["game_phase"] = "finished"
+        game_state["winner"] = winner
 
         await send_success(websocket, f"Manual result saved: {winner} wins (Round {game_state['round']})")
         await broadcast_refresh_stats()

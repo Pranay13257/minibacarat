@@ -165,6 +165,7 @@ def new_round():
     game_results["is_super_six"] = False
     global burned_cards
     burned_cards = []
+    game_state["winner"] = None
     
     is_vip_mode = game_state.get("game_mode") == "vip"
 
@@ -175,7 +176,8 @@ def new_round():
         "auto_dealing": False,
         "vip_revealer": None,  # Reset revealer every game
         "cards_revealed": not is_vip_mode,  # Default to True unless in VIP mode
-        "can_manage_players": True
+        "can_manage_players": True,
+        "winner": None
     })
 
 async def broadcast_refresh_stats():
@@ -738,7 +740,9 @@ async def handle_auto_deal(websocket):
 
 async def handle_manual_result(websocket, data):
     """Handle manual game result entry"""
-    game_state["game_phase"] = "waiting"
+    # Reinitialize round for manual mode (since no explicit new_round)
+    new_round()
+    await broadcast_game_state()
     try:
         winner = data.get("winner")
         is_super_six = data.get("is_super_six", False)
@@ -759,7 +763,7 @@ async def handle_manual_result(websocket, data):
         )
         
         game_state["game_phase"] = "finished"
-
+        game_state["winner"] = winner
         await send_success(websocket, f"Manual result saved: {winner} wins (Round {game_state['round']})")
         await broadcast_refresh_stats()
         await broadcast_game_state()
