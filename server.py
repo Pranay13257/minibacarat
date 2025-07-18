@@ -84,7 +84,8 @@ game_state = {
     "min_bet": 10000,
     "game_mode": "manual",
     "vip_revealer": None,
-    "cards_revealed": False
+    "cards_revealed": False,
+    "winner": None
 }
 
 remaining_cards = None
