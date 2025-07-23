@@ -473,87 +473,77 @@ export default function MiniBaccaratDashboard() {
     <div className="min-h-screen bg-darkBrown flex flex-col justify-center items-center">
       <div className="h-[95vh] w-[97vw] m-4 border-[1rem] border-randomBrown bg-[#EFE6D3] grid grid-cols-12 grid-rows-12">
         <div
-          className="col-start-1 col-end-13 row-start-1 row-end-4 flex justify-center items-center relative z-15"
+          className="col-start-1 col-end-13 row-start-1 row-end-2 flex justify-between items-center relative z-15"
           style={{
             backgroundImage: "url('/assets/wood.png')",
             backgroundSize: "cover",
             backgroundPosition: "center"
           }}
         >
-          <img src="/assets/mini_baccarat.png" className="relative top-[-5vh] h-[20vh] z-50"/>
-        </div>
-
-
-        <div className="col-start-3 col-end-5 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tl-3xl rounded-br-3xl m-0.5 flex flex-row justify-around items-center p-4 relative z-10">
-          <div className="flex flex-col items-center gap-2">
-            <div className="text-3xl text-yellow-500">Player</div>
-            <img src="/assets/box_bc.png" className="w-10 h-10"/>
-            <img src="/assets/box_bhc.png" className="w-10 h-10"/>
-            <img src="/assets/box_blc.png" className="w-10 h-10"/>
+          <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-xl text-yellow-500">
+            <div>Games : {games}</div>
+            <div>Table no.  : {gameState.table_number}</div>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="text-3xl text-yellow-500">Banker</div>
-            <img src="/assets/box_rc.png" className="w-10 h-10"/>
-            <img src="/assets/box_rhc.png" className="w-10 h-10"/>
-            <img src="/assets/box_rlc.png" className="w-10 h-10"/>
-          </div>
-        </div>
-        <div className="col-start-5 col-end-7 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-br-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
-          <div className="text-3xl text-yellow-500">
-            Games
-          </div>
-          <div className="text-3xl text-yellow-500">
-            {games}
-          </div>
-        </div>
-        <div className="col-start-7 col-end-9 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-bl-3xl rounded-br-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
-          <div className="text-3xl text-yellow-500">
-            Bets
-          </div>
-          <div className="text-3xl text-yellow-500">
-            Max: {gameState.max_bet}
-          </div>
-          <div className="text-3xl text-yellow-500">
-            Min: {gameState.min_bet}
-          </div>
-        </div>
-        <div className="col-start-9 col-end-11 row-start-2 row-end-5 bg-darkRed border-8 border-yellow-500 rounded-tr-3xl rounded-bl-3xl m-0.5 flex flex-col justify-center items-center relative z-10">
-          <div className="flex flex-col justify-center items-start mt-1">
-            <div className="flex flex-row gap-4 justify-center items-center">
-              <img src="/assets/c1.png" className="w-6 h-6"/>
-              <div className="text-2xl text-yellow-500">Player Wins : {stats.player_wins}</div>
-            </div>
-            <div className="flex flex-row gap-4 justify-center items-center">
-              <img src="/assets/c2.png" className="w-6 h-6"/>
-              <div className="text-2xl text-yellow-500">Banker Wins : {stats.banker_wins}</div>
-            </div>
-            <div className="flex flex-row gap-4 justify-center items-center">
-              <img src="/assets/c3.png" className="w-6 h-6"/>
-              <div className="text-2xl text-yellow-500">Tie : {stats.ties}</div>
-            </div>
-            <div className="flex flex-row gap-4 justify-center items-center">
-              <img src="/assets/c4.png" className="w-6 h-6"/>
-              <div className="text-2xl text-yellow-500">Naturals : {naturals}</div>
-            </div>
-            <div className="flex flex-row gap-4 justify-center items-center">
-              <img src="/assets/c5.png" className="w-6 h-6"/>
-              <div className="text-2xl text-yellow-500">Player pair : {stats.player_pairs}</div>
-            </div>
-            <div className="flex flex-row gap-4 justify-center items-center">
-              <img src="/assets/c6.png" className="w-6 h-6"/>
-              <div className="text-2xl text-yellow-500">Banker pair : {stats.banker_pairs}</div>
-            </div>
+          <img src="/assets/mini_baccarat.png" className="z-50"/>
+          <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-xl text-yellow-500">
+            <div>Min bet : {gameState.max_bet}</div>
+            <div>Max bet : {gameState.min_bet}</div>
           </div>
         </div>
 
+        <div className="gird row-start-2 row-end-6 col-start-9 col-end-11 border-2 border-yellow-500 grid grid-cols-2 grid-rows-4">
+          <div className="row-start-1 row-end-2 col-start-1 col-end-2 text-black text-2xl text-bold flex items-center justify-center">Player</div>
+          <div className="row-start-2 row-end-3 col-start-1 col-end-2 text-black flex items-center justify-center">
+            <img src="/assets/new_bc.png" className="w-10 h-10"/>
+          </div>
+          <div className="row-start-3 row-end-4 col-start-1 col-end-2 text-black flex items-center justify-center">
+            <img src="/assets/new_bhcz.png" className="w-10 h-10"/>
+          </div>
+          <div className="row-start-4 row-end-5 col-start-1 col-end-2 text-black flex items-center justify-center">
+            <img src="/assets/new_lineBlue.png" className="w-10 h-10"/>
+          </div>
+          <div className="row-start-1 row-end-2 col-start-2 col-end-3 text-black text-2xl text-bold flex items-center justify-center">Banker</div>
+          <div className="row-start-2 row-end-3 col-start-2 col-end-3 text-black flex items-center justify-center">
+            <img src="/assets/new_rc.png" className="w-10 h-10"/>
+          </div>
+          <div className="row-start-3 row-end-4 col-start-2 col-end-3 text-black flex items-center justify-center">
+            <img src="/assets/new_rhcz.png" className="w-10 h-10"/>
+          </div>
+          <div className="row-start-4 row-end-5 col-start-2 col-end-3 text-black flex items-center justify-center">
+            <img src="/assets/new_lineRed.png" className="w-10 h-10"/>
+          </div>
+        </div>
 
-        <img src="/assets/golden_d.png" className="col-start-5 col-end-9 row-start-4 row-end-7 relative z-5"/>
+        <div className="gird row-start-2 row-end-6 col-start-11 col-end-13 bg-[darkRed] flex flex-col justify-around items-start pl-4">
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <img src="/assets/c1.png" className="w-6 h-6"/>
+            <div className="text-2xl text-yellow-500">Player Wins : {stats.player_wins}</div>
+          </div>
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <img src="/assets/c2.png" className="w-6 h-6"/>
+            <div className="text-2xl text-yellow-500">Banker Wins : {stats.banker_wins}</div>
+          </div>
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <img src="/assets/c3.png" className="w-6 h-6"/>
+            <div className="text-2xl text-yellow-500">Tie : {stats.ties}</div>
+          </div>
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <img src="/assets/c4.png" className="w-6 h-6"/>
+            <div className="text-2xl text-yellow-500">Naturals : {naturals}</div>
+          </div>
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <img src="/assets/c5.png" className="w-6 h-6"/>
+            <div className="text-2xl text-yellow-500">Player pair : {stats.player_pairs}</div>
+          </div>
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <img src="/assets/c6.png" className="w-6 h-6"/>
+            <div className="text-2xl text-yellow-500">Banker pair : {stats.banker_pairs}</div>
+          </div>
+        </div>
 
-
-        <div className="col-start-1 col-end-7 row-start-5 row-end-13 pl-2 pb-2 pt-2 grid grid-rows-2 h-full z-50">
-          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
-            <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
-              <div className="text-6xl opacity-50 z-20 text-[#915A14]">Bead Plate</div>
+        <div className="gird row-start-2 row-end-6 col-start-1 col-end-9 border-2 border-yellow-500 grid grid-cols-11 grid-rows-5">
+            <div className="col-start-6 col-end-8 row-start-3 row-end-4 flex justify-center items-center">
+              <div className="text-6xl opacity-50 z-20 text-[#915A14] text-center">Bead Plate</div>
             </div>
             {Array.from({length:11}).map((_,colIdx) => (
               Array.from({length:5}).map((_,rowIdx) => {
@@ -574,282 +564,20 @@ export default function MiniBaccaratDashboard() {
                 )
               })
             ))}
-          </div>
-
-
-          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-5">
-            <div className="col-start-5 col-end-7 row-start-3 row-end-4 flex justify-center items-center">
-              <div className="text-6xl opacity-50 text-[#915A14]">Big Road</div>
-            </div>
-            {/* Dragon tail logic with diagonal up-right slide for collisions start */}
-            {(() => {
-              const maxRows = 5;
-              let positions = [];
-              let grid: Record<string, boolean> = {};
-              let col = 0;
-              for (let streakIdx = 0; streakIdx < bigRoad.length; streakIdx++) {
-                const streak = bigRoad[streakIdx];
-                if (streak.length <= maxRows) {
-                  for (let i = 0; i < streak.length; i++) {
-                    let targetCol = col;
-                    let targetRow = i;
-                    // Slide diagonally up-right if collision
-                    while (grid[`${targetCol},${targetRow}`]) {
-                      targetCol++;
-                      targetRow--;
-                      if (targetRow < 0) break;
-                    }
-                    if (targetRow >= 0) {
-                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
-                      grid[`${targetCol},${targetRow}`] = true;
-                    }
-                  }
-                  col++; // Next streak starts in next column
-                } else {
-                  // Fill the column vertically
-                  for (let i = 0; i < maxRows; i++) {
-                    let targetCol = col;
-                    let targetRow = i;
-                    // Slide diagonally up-right if collision
-                    while (grid[`${targetCol},${targetRow}`]) {
-                      targetCol++;
-                      targetRow--;
-                      if (targetRow < 0) break;
-                    }
-                    if (targetRow >= 0) {
-                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
-                      grid[`${targetCol},${targetRow}`] = true;
-                    }
-                  }
-                  // Remaining beads go to the right, all at the bottom row
-                  let tailCol = col + 1;
-                  let tailRow = maxRows - 1;
-                  for (let i = maxRows; i < streak.length; i++) {
-                    let targetCol = tailCol;
-                    let targetRow = tailRow;
-                    // Slide diagonally up-right if collision
-                    while (grid[`${targetCol},${targetRow}`]) {
-                      targetCol++;
-                      targetRow--;
-                      if (targetRow < 0) break;
-                    }
-                    if (targetRow >= 0) {
-                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
-                      grid[`${targetCol},${targetRow}`] = true;
-                    }
-                    tailCol = targetCol + 1;
-                  }
-                  col++; // Next streak starts in next column
-                }
-              }
-              return positions.map(({ bead: cell, col, row }, idx) => {
-                let imgSrc = "";
-                if (cell.winner === "player") imgSrc = "/assets/bhcz.png";
-                else if (cell.winner === "banker") imgSrc = "/assets/rhcz.png";
-                return (
-                  <div
-                    key={`${col}-${row}-${cell.tie_count || 0}-BigRoad`}
-                    className={`col-start-${col+1} col-end-${col+2} row-start-${row+1} row-end-${row+2} z-50 relative`}
-                  >
-                    {imgSrc && (
-                      <img
-                        src={imgSrc}
-                        className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                        alt={cell.winner}
-                      />
-                    )}
-                    {cell.tie_count >= 1 && cell.tie_count <= 8 && (
-                      Array.from({ length: cell.tie_count }, (_, index) => (
-                        <img
-                          key={`line${index + 1}`}
-                          src={`/assets/line${index + 1}.png`}
-                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                          alt={`tie-line-${index + 1}`}
-                        />
-                      ))
-                    )}
-                    {cell.player_pair ? (
-                      <img src="/assets/player (2).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
-                    ) : null}
-                    {cell.banker_pair ? (
-                      <img src="/assets/banker (1).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
-                    ) : null}
-                    {(cell.banker_natural || cell.player_natural) ? (
-                      <img src="/assets/natural.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
-                    ) : null}
-                  </div>
-                );
-              });
-            })()}
-            {/* Dragon tail logic with diagonal up-right slide for collisions end */}
+        </div>
+        <div className="gird row-start-6 row-end-9 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(20,minmax(0,1fr))] grid-rows-4">
+          <div className="col-start-10 col-end-12 row-start-2 row-end-4 flex justify-center items-center">
+             <div className="text-6xl opacity-50 text-[#915A14] text-center">Big Road</div>
           </div>
         </div>
-
-        
-        <div className="col-start-7 col-end-13 row-start-5 row-end-13 pr-2 pb-2 pt-2 grid grid-rows-3 h-full z-50">
-          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-4">
-            <div className="col-start-5 col-end-8 row-start-2 row-end-4 flex justify-center items-center">
-              <div className="text-4xl opacity-50 z-20 text-[#915A14]">Big Eye Boy</div>
-            </div>
-            {(() => {
-              const maxRow = 4;
-              let positions = [];
-              let grid: Record<string, boolean> = {};
-              for(let i=0; i<=11;i++){
-                grid[`${i},${5}`] = true;
-                grid[`${i},${6}`] = true;
-                grid[`${i},${7}`] = true;
-                grid[`${i},${8}`] = true;
-                grid[`${i},${9}`] = true;
-                grid[`${i},${10}`] = true;
-                grid[`${i},${11}`] = true;
-                grid[`${i},${12}`] = true;
-                grid[`${i},${13}`] = true;
-                grid[`${i},${14}`] = true;
-                grid[`${i},${15}`] = true;
-                grid[`${i},${16}`] = true;
-              }
-              for(let col=0;col < BEB.length;col++){
-                for(let row=0;row < BEB[col].length;row++){
-                  let tempRow = row+1;
-                  let tempCol = col+1;
-                  while(grid[`${tempCol},${tempRow}`]){
-                    tempCol++;
-                    tempRow--;
-                  }
-                  positions.push({tempo:BEB[col][row].tempo, col:tempCol, row:tempRow});
-                  grid[`${tempCol},${tempRow}`] = true;
-                }
-              }
-              return positions.map(({ tempo, col, row }, idx) => {
-                let imgSrc = "";
-                if (tempo === "stable") imgSrc = "/assets/bhcz.png";
-                else if (tempo === "unstable") imgSrc = "/assets/rhcz.png";
-                return (
-                  <div
-                    key={`${col}-${row}-${tempo}-BigRoad`}
-                    className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
-                  >
-                    {imgSrc && (
-                      <img
-                        src={imgSrc}
-                        className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                      />
-                    )}
-                  </div>
-                );
-              });
-            })()}
-          </div>
-          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-4">
-            <div className="col-start-5 col-end-8 row-start-2 row-end-4 flex justify-center items-center">
-                <div className="text-4xl opacity-50 z-20 text-[#915A14]">Small Road</div>
-            </div>
-            {(() => {
-                const maxRow = 4;
-                let positions = [];
-                let grid: Record<string, boolean> = {};
-                for(let i=0; i<=11;i++){
-                  grid[`${i},${5}`] = true;
-                  grid[`${i},${6}`] = true;
-                  grid[`${i},${7}`] = true;
-                  grid[`${i},${8}`] = true;
-                  grid[`${i},${9}`] = true;
-                  grid[`${i},${10}`] = true;
-                  grid[`${i},${11}`] = true;
-                  grid[`${i},${12}`] = true;
-                  grid[`${i},${13}`] = true;
-                  grid[`${i},${14}`] = true;
-                  grid[`${i},${15}`] = true;
-                  grid[`${i},${16}`] = true;
-                }
-                for(let col=0;col < smallRoad.length;col++){
-                  for(let row=0;row < smallRoad[col].length;row++){
-                    let tempRow = row+1;
-                    let tempCol = col+1;
-                    while(grid[`${tempCol},${tempRow}`]){
-                      tempCol++;
-                      tempRow--;
-                    }
-                    positions.push({tempo:smallRoad[col][row].tempo, col:tempCol, row:tempRow});
-                    grid[`${tempCol},${tempRow}`] = true;
-                  }
-                }
-                return positions.map(({ tempo, col, row }, idx) => {
-                  let imgSrc = "";
-                  if (tempo === "stable") imgSrc = "/assets/box_rcz.png";
-                  else if (tempo === "unstable") imgSrc = "/assets/box_bcz.png";
-                  return (
-                    <div
-                      key={`${col}-${row}-${tempo}-BigRoad`}
-                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
-                    >
-                      {imgSrc && (
-                        <img
-                          src={imgSrc}
-                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                        />
-                      )}
-                    </div>
-                  );
-                });
-            })()}
-          </div>
-          <div className="border-4 border-yellow-500 grid grid-cols-11 grid-rows-4">
-            <div className="col-start-5 col-end-8 row-start-2 row-end-4 flex justify-center items-center">
-                <div className="text-4xl opacity-50 z-20 text-[#915A14]">Cockroach Pig</div>
-            </div>
-            {(() => {
-                const maxRow = 4;
-                let positions = [];
-                let grid: Record<string, boolean> = {};
-                for(let i=0; i<=11;i++){
-                  grid[`${i},${5}`] = true;
-                  grid[`${i},${6}`] = true;
-                  grid[`${i},${7}`] = true;
-                  grid[`${i},${8}`] = true;
-                  grid[`${i},${9}`] = true;
-                  grid[`${i},${10}`] = true;
-                  grid[`${i},${11}`] = true;
-                  grid[`${i},${12}`] = true;
-                  grid[`${i},${13}`] = true;
-                  grid[`${i},${14}`] = true;
-                  grid[`${i},${15}`] = true;
-                  grid[`${i},${16}`] = true;
-                }
-                for(let col=0;col < cp.length;col++){
-                  for(let row=0;row < cp[col].length;row++){
-                    let tempRow = row+1;
-                    let tempCol = col+1;
-                    while(grid[`${tempCol},${tempRow}`]){
-                      tempCol++;
-                      tempRow--;
-                    }
-                    positions.push({tempo:cp[col][row].tempo, col:tempCol, row:tempRow});
-                    grid[`${tempCol},${tempRow}`] = true;
-                  }
-                }
-                return positions.map(({ tempo, col, row }, idx) => {
-                  let imgSrc = "";
-                  if (tempo === "stable") imgSrc = "/assets/box_rlcz.png";
-                  else if (tempo === "unstable") imgSrc = "/assets/box_blcz.png";
-                  return (
-                    <div
-                      key={`${col}-${row}-${tempo}-BigRoad`}
-                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
-                    >
-                      {imgSrc && (
-                        <img
-                          src={imgSrc}
-                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                        />
-                      )}
-                    </div>
-                  );
-                });
-              })()}
+        <div className="gird row-start-9 row-end-11 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(30,minmax(0,1fr))] grid-rows-3">
+          <div className="col-start-1 col-end-31 row-start-1 row-end-4 flex justify-center items-center justify-self-center">
+             <div className="text-xl opacity-50 text-[#915A14] text-center">Big Eye Boy</div>
           </div>
         </div>
+        <div className="gird row-start-11 row-end-13 col-start-7 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3" ></div>
+        <div className="gird row-start-11 row-end-13 col-start-1 col-end-7 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3"></div>
+
       </div>
       <span className="absolute bottom-0 text-black text-xl">This is the display screen. All tables results and management decisions will be final</span>
     </div>
