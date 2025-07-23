@@ -41,8 +41,11 @@ game_state = {
     "max_bet": 100000,
     "min_bet": 10000,
     "game_mode": "manual",
-    "vip_revealer": None,
+    "vip_player_revealer": None,  # NEW: separate revealers
+    "vip_banker_revealer": None,  # NEW: separate revealers
     "cards_revealed": False,
+    "player_cards_revealed": False,  # NEW: track player reveal
+    "banker_cards_revealed": False,  # NEW: track banker reveal
     "winner": None
 }
 
@@ -169,13 +172,20 @@ def new_round():
     
     is_vip_mode = game_state.get("game_mode") == "vip"
 
+    # Reset both revealers and individual reveal states
+    if is_vip_mode:
+        asyncio.create_task(reset_vip_revealers())
+        game_state["player_cards_revealed"] = False
+        game_state["banker_cards_revealed"] = False
+    
     game_state.update({
         "game_phase": "waiting",
         "natural_win": False,
         "natural_type": None,
         "auto_dealing": False,
-        "vip_revealer": None,  # Reset revealer every game
-        "cards_revealed": not is_vip_mode,  # Default to True unless in VIP mode
+        "vip_player_revealer": None,
+        "vip_banker_revealer": None,
+        "cards_revealed": not is_vip_mode,
         "can_manage_players": True,
         "winner": None
     })
@@ -356,7 +366,7 @@ async def broadcast_game_state():
         "max_bet": game_state["max_bet"],
         "min_bet": game_state["min_bet"],
         "game_mode": game_state["game_mode"],
-        "vip_revealer": game_state["vip_revealer"],
+        "vip_revealer": game_state["vip_player_revealer"], # Changed from vip_revealer
         "cards_revealed": game_state["cards_revealed"],
         "winner": game_state["winner"]
     }
@@ -774,59 +784,124 @@ async def handle_manual_result(websocket, data):
         await send_error(websocket, f"Error saving manual result: {str(e)}")
         return False
 
-async def handle_set_vip_revealer(websocket, player_id):
-    """Set the VIP revealer player"""
+async def handle_set_vip_revealer(websocket, player_id, reveal_for):
+    """Set the VIP revealer for player or banker cards."""
+    # Validate game mode
     if game_state["game_mode"] != "vip":
         await send_error(websocket, "VIP revealer can only be set in VIP mode")
         return False
-    # Allow setting revealer after 4 cards are dealt in VIP
+   
+    # Validate reveal target
+    if reveal_for not in ["player", "banker"]:
+        await send_error(websocket, "Invalid reveal target. Must be 'player' or 'banker'.")
+        return False
+    
+    # Validate game phase
     if game_state["game_phase"] not in ["finished", "waiting_for_reveal"]:
         await send_error(websocket, "Revealer can only be set when the game is paused for reveal.")
         return False
-    if game_state["vip_revealer"] is not None:
-        await send_error(websocket, "Revealer already set for this round.")
-        return False
+    
+    # Check if player is in active players list
     if player_id not in game_state["active_players"]:
         await send_error(websocket, "Player must be active to be a revealer")
         return False
-    game_state["vip_revealer"] = player_id
-    await send_success(websocket, f"Player {player_id} set as VIP revealer")
+    
+    # Check if player is already assigned to the other role
+    if reveal_for == "player" and player_id == game_state.get("vip_banker_revealer"):
+        await send_error(websocket, f"Player {player_id} is already the banker revealer.")
+        return False
+    if reveal_for == "banker" and player_id == game_state.get("vip_player_revealer"):
+        await send_error(websocket, f"Player {player_id} is already the player revealer.")
+        return False
+    
+    # Check if revealer for this role is already set
+    revealer_key = f"vip_{reveal_for}_revealer"
+    if game_state.get(revealer_key) is not None:
+        await send_error(websocket, f"{reveal_for.capitalize()} revealer already set for this round.")
+        return False
+    
+    # Set the revealer in game state
+    game_state[revealer_key] = player_id
+    
+    # Remove the player from active players list since they're now assigned as revealer
+    if player_id in game_state["active_players"]:
+        game_state["active_players"].remove(player_id)
+    
+    await send_success(websocket, f"Player {player_id} set as VIP revealer for {reveal_for} cards")
     await broadcast_game_state()
     return True
 
-async def handle_vip_reveal(websocket, player_id):
-    """Handle VIP card revelation"""
+async def reset_vip_revealers():
+    """Reset VIP revealers and return them to active players list for next round."""
+    # Add revealers back to active players if they were assigned
+    if game_state.get("vip_player_revealer") and game_state["vip_player_revealer"] not in game_state["active_players"]:
+        game_state["active_players"].add(game_state["vip_player_revealer"])
+    if game_state.get("vip_banker_revealer") and game_state["vip_banker_revealer"] not in game_state["active_players"]:
+        game_state["active_players"].add(game_state["vip_banker_revealer"])
+    # Reset revealer assignments in game state
+    game_state.pop("vip_player_revealer", None)
+    game_state.pop("vip_banker_revealer", None)
+
+def get_available_vip_players():
+    """Get list of players available to be assigned as VIP revealers."""
+    if game_state["game_mode"] != "vip":
+        return []
+    available_players = []
+    for player_id in game_state["active_players"]:
+        # Skip if player is already a revealer (shouldn't be possible, but for safety)
+        if (player_id == game_state.get("vip_player_revealer") or 
+            player_id == game_state.get("vip_banker_revealer")):
+            continue
+        available_players.append(player_id)
+    return available_players
+
+async def handle_vip_reveal(websocket, player_id, reveal_for):
+    """Handle VIP card revelation for specific card set (player or banker)"""
     if game_state["game_mode"] != "vip":
         await send_error(websocket, "Card revelation only available in VIP mode")
         return False
     
-    if game_state["vip_revealer"] != player_id:
-        await send_error(websocket, "Only the designated revealer can reveal cards")
+    # Validate reveal target
+    if reveal_for not in ["player", "banker"]:
+        await send_error(websocket, "Invalid reveal target. Must be 'player' or 'banker'.")
         return False
     
-    if game_state["cards_revealed"]:
-        await send_error(websocket, "Cards have already been revealed.")
+    # Check if this player is the assigned revealer for this card set
+    revealer_key = f"vip_{reveal_for}_revealer"
+    if game_state.get(revealer_key) != player_id:
+        await send_error(websocket, f"Only the designated {reveal_for} revealer can reveal {reveal_for} cards")
+        return False
+    
+    # Check if already revealed
+    reveal_state_key = f"{reveal_for}_cards_revealed"
+    if game_state.get(reveal_state_key, False):
+        await send_error(websocket, f"{reveal_for.capitalize()} cards have already been revealed.")
         return False
 
-    game_state["cards_revealed"] = True
-    await send_success(websocket, "Cards revealed!")
+    # Reveal the cards
+    game_state[reveal_state_key] = True
+    await send_success(websocket, f"{reveal_for.capitalize()} cards revealed!")
 
-    # After revealing, check if the game ends (natural) or continues to 3rd card
-    player_score = calculate_hand_score(player_cards)
-    banker_score = calculate_hand_score(banker_cards)
-    is_natural = player_score >= 8 or banker_score >= 8
-
-    if is_natural:
-        # Game ends here, calculate result
-        game_state["natural_win"] = True
-        game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
-        await calculate_result()
+    # Check if both sets are revealed
+    both_revealed = (game_state.get("player_cards_revealed", False) and 
+                    game_state.get("banker_cards_revealed", False))
+    
+    if both_revealed:
+        # Both revealed, continue with game logic
+        game_state["cards_revealed"] = True  # Set main reveal flag for compatibility
+        player_score = calculate_hand_score(player_cards)
+        banker_score = calculate_hand_score(banker_cards)
+        is_natural = player_score >= 8 or banker_score >= 8
+        if is_natural:
+            game_state["natural_win"] = True
+            game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
+            await calculate_result()
+        else:
+            game_state["game_phase"] = "waiting"
+            await broadcast_game_state()
     else:
-        # Game continues, check for 3rd card
-        game_state["game_phase"] = "waiting" # Or "dealing"
-        # The frontend will see the revealed cards and nextCardGoesTo
+        # Only one set revealed, wait for the other
         await broadcast_game_state()
-
     return True
 
 counter=0
@@ -894,10 +969,12 @@ async def handle_client(websocket):
                             counter=1
                         
                         if mode == "vip":
-                            game_state["vip_revealer"] = None
+                            game_state["vip_player_revealer"] = None
+                            game_state["vip_banker_revealer"] = None
                             game_state["cards_revealed"] = False
                         else:
-                            game_state["vip_revealer"] = None
+                            game_state["vip_player_revealer"] = None
+                            game_state["vip_banker_revealer"] = None
                             game_state["cards_revealed"] = True
                         await send_success(websocket, f"Game mode set to {mode}")
                         await broadcast_game_state()
@@ -910,11 +987,13 @@ async def handle_client(websocket):
 
                 elif action == "set_vip_revealer":
                     player_id = data.get("player_id")
-                    await handle_set_vip_revealer(websocket, player_id)
+                    reveal_for = data.get("reveal_for", "player")  # NEW: specify which cards to reveal
+                    await handle_set_vip_revealer(websocket, player_id, reveal_for)
 
                 elif action == "vip_reveal":
                     player_id = data.get("player_id")
-                    await handle_vip_reveal(websocket, player_id)
+                    reveal_for = data.get("reveal_for", "player")  # NEW: specify which cards to reveal
+                    await handle_vip_reveal(websocket, player_id, reveal_for)
 
                 elif action == "update_players":
                     if not game_state["can_manage_players"]:
