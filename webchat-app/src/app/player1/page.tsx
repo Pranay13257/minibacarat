@@ -41,6 +41,7 @@ interface GameState {
   game_mode?: string;
   vip_revealer?: string | null;
   cards_revealed?: boolean;
+  winner?: string | null;
 }
 
 const Player1Page = () => {
@@ -83,6 +84,7 @@ const Player1Page = () => {
     game_mode: undefined,
     vip_revealer: null,
     cards_revealed: false,
+    winner: null,
   });
   const [stats, setStats] = useState({
     banker_wins: 0,
@@ -211,6 +213,7 @@ const Player1Page = () => {
           game_mode: data.game_mode || undefined,
           vip_revealer: data.vip_revealer || null,
           cards_revealed: data.cards_revealed || false,
+          winner: data.winner || null,
         };
         setGameState(newGameState);
         setIsActive(newGameState.activePlayers.includes(PLAYER_ID));
@@ -312,7 +315,7 @@ const Player1Page = () => {
         {showWinnerModal && (
           <WinnerModal
             show={showWinnerModal}
-            winner={gameState.winner}
+            winner={gameState.winner ?? null}
             isLuckySix={gameState.isSuperSix}
             isNatural={gameState.naturalWin}
             naturalType={gameState.naturalType}

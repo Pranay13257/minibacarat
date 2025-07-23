@@ -44,6 +44,7 @@ interface GameState {
   cards_revealed?: boolean;
   burnAvailable?: boolean;
   burnMode?: string;
+  winner?: string | null;
   // Add any other new fields from server.py here
 }
 
@@ -101,7 +102,8 @@ const DealerPage = () => {
     vip_revealer: null,
     cards_revealed: false,
     burnAvailable: false,
-    burnMode: 'inactive'
+    burnMode: 'inactive',
+    winner: null
   });
 
   const [stats, setStats] = useState({
@@ -505,7 +507,7 @@ const DealerPage = () => {
         {showWinnerModal && (
           <WinnerModal
             show={showWinnerModal}
-            winner={gameState.winner}
+            winner={gameState.winner ?? null}
             isLuckySix={gameState.isSuperSix}
             isNatural={gameState.naturalWin}
             naturalType={gameState.naturalType}
@@ -522,7 +524,7 @@ const DealerPage = () => {
               (gameState.naturalType === 'natural_8' || gameState.naturalType === 'natural_9')
             )}
             onClose={() => setShowWinnerModal(false)}
-            gameMode={gameState.game_mode}
+            gameMode={gameState.game_mode ?? ''}
           />
         )}
       </div>
