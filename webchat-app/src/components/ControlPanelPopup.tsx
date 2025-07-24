@@ -649,7 +649,7 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                   <button
                     className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
                     style={{ width: 250, height: 49, backgroundColor: '#fff', color: '#741003' }}
-                    onClick={() => sendMessage({ action: 'vip_reveal', player_id: gameState.vip_revealer })}
+                    onClick={() => sendMessage({ action: 'dealer_final_reveal'})}
                   >
                     Reveal Cards
                   </button>

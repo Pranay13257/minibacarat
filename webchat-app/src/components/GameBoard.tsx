@@ -33,7 +33,8 @@ interface GameBoardProps {
     lastGameResult?: any;
     game_mode?: string;
     cards_revealed?: boolean;
-    vip_revealer?: string | null;
+    vip_player_revealer?: string | null;
+    vip_banker_revealer?: string | null;
     // Add any other new fields from server.py here
   };
   hideCards?: boolean;
@@ -116,12 +117,13 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
             }
           })()}
         </div>
-        {/* VIP Reveal Button for Player - under cards, above total */}
-        {!isBanker && (() => {
+        {/* VIP Reveal Button - under cards, above total */}
+        {(() => {
           const isVipMode = gameState.game_mode === 'vip';
           const cardsRevealed = !!gameState.cards_revealed;
-          const isRevealer = isVipMode && vipRevealer && playerId && vipRevealer === playerId;
-          const cards = gameState.playerCards;
+          const revealer = isBanker ? gameState.vip_banker_revealer : gameState.vip_player_revealer;
+          const isRevealer = isVipMode && revealer && playerId && revealer === playerId;
+          const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
           if (isVipMode && isRevealer && !cardsRevealed && cards.length > 0) {
             return (
               <div className="my-4 text-center">
