@@ -1,4 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+
+const range = (size) => {
+  const output = {};
+  for (let i = 1; i <= size; i++) {
+    output[i] = `${i}`;
+    output[`span-${i}`] = `span ${i} / span ${i}`;
+  }
+  return output;
+};
+
 module.exports = {
   content: [ './app/**/*.{js,ts,jsx,tsx,mdx}', // Note the addition of the `app` directory.
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -36,6 +46,9 @@ module.exports = {
         'darkBrown' : "#DEBE83",
         'randomBrown' : "#915A14",
       },
+      gridColumnStart: range(31), // adds col-start-1...col-start-31
+      gridColumnEnd: range(31),   // adds col-end-1...col-end-31
+      gridColumn: range(31), 
     },
   },
   plugins: [],

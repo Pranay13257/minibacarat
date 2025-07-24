@@ -516,27 +516,27 @@ export default function MiniBaccaratDashboard() {
 
         <div className="gird row-start-2 row-end-6 col-start-11 col-end-13 bg-[darkRed] flex flex-col justify-around items-start pl-4">
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/c1.png" className="w-6 h-6"/>
+            <img src="/assets/cn1.png" className="w-6 h-6"/>
             <div className="text-2xl text-yellow-500">Player Wins : {stats.player_wins}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/c2.png" className="w-6 h-6"/>
+            <img src="/assets/cn2.png" className="w-6 h-6"/>
             <div className="text-2xl text-yellow-500">Banker Wins : {stats.banker_wins}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/c3.png" className="w-6 h-6"/>
+            <img src="/assets/cn3.png" className="w-6 h-6"/>
             <div className="text-2xl text-yellow-500">Tie : {stats.ties}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/c4.png" className="w-6 h-6"/>
+            <img src="/assets/cn4.png" className="w-6 h-6"/>
             <div className="text-2xl text-yellow-500">Naturals : {naturals}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/c5.png" className="w-6 h-6"/>
+            <img src="/assets/cn5.png" className="w-6 h-6"/>
             <div className="text-2xl text-yellow-500">Player pair : {stats.player_pairs}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/c6.png" className="w-6 h-6"/>
+            <img src="/assets/cn6.png" className="w-6 h-6"/>
             <div className="text-2xl text-yellow-500">Banker pair : {stats.banker_pairs}</div>
           </div>
         </div>
@@ -551,11 +551,11 @@ export default function MiniBaccaratDashboard() {
                 const game = beadPlate[colIdx]?.[rowIdx];
                 let imgSrc = "";
                 if (game?.winner === "player") {
-                  imgSrc = "/assets/c1.png";
+                  imgSrc = "/assets/f2.png";
                 } else if (game?.winner === "banker") {
-                  imgSrc = "/assets/c2.png";
+                  imgSrc = "/assets/f1.png";
                 } else if (game?.winner === "tie") {
-                  imgSrc = "/assets/c6.png";
+                  imgSrc = "/assets/f3.png";
                 }
                 return (
                   <div key={`${colIdx}-${rowIdx}`} className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} z-50 relative `}>
@@ -565,18 +565,275 @@ export default function MiniBaccaratDashboard() {
               })
             ))}
         </div>
-        <div className="gird row-start-6 row-end-9 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(20,minmax(0,1fr))] grid-rows-4">
+        <div className="row-start-6 row-end-9 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(20,minmax(0,1fr))] grid-rows-4">
           <div className="col-start-10 col-end-12 row-start-2 row-end-4 flex justify-center items-center">
              <div className="text-6xl opacity-50 text-[#915A14] text-center">Big Road</div>
           </div>
+          {(() => {
+              const maxRows = 4;
+              let positions = [];
+              let grid: Record<string, boolean> = {};
+              let col = 0;
+              for (let streakIdx = 0; streakIdx < bigRoad.length; streakIdx++) {
+                const streak = bigRoad[streakIdx];
+                if (streak.length <= maxRows) {
+                  for (let i = 0; i < streak.length; i++) {
+                    let targetCol = col;
+                    let targetRow = i;
+                    // Slide diagonally up-right if collision
+                    while (grid[`${targetCol},${targetRow}`]) {
+                      targetCol++;
+                      targetRow--;
+                      if (targetRow < 0) break;
+                    }
+                    if (targetRow >= 0) {
+                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
+                      grid[`${targetCol},${targetRow}`] = true;
+                    }
+                  }
+                  col++; // Next streak starts in next column
+                } else {
+                  // Fill the column vertically
+                  for (let i = 0; i < maxRows; i++) {
+                    let targetCol = col;
+                    let targetRow = i;
+                    // Slide diagonally up-right if collision
+                    while (grid[`${targetCol},${targetRow}`]) {
+                      targetCol++;
+                      targetRow--;
+                      if (targetRow < 0) break;
+                    }
+                    if (targetRow >= 0) {
+                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
+                      grid[`${targetCol},${targetRow}`] = true;
+                    }
+                  }
+                  // Remaining beads go to the right, all at the bottom row
+                  let tailCol = col + 1;
+                  let tailRow = maxRows - 1;
+                  for (let i = maxRows; i < streak.length; i++) {
+                    let targetCol = tailCol;
+                    let targetRow = tailRow;
+                    // Slide diagonally up-right if collision
+                    while (grid[`${targetCol},${targetRow}`]) {
+                      targetCol++;
+                      targetRow--;
+                      if (targetRow < 0) break;
+                    }
+                    if (targetRow >= 0) {
+                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
+                      grid[`${targetCol},${targetRow}`] = true;
+                    }
+                    tailCol = targetCol + 1;
+                  }
+                  col++; // Next streak starts in next column
+                }
+              }
+              return positions.map(({ bead: cell, col, row }, idx) => {
+                let imgSrc = "";
+                if (cell.winner === "player") imgSrc = "/assets/yoloBlue.png";
+                else if (cell.winner === "banker") imgSrc = "/assets/yoloRed.png";
+                return (
+                  <div
+                    key={`${col}-${row}-${cell.tie_count || 0}-BigRoad`}
+                    className={`col-start-${col+1} col-end-${col+2} row-start-${row+1} row-end-${row+2} z-50 relative`}
+                  >
+                    {imgSrc && (
+                      <img
+                        src={imgSrc}
+                        className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        alt={cell.winner}
+                      />
+                    )}
+                    {cell.tie_count >= 1 && cell.tie_count <= 8 && (
+                      Array.from({ length: cell.tie_count }, (_, index) => (
+                        <img
+                          key={`line${index + 1}`}
+                          src={`/assets/l${index + 1}.png`}
+                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                          alt={`tie-line-${index + 1}`}
+                        />
+                      ))
+                    )}
+                    {cell.player_pair ? (
+                      <img src="/assets/bcs.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+                    ) : null}
+                    {cell.banker_pair ? (
+                      <img src="/assets/rcs.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
+                    ) : null}
+                    {(cell.banker_natural || cell.player_natural) ? (
+                      <img src="/assets/n.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
+                    ) : null}
+                  </div>
+                );
+              });
+            })()}
         </div>
-        <div className="gird row-start-9 row-end-11 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(30,minmax(0,1fr))] grid-rows-3">
-          <div className="col-start-1 col-end-31 row-start-1 row-end-4 flex justify-center items-center justify-self-center">
-             <div className="text-xl opacity-50 text-[#915A14] text-center">Big Eye Boy</div>
+        <div className="row-start-9 row-end-11 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(30,minmax(0,1fr))] grid-rows-3">
+          <div className="col-start-14 col-end-18 row-start-1 row-end-4 flex justify-center items-center">
+             <div className="text-4xl opacity-50 text-[#915A14] text-center">Big Eye Boy</div>
           </div>
+          {(() => {
+              const maxRow = 3;
+              let positions = [];
+              let grid: Record<string, boolean> = {};
+              for(let i=0; i<=11;i++){
+                grid[`${i},${4}`] = true;
+                grid[`${i},${5}`] = true;
+                grid[`${i},${6}`] = true;
+                grid[`${i},${7}`] = true;
+                grid[`${i},${8}`] = true;
+                grid[`${i},${9}`] = true;
+                grid[`${i},${10}`] = true;
+                grid[`${i},${11}`] = true;
+                grid[`${i},${12}`] = true;
+                grid[`${i},${13}`] = true;
+                grid[`${i},${14}`] = true;
+                grid[`${i},${15}`] = true;
+                grid[`${i},${16}`] = true;
+              }
+              for(let col=0;col < BEB.length;col++){
+                for(let row=0;row < BEB[col].length;row++){
+                  let tempRow = row+1;
+                  let tempCol = col+1;
+                  while(grid[`${tempCol},${tempRow}`]){
+                    tempCol++;
+                    tempRow--;
+                  }
+                  positions.push({tempo:BEB[col][row].tempo, col:tempCol, row:tempRow});
+                  grid[`${tempCol},${tempRow}`] = true;
+                }
+              }
+              return positions.map(({ tempo, col, row }, idx) => {
+                let imgSrc = "";
+                if (tempo === "stable") imgSrc = "/assets/f1.png";
+                else if (tempo === "unstable") imgSrc = "/assets/f2.png";
+                return (
+                  <div
+                    key={`${col}-${row}-${tempo}-BigRoad`}
+                    className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
+                  >
+                    {imgSrc && (
+                      <img
+                        src={imgSrc}
+                        className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      />
+                    )}
+                  </div>
+                );
+              });
+            })()}
         </div>
-        <div className="gird row-start-11 row-end-13 col-start-7 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3" ></div>
-        <div className="gird row-start-11 row-end-13 col-start-1 col-end-7 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3"></div>
+        <div className="row-start-11 row-end-13 col-start-7 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3" >
+          <div className="col-start-6 col-end-10 row-start-1 row-end-4 flex justify-center items-center">
+             <div className="text-4xl opacity-50 text-[#915A14] text-center">Cockroach Pig</div>
+          </div>
+          {(() => {
+                const maxRow = 3;
+                let positions = [];
+                let grid: Record<string, boolean> = {};
+                for(let i=0; i<=11;i++){
+                  grid[`${i},${4}`] = true;
+                  grid[`${i},${5}`] = true;
+                  grid[`${i},${6}`] = true;
+                  grid[`${i},${7}`] = true;
+                  grid[`${i},${8}`] = true;
+                  grid[`${i},${9}`] = true;
+                  grid[`${i},${10}`] = true;
+                  grid[`${i},${11}`] = true;
+                  grid[`${i},${12}`] = true;
+                  grid[`${i},${13}`] = true;
+                  grid[`${i},${14}`] = true;
+                  grid[`${i},${15}`] = true;
+                  grid[`${i},${16}`] = true;
+                }
+                for(let col=0;col < cp.length;col++){
+                  for(let row=0;row < cp[col].length;row++){
+                    let tempRow = row+1;
+                    let tempCol = col+1;
+                    while(grid[`${tempCol},${tempRow}`]){
+                      tempCol++;
+                      tempRow--;
+                    }
+                    positions.push({tempo:cp[col][row].tempo, col:tempCol, row:tempRow});
+                    grid[`${tempCol},${tempRow}`] = true;
+                  }
+                }
+                return positions.map(({ tempo, col, row }, idx) => {
+                  let imgSrc = "";
+                  if (tempo === "stable") imgSrc = "/assets/new_lineRed.png";
+                  else if (tempo === "unstable") imgSrc = "/assets/new_lineBlue.png";
+                  return (
+                    <div
+                      key={`${col}-${row}-${tempo}-BigRoad`}
+                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
+                    >
+                      {imgSrc && (
+                        <img
+                          src={imgSrc}
+                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        />
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+        </div>
+        <div className="row-start-11 row-end-13 col-start-1 col-end-7 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3">
+          <div className="col-start-6 col-end-10 row-start-1 row-end-4 flex justify-center items-center">
+             <div className="text-4xl opacity-50 text-[#915A14] text-center">Small Road</div>
+          </div>
+          {(() => {
+                const maxRow = 3;
+                let positions = [];
+                let grid: Record<string, boolean> = {};
+                for(let i=0; i<=11;i++){
+                  grid[`${i},${4}`] = true;
+                  grid[`${i},${5}`] = true;
+                  grid[`${i},${6}`] = true;
+                  grid[`${i},${7}`] = true;
+                  grid[`${i},${8}`] = true;
+                  grid[`${i},${9}`] = true;
+                  grid[`${i},${10}`] = true;
+                  grid[`${i},${11}`] = true;
+                  grid[`${i},${12}`] = true;
+                  grid[`${i},${13}`] = true;
+                  grid[`${i},${14}`] = true;
+                  grid[`${i},${15}`] = true;
+                  grid[`${i},${16}`] = true;
+                }
+                for(let col=0;col < smallRoad.length;col++){
+                  for(let row=0;row < smallRoad[col].length;row++){
+                    let tempRow = row+1;
+                    let tempCol = col+1;
+                    while(grid[`${tempCol},${tempRow}`]){
+                      tempCol++;
+                      tempRow--;
+                    }
+                    positions.push({tempo:smallRoad[col][row].tempo, col:tempCol, row:tempRow});
+                    grid[`${tempCol},${tempRow}`] = true;
+                  }
+                }
+                return positions.map(({ tempo, col, row }, idx) => {
+                  let imgSrc = "";
+                  if (tempo === "stable") imgSrc = "/assets/f1.png";
+                  else if (tempo === "unstable") imgSrc = "/assets/f2.png";
+                  return (
+                    <div
+                      key={`${col}-${row}-${tempo}-BigRoad`}
+                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
+                    >
+                      {imgSrc && (
+                        <img
+                          src={imgSrc}
+                          className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        />
+                      )}
+                    </div>
+                  );
+                });
+            })()}
+        </div>
 
       </div>
       <span className="absolute bottom-0 text-black text-xl">This is the display screen. All tables results and management decisions will be final</span>
