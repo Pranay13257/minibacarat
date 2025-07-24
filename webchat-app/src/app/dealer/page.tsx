@@ -40,11 +40,12 @@ interface GameState {
   max_bet?: number;
   min_bet?: number;
   game_mode?: string;
-  vip_revealer?: string | null;
   cards_revealed?: boolean;
   burnAvailable?: boolean;
   burnMode?: string;
   winner?: string | null;
+  vip_player_revealer?: string | null;
+  vip_banker_revealer?: string | null;
   // Add any other new fields from server.py here
 }
 
@@ -99,7 +100,8 @@ const DealerPage = () => {
     naturalType: null,
     isSuperSix: false,
     lastGameResult: null,
-    vip_revealer: null,
+    vip_player_revealer: null,
+    vip_banker_revealer: null,
     cards_revealed: false,
     burnAvailable: false,
     burnMode: 'inactive',
@@ -136,8 +138,8 @@ const DealerPage = () => {
   const [manualSubmitting, setManualSubmitting] = useState(false);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
 
-  // VIP mode revealer selection state
-  const [selectedRevealer, setSelectedRevealer] = useState('');
+  
+  
 
   useEffect(() => {
     if (gameState.gamePhase === "finished") {
@@ -322,7 +324,8 @@ const DealerPage = () => {
           max_bet: data.max_bet || undefined,
           min_bet: data.min_bet || undefined,
           game_mode: data.game_mode || undefined,
-          vip_revealer: data.vip_revealer || null,
+          vip_player_revealer: data.vip_player_revealer || null,
+          vip_banker_revealer: data.vip_banker_revealer || null,
           cards_revealed: data.cards_revealed || false,
           burnAvailable: typeof data.burnAvailable !== 'undefined' ? data.burnAvailable : false,
           burnMode: typeof data.burnMode !== 'undefined' ? data.burnMode : 'inactive',
@@ -350,6 +353,7 @@ const DealerPage = () => {
         break;
     }
   };
+
 
   const sendMessage = (message: Record<string, any>) => {
     if (socket && connected) {
@@ -431,18 +435,7 @@ const DealerPage = () => {
     setTimeout(() => setManualSubmitting(false), 1000);
   };
 
-  const handleSetRevealer = () => {
-    if (selectedRevealer) {
-      sendMessage({ action: 'set_vip_revealer', player_id: selectedRevealer });
-    }
-  };
 
-  // Add useEffect to reset selectedRevealer on new game in VIP mode
-  useEffect(() => {
-    if (mode === 'vip' && gameState.gamePhase === 'waiting') {
-      setSelectedRevealer('');
-    }
-  }, [mode, gameState.gamePhase]);
 
   return (
     <div className="min-h-screen bg-vdarkRed flex flex-col justify-start items-center">
@@ -476,7 +469,7 @@ const DealerPage = () => {
         selectedMode={mode}
         setSelectedMode={handleModeChange}
         connected={connected}
-        setSelectedRevealer={setSelectedRevealer}
+        //setSelectedRevealer={setSelectedRevealer}
         canUndoLastWin={canUndoLastWin}
       />
       {/* {statusMessage && (
