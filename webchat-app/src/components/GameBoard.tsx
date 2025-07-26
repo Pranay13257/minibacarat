@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { div } from "framer-motion/client";
+import { useState, useEffect } from "react";
 
 interface GameBoardProps {
   gameState: {
@@ -48,16 +49,64 @@ interface GameBoardProps {
 
 const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, playerId, vipRevealer, connected, onVipReveal }: GameBoardProps) => {
   const [cardInput, setCardInput] = useState("");
+  const [isTouched, setIsTouched] = useState(false);
+  const [currPage, setCurrPage] = useState<'dealer' | 'player' | 'stats'>('stats');
+  const [canReveal, setCanReveal] = useState(false);
+
+  useEffect(() => {
+    console.log("vipPlayer="+[gameState.vip_player_revealer]);
+    console.log("vipBanker="+[gameState.vip_banker_revealer]);
+    if(!isBanker && gameState.vip_player_revealer == playerId){
+      setCanReveal(true);
+    }
+    else if(isBanker && gameState.vip_banker_revealer == playerId){
+      setCanReveal(true);
+    }
+    else{
+      setCanReveal(false);
+    }
+  }, [gameState])
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('dealer')) {
+      setCurrPage('dealer');
+    } else if (path.includes('player')) {
+      setCurrPage('player');
+    } else {
+      setCurrPage('stats');
+    }
+  }, []);
+
+  const handleTouchStart = () => {
+    if (currPage === 'player' && canReveal) {
+      console.log("touched");
+      setIsTouched(prev => !prev);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (currPage === 'player' && canReveal) {
+      console.log("untouched");
+      setIsTouched(prev => !prev);
+    }
+  };
 
   const renderCard = (card: string) => {
     return (
-      <div key={card} className="relative">
+      // <div key={card} className="relative">
+      <div 
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={`/cards/${card.toLowerCase()}.png`}
           alt={`Card ${card}`}
           className="w-24 h-36 object-contain"
         />
       </div>
+        
+      // </div>
     );
   };
 
@@ -109,7 +158,14 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
             } else if (isVipMode && !cardsRevealed) {
               // VIP mode, cards dealt but not revealed: show BR.png for each card
               return cards.map((_, i) => (
-                <img key={i} src="/cards/BR.png" alt="VIP Hidden Card" className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2" />
+                  <img 
+                  key={i}
+                  src={isTouched ? `/cards/${cards[i].toLowerCase()}.png` : "/cards/BR.png"}
+                  alt="VIP Hidden Card" 
+                  className="w-24 h-36 rounded mb-2"
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                />
               ));
             } else {
               // Normal: show actual cards
@@ -124,19 +180,19 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
           const revealer = isBanker ? gameState.vip_banker_revealer : gameState.vip_player_revealer;
           const isRevealer = isVipMode && revealer && playerId && revealer === playerId;
           const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
-          if (isVipMode && isRevealer && !cardsRevealed && cards.length > 0) {
-            return (
-              <div className="my-4 text-center">
-                <button
-                  className="px-6 py-3 bg-darkRed text-white rounded-lg font-semibold text-xl"
-                  onClick={onVipReveal}
-                  disabled={!connected}
-                >
-                  Reveal Cards
-                </button>
-              </div>
-            );
-          }
+          // if (isVipMode && isRevealer && !cardsRevealed && cards.length > 0) {
+          //   return (
+          //     <div className="my-4 text-center">
+          //       <button
+          //         className="px-6 py-3 bg-darkRed text-white rounded-lg font-semibold text-xl"
+          //         onClick={onVipReveal}
+          //         disabled={!connected}
+          //       >
+          //         Reveal Cards
+          //       </button>
+          //     </div>
+          //   );
+          // }
           return null;
         })()}
       </div>

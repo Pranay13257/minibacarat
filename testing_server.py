@@ -915,7 +915,7 @@ async def handle_client(websocket):
                         await send_error(websocket, "Both revealers already assigned for this round")
                         continue
                     await handle_set_vip_revealer(websocket, player_id, reveal_for)
-                    print(game_state["vip_player_revealer"], game_state["vip_banker_revealer"])
+                    print("player revealer"+game_state["vip_player_revealer"], "banker revealer"+game_state["vip_banker_revealer"])
 
                 elif action == "update_players":
                     if not game_state["can_manage_players"]:

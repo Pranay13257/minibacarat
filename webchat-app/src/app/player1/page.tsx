@@ -42,6 +42,8 @@ interface GameState {
   vip_revealer?: string | null;
   cards_revealed?: boolean;
   winner?: string | null;
+  vip_player_revealer?: string | null;
+  vip_banker_revealer?: string | null;
 }
 
 const Player1Page = () => {
@@ -214,6 +216,8 @@ const Player1Page = () => {
           vip_revealer: data.vip_revealer || null,
           cards_revealed: data.cards_revealed || false,
           winner: data.winner || null,
+          vip_player_revealer: data.vip_player_revealer || null,
+          vip_banker_revealer: data.vip_banker_revealer || null,
         };
         setGameState(newGameState);
         setIsActive(newGameState.activePlayers.includes(PLAYER_ID));
@@ -276,7 +280,13 @@ const Player1Page = () => {
           </div>
           {/* Banker GameBoard (top, ends at row 7) */}
           <div className="col-start-4 col-end-10 row-start-3 row-end-7 flex justify-center items-end m-6">
-            <GameBoard gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={true} extraWide={gameState.bankerCards.length === 3} />
+            <GameBoard
+              gameState={gameState}
+              hideCards={isVipMode && !cardsRevealed}
+              isBanker={true}
+              extraWide={gameState.bankerCards.length === 3}
+              playerId={PLAYER_ID}
+              />
           </div>
           {/* Player GameBoard (bottom, starts at row 7) */}
           <div className="col-start-4 col-end-10 row-start-7 row-end-11 flex justify-center items-start m-6">
