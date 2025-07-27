@@ -216,20 +216,18 @@ def new_round():
 
     # Reset both revealers and individual reveal states
     if is_vip_mode:
-        asyncio.create_task(reset_vip_revealers())
-        game_state["player_cards_revealed"] = False
-        game_state["banker_cards_revealed"] = False
+        game_state["vip_player_revealer"] = None
+        game_state["vip_banker_revealer"] = None
+        game_state["cards_revealed"] = False
     
     game_state.update({
         "game_phase": "waiting",
         "natural_win": False,
         "natural_type": None,
         "auto_dealing": False,
-        "vip_player_revealer": None,
-        "vip_banker_revealer": None,
         "cards_revealed": not is_vip_mode,
         "can_manage_players": True,
-        "winner": None
+        "winner": None,
     })
 
 async def broadcast_refresh_stats():
@@ -408,7 +406,8 @@ async def broadcast_game_state():
         "max_bet": game_state["max_bet"],
         "min_bet": game_state["min_bet"],
         "game_mode": game_state["game_mode"],
-        "vip_revealer": game_state["vip_revealer"],
+        "vip_player_revealer": game_state["vip_player_revealer"],
+        "vip_banker_revealer": game_state["vip_banker_revealer"],
         "cards_revealed": game_state["cards_revealed"],
         "winner": game_state["winner"]
     }
@@ -942,10 +941,12 @@ async def handle_client(websocket):
                             counter=1
                         
                         if mode == "vip":
-                            game_state["vip_revealer"] = None
+                            game_state["vip_player_revealer"] = None
+                            game_state["vip_banker_revealer"] = None
                             game_state["cards_revealed"] = False
                         else:
-                            game_state["vip_revealer"] = None
+                            game_state["vip_player_revealer"] = None
+                            game_state["vip_banker_revealer"] = None
                             game_state["cards_revealed"] = True
                         await send_success(websocket, f"Game mode set to {mode}")
                         await broadcast_game_state()
