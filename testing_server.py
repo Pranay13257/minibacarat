@@ -46,13 +46,15 @@ game_state = {
     "cards_revealed": False,  
     "winner": None
 }
-
+game_state["active_players"].add("dealer")  # Add default player for testing
 remaining_cards = None
 card_duplicates = defaultdict(int)
 last_card_info = {"card": None, "recipient": None}
 last_game_result = None
 player_cards = []
 banker_cards = []
+dummy_player_cards = []  # For dummy player in VIP mode
+dummy_banker_cards = []  # For dummy banker in VIP mode
 burn_card = None
 burned_cards = []  # Track all burned cards in the current round
 
@@ -157,9 +159,11 @@ def update_card_tracking(card, recipient, is_undo=False):
         last_card_info.update({"card": card, "recipient": recipient})
 
 def new_round():
-    global player_cards, banker_cards, last_card_info, game_pairs, last_game_result
+    global player_cards, banker_cards, last_card_info, game_pairs, last_game_result,dummy_player_cards, dummy_banker_cards
     player_cards = []
     banker_cards = []
+    dummy_player_cards = []  # Reset dummy player cards for VIP mode
+    dummy_banker_cards = []  # Reset dummy banker cards for VIP mode
     last_card_info = {"card": None, "recipient": None}
     last_game_result = None
     game_pairs = {"player_pair": False, "banker_pair": False}
@@ -213,6 +217,7 @@ async def reset_all():
         logging.error(f"Error clearing MongoDB: {e}")
     # Deactivate all players
     game_state["active_players"] = set()
+    game_state["active_players"].add("dealer")
     game_state.update({
         "round": 0,
         "burn_mode": "inactive",
@@ -221,40 +226,57 @@ async def reset_all():
     })
     await broadcast_refresh_stats()
 
+def has_unrevealed_cards():
+    """Check if there are any 'BR' cards remaining in player_cards or banker_cards"""
+    if 'BR' in player_cards or 'BR' in banker_cards:
+        return True
+    else:
+        return False
+
 def get_next_card_recipient():
     if not game_state["auto_dealing"] and len(game_state["active_players"]) == 0:
         return "no_players"
-    
+   
     total_cards = len(player_cards) + len(banker_cards)
-    
+   
     if total_cards < 4:
-        if total_cards%2 == 0:
+        if total_cards % 2 == 0:
             return "player"
-        elif total_cards%2 == 1:
+        elif total_cards % 2 == 1:
             return "banker"
-
+    
     # In VIP mode, stop dealing after 4 cards until they are revealed
     if game_state["game_mode"] == "vip" and not game_state["cards_revealed"] and total_cards >= 4:
         return "complete"
-        
+       
     if total_cards == 4:
-        player_score = calculate_hand_score(player_cards)
-        banker_score = calculate_hand_score(banker_cards)
-        
+        # For VIP mode, use dummy cards for calculation
+        if game_state["game_mode"] == "vip":
+            player_score = calculate_hand_score(dummy_player_cards)
+            banker_score = calculate_hand_score(dummy_banker_cards)
+        else:
+            player_score = calculate_hand_score(player_cards)
+            banker_score = calculate_hand_score(banker_cards)
+       
         if player_score >= 8 or banker_score >= 8:
             return "complete"
-        
+       
         if player_score <= 5:
             return "player"
         elif banker_score <= 5:
             return "banker"
         else:
             return "complete"
-    
+   
     if total_cards == 5 and len(player_cards) == 3:
-        banker_score = calculate_hand_score(banker_cards)
-        player_third = card_value(player_cards[2])
-        
+        # For VIP mode, use dummy cards for calculation
+        if game_state["game_mode"] == "vip":
+            banker_score = calculate_hand_score(dummy_banker_cards)
+            player_third = card_value(dummy_player_cards[2])  # Use dummy card for 3rd card value
+        else:
+            banker_score = calculate_hand_score(banker_cards)
+            player_third = card_value(player_cards[2])
+       
         if banker_score <= 2:
             return "banker"
         elif banker_score == 3 and player_third != 8:
@@ -267,7 +289,7 @@ def get_next_card_recipient():
             return "banker"
         else:
             return "complete"
-    
+   
     return "complete"
 
 async def shuffle_deck(mode=None):
@@ -318,6 +340,19 @@ async def handle_end_burn_card(websocket):
     logging.info("Burn mode ended.")
     return True
 
+def get_calculation_cards(card_type):
+    """Returns the appropriate card list for calculations based on game mode"""
+    if game_state["game_mode"] == "vip":
+        if card_type == "player":
+            return dummy_player_cards
+        else:  # banker
+            return dummy_banker_cards
+    else:
+        if card_type == "player":
+            return player_cards
+        else:  # banker
+            return banker_cards
+
 async def broadcast_game_state():
     if not connected_clients:
         return
@@ -331,12 +366,17 @@ async def broadcast_game_state():
         can_shuffle = len(remaining_cards) < 52
     else:
         can_shuffle = False
+    
+    # Use appropriate cards for totals
+    calc_player_cards = get_calculation_cards("player")
+    calc_banker_cards = get_calculation_cards("banker")
+    
     message = {
         "action": "game_state",
-        "playerCards": player_cards,
-        "bankerCards": banker_cards,
-        "playerTotal": calculate_hand_score(player_cards),
-        "bankerTotal": calculate_hand_score(banker_cards),
+        "playerCards": player_cards,  # Display cards (may contain "BR")
+        "bankerCards": banker_cards,  # Display cards (may contain "BR")
+        "playerTotal": calculate_hand_score(calc_player_cards),  # Use calculation cards
+        "bankerTotal": calculate_hand_score(calc_banker_cards),  # Use calculation cards
         "nextCardGoesTo": next_recipient,
         "gamePhase": game_state["game_phase"],
         "playerPair": game_pairs["player_pair"],
@@ -347,8 +387,8 @@ async def broadcast_game_state():
         "canUndoLastWin": has_mongo_entries,
         "canCalculate": game_state["can_calculate"],
         "canShuffle": can_shuffle,
-        "burnMode": game_state["burn_mode"],  # Changed from burnEnabled 
-        "burnAvailable": game_state["burn_available"],  # NEW: for frontend logic
+        "burnMode": game_state["burn_mode"],
+        "burnAvailable": game_state["burn_available"],
         "burnCard": burn_card,
         "naturalWin": game_state["natural_win"],
         "naturalType": game_state["natural_type"],
@@ -362,8 +402,8 @@ async def broadcast_game_state():
         "max_bet": game_state["max_bet"],
         "min_bet": game_state["min_bet"],
         "game_mode": game_state["game_mode"],
-        "vip_player_revealer": game_state["vip_player_revealer"], # Changed from vip_revealer
-        "vip_banker_revealer": game_state["vip_banker_revealer"], # Changed from vip_revealer
+        "vip_player_revealer": game_state["vip_player_revealer"],
+        "vip_banker_revealer": game_state["vip_banker_revealer"],
         "cards_revealed": game_state["cards_revealed"],
         "winner": game_state["winner"]
     }
@@ -395,6 +435,7 @@ async def send_error(websocket, message):
 
 async def send_success(websocket, message):
     await websocket.send(json.dumps({"action": "success", "message": message}))
+
 
 async def handle_add_card(websocket, card, is_auto_deal=False):
     if not is_auto_deal:
@@ -434,14 +475,28 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
             await send_error(websocket, "Cannot add more cards")
         return False
     
-    if recipient == "player":
-        player_cards.append(card)
-        # Once the first card is dealt to player, disable burn buttons
-        if len(player_cards) == 1:
-            game_state["burn_available"] = False
-            game_state["burn_mode"] = "completed"
+    # VIP Mode Logic: Add to dummy lists and original lists with "BR"
+    if game_state["game_mode"] == "vip":
+        if recipient == "player":
+            dummy_player_cards.append(card)  # Add actual card to dummy list
+            player_cards.append("BR")        # Add "BR" to original list
+            # Once the first card is dealt to player, disable burn buttons
+            if len(player_cards) == 1:
+                game_state["burn_available"] = False
+                game_state["burn_mode"] = "completed"
+        else:
+            dummy_banker_cards.append(card)  # Add actual card to dummy list
+            banker_cards.append("BR")        # Add "BR" to original list
     else:
-        banker_cards.append(card)
+        # Normal Mode Logic
+        if recipient == "player":
+            player_cards.append(card)
+            # Once the first card is dealt to player, disable burn buttons
+            if len(player_cards) == 1:
+                game_state["burn_available"] = False
+                game_state["burn_mode"] = "completed"
+        else:
+            banker_cards.append(card)
     
     if len(player_cards) + len(banker_cards) == 1:
         game_state["can_manage_players"] = False
@@ -453,25 +508,38 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
     else:
         update_card_tracking(card, recipient)
     
-    if recipient == "player" and len(player_cards) == 2:
-        game_pairs["player_pair"] = has_pair(player_cards)
-        logging.info(f"Player pair detected: {player_cards} -> {game_pairs['player_pair']}")
-    elif recipient == "banker" and len(banker_cards) == 2:
-        game_pairs["banker_pair"] = has_pair(banker_cards)
-        logging.info(f"Banker pair detected: {banker_cards} -> {game_pairs['banker_pair']}")
+    # Pair detection logic - use dummy cards for VIP mode
+    if game_state["game_mode"] == "vip":
+        if recipient == "player" and len(dummy_player_cards) == 2:
+            game_pairs["player_pair"] = has_pair(dummy_player_cards)
+            logging.info(f"Player pair detected (VIP): {dummy_player_cards} -> {game_pairs['player_pair']}")
+        elif recipient == "banker" and len(dummy_banker_cards) == 2:
+            game_pairs["banker_pair"] = has_pair(dummy_banker_cards)
+            logging.info(f"Banker pair detected (VIP): {dummy_banker_cards} -> {game_pairs['banker_pair']}")
+    else:
+        if recipient == "player" and len(player_cards) == 2:
+            game_pairs["player_pair"] = has_pair(player_cards)
+            logging.info(f"Player pair detected: {player_cards} -> {game_pairs['player_pair']}")
+        elif recipient == "banker" and len(banker_cards) == 2:
+            game_pairs["banker_pair"] = has_pair(banker_cards)
+            logging.info(f"Banker pair detected: {banker_cards} -> {game_pairs['banker_pair']}")
     
     total_cards = len(player_cards) + len(banker_cards)
 
-    # NEW: VIP logic to pause after 4 cards for reveal
-    if total_cards == 4 and game_state["game_mode"] == "vip" and not game_state["cards_revealed"]:
+    # VIP logic to pause after 4 cards for reveal
+    if total_cards >= 4 and game_state["game_mode"] == "vip" and has_unrevealed_cards():
         game_state["game_phase"] = "waiting_for_reveal"
         game_state["can_calculate"] = False # Cannot calculate until reveal
         await broadcast_game_state()
         return True # Stop dealing process
-
-    if total_cards == 4:
+    
+    # Handle 4 cards logic
+    if total_cards == 4 and game_state["game_mode"] != "vip":
+        # Use dummy cards for VIP mode calculations
+        
         player_score = calculate_hand_score(player_cards)
         banker_score = calculate_hand_score(banker_cards)
+        
         game_state["can_calculate"] = True
         
         if player_score >= 8 or banker_score >= 8:
@@ -480,34 +548,53 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
             if not is_auto_deal:
                 await calculate_result()
                 return True
-    
+
     if not is_auto_deal and get_next_card_recipient() == "complete":
         await calculate_result()
     
     return True
 
+
 async def calculate_result():
     global last_game_result
-    player_score = calculate_hand_score(player_cards)
-    banker_score = calculate_hand_score(banker_cards)
-    is_super_six = (banker_score == 6 and banker_score > player_score and len(banker_cards) == 3)
-    player_pair = game_pairs["player_pair"]
-    banker_pair = game_pairs["banker_pair"]
+    
+    # Use appropriate cards based on game mode
+    calc_player_cards = get_calculation_cards("player")
+    calc_banker_cards = get_calculation_cards("banker")
+    
+    player_score = calculate_hand_score(calc_player_cards)
+    banker_score = calculate_hand_score(calc_banker_cards)
+    
+    if game_state["game_mode"] == "vip" and (len(calc_player_cards)+len(calc_banker_cards) == 4):
+        if player_score >= 8 or banker_score >= 8:
+            game_state["natural_win"] = True
+            game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
+
+    is_super_six = (banker_score == 6 and banker_score > player_score and len(calc_banker_cards) == 3)
+    
+    # Use calculation cards for pair detection too
+    player_pair = len(calc_player_cards) == 2 and has_pair(calc_player_cards)
+    banker_pair = len(calc_banker_cards) == 2 and has_pair(calc_banker_cards)
+    
     game_results["is_super_six"] = is_super_six
     is_natural = game_state["natural_win"]
     natural_type = game_state["natural_type"]
-    # UPDATED: Separate natural detection
+    
+    # UPDATED: Separate natural detection using calculation cards
     player_natural = is_natural and player_score >= 8 and player_score > banker_score
     banker_natural = is_natural and banker_score >= 8 and banker_score > player_score
+    
     previous_state = {
         "round": game_state["round"]
     }
+    
     if player_score > banker_score:
         winner = "player"
     elif banker_score > player_score:
         winner = "banker"
     else:
         winner = "tie"
+    
     game_state["round"] += 1
     await save_game_result(
         winner, game_state["round"],
@@ -525,11 +612,12 @@ async def calculate_result():
     }
     game_state["game_phase"] = "finished"
     game_state["can_calculate"] = False
+    
     result_data = {
         "action": "game_result",
         "winner": winner,
-        "playerCards": player_cards,
-        "bankerCards": banker_cards,
+        "playerCards": player_cards,  # Still send display cards
+        "bankerCards": banker_cards,  # Still send display cards
         "playerTotal": player_score,
         "bankerTotal": banker_score,
         "playerPair": player_pair,
@@ -537,13 +625,14 @@ async def calculate_result():
         "is_super_six": is_super_six,
         "isNatural": is_natural,
         "naturalType": natural_type,
-        "playerNatural": player_natural,  # New
-        "bankerNatural": banker_natural,  # New
+        "playerNatural": player_natural,
+        "bankerNatural": banker_natural,
         "round": game_state["round"]
     }
     await broadcast_result(result_data)
     await broadcast_game_state()
     await broadcast_refresh_stats()
+
 
 async def handle_burn_card(websocket, card):
     global burn_card
@@ -781,8 +870,16 @@ async def handle_manual_result(websocket, data):
         await send_error(websocket, f"Error saving manual result: {str(e)}")
         return False
 
-async def handle_set_vip_revealer(websocket, player_id, reveal_for):
-    """Set the VIP revealer for player or banker cards - simplified version."""
+async def handle_set_vip_revealer(websocket, player_id, revealer_type):
+    """
+    Enhanced VIP revealer logic for casino game with 6 players + 1 dealer.
+    
+    Three scenarios:
+    1. Player selects player_revealer -> Dealer becomes banker_revealer
+    2. Player selects banker_revealer -> Dealer becomes player_revealer  
+    3. Two different players selected as revealers -> No dealer involvement
+    """
+    
     if game_state["game_mode"] != "vip":
         await send_error(websocket, "VIP revealer can only be set in VIP mode")
         return False
@@ -791,39 +888,50 @@ async def handle_set_vip_revealer(websocket, player_id, reveal_for):
         await send_error(websocket, "Player must be active to be a revealer")
         return False
     
-    # Set the revealer (reveal_for is automatically determined)
-    revealer_key = f"vip_{reveal_for}_revealer"
-    game_state[revealer_key] = player_id
-    await send_success(websocket, f"Player {player_id} set as VIP revealer for {reveal_for} cards")
-    await broadcast_game_state()
-    return True
+    if revealer_type == "player" and player_id != game_state["vip_banker_revealer"]:
+        game_state["vip_player_revealer"] = player_id
+        if game_state["vip_banker_revealer"] is None:
+            # If no banker revealer, set dealer as banker revealer
+            game_state["vip_banker_revealer"] = "dealer"
+            message = f"Player {player_id} set as player revealer, dealer set as banker revealer"
+    
+    if revealer_type == "banker" and player_id != game_state["vip_player_revealer"]:
+        game_state["vip_banker_revealer"] = player_id
+        if game_state["vip_player_revealer"] is None:
+            # If no player revealer, set dealer as player revealer
+            game_state["vip_player_revealer"] = "dealer"
+            message = f"Player {player_id} set as banker revealer, dealer set as player revealer"
 
+    await send_success(websocket, message)
+    await broadcast_game_state()
+    
+    # Log current state
+    print(f"Revealer assignment complete:")
+    print(f"  Player revealer: {game_state['vip_player_revealer']}")
+    print(f"  Banker revealer: {game_state['vip_banker_revealer']}")
+    
+    return True
+    
 async def handle_dealer_final_reveal(websocket):
     """Dealer triggers final reveal for all cards in VIP mode."""
+    global player_cards, banker_cards
     if game_state["game_mode"] != "vip":
         await send_error(websocket, "Final reveal only available in VIP mode")
         return False
     if game_state["game_phase"] != "waiting_for_reveal":
         await send_error(websocket, "Final reveal can only be triggered during waiting_for_reveal phase")
         return False
-    game_state["cards_revealed"] = True
-    # Now, after final reveal, calculate result if needed
-    player_score = calculate_hand_score(player_cards)
-    banker_score = calculate_hand_score(banker_cards)
-    is_natural = player_score >= 8 or banker_score >= 8
-    if is_natural:
-        game_state["natural_win"] = True
-        game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
-        await calculate_result()
-    else:
-        game_state["game_phase"] = "waiting"
-        await broadcast_game_state()
-    await send_success(websocket, "Dealer triggered final reveal. All cards are now visible.")
+    
+    player_cards[0]=dummy_player_cards[0]
+    player_cards[1]=dummy_player_cards[1]
+    banker_cards[0]=dummy_banker_cards[0]
+    banker_cards[1]=dummy_banker_cards[1]
+    broadcast_game_state()
     return True
 
 counter=0
 async def handle_client(websocket):
-    global counter
+    global counter,player_cards,banker_cards
     try:
         connected_clients.add(websocket)
         await broadcast_game_state()
@@ -837,6 +945,7 @@ async def handle_client(websocket):
                     success = await handle_add_card(websocket, data.get("card", "").strip().upper())
                     if success:
                         await broadcast_game_state()
+                        print(player_cards, banker_cards, dummy_banker_cards, dummy_player_cards,sep=", ")
                 
                 elif action == "start_new_game":
                     if game_state["auto_dealing"]:
@@ -902,20 +1011,26 @@ async def handle_client(websocket):
                     else:
                         await handle_manual_result(websocket, data)
 
-                elif action == "set_vip_revealer":
+                elif action == "set_vip_player_revealer":
                     player_id = data.get("player_id")
-                    if game_state["vip_player_revealer"] is None:
-                        reveal_for = "player"  # First selection = player revealer
-                    elif game_state["vip_banker_revealer"] is None:
-                        if player_id == game_state["vip_player_revealer"]:
-                            await send_error(websocket, f"Player {player_id} is already the player revealer. Please select a different player for banker revealer.")
-                            continue
-                        reveal_for = "banker"  # Second selection = banker revealer
-                    else:
-                        await send_error(websocket, "Both revealers already assigned for this round")
+                    if not player_id:
+                        await send_error(websocket, "Missing player_id")
                         continue
-                    await handle_set_vip_revealer(websocket, player_id, reveal_for)
-                    print("player revealer"+game_state["vip_player_revealer"], "banker revealer"+game_state["vip_banker_revealer"])
+
+                    success = await handle_set_vip_revealer(websocket, player_id, "player")
+                    if success:
+                        print(f"Player revealer: {game_state['vip_player_revealer']}, Banker revealer: {game_state['vip_banker_revealer']}")
+
+                elif action == "set_vip_banker_revealer":
+                    player_id = data.get("player_id")
+                    if not player_id:
+                        await send_error(websocket, "Missing player_id")
+                        continue
+                        
+                    success = await handle_set_vip_revealer(websocket, player_id, "banker")
+                    if success:
+                        print(f"Player revealer: {game_state['vip_player_revealer']}, Banker revealer: {game_state['vip_banker_revealer']}")
+
 
                 elif action == "update_players":
                     if not game_state["can_manage_players"]:
@@ -974,6 +1089,65 @@ async def handle_client(websocket):
                 elif action == "dealer_final_reveal":
                     await handle_dealer_final_reveal(websocket)
 
+                elif action == "reveal_player_card_1":
+                    player_cards[0]=dummy_player_cards[0]
+                    await broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state  
+                
+
+                elif action == "reveal_player_card_2":
+                    player_cards[1]=dummy_player_cards[1]
+                    await broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state 
+
+                elif action == "reveal_player_card_3":
+                    player_cards[2]=dummy_player_cards[2]
+                    await broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state 
+
+                elif action == "reveal_banker_card_1":
+                    banker_cards[0]=dummy_banker_cards[0]
+                    await broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state 
+                
+                elif action == "reveal_banker_card_2":
+                    banker_cards[1]=dummy_banker_cards[1]
+                    await broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state 
+
+                elif action == "reveal_banker_card_3":
+                    banker_cards[2]=dummy_banker_cards[2]
+                    await broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state 
+                
+                elif action == "reveal_dealer_banker_cards":
+                    banker_cards[0]=dummy_banker_cards[0]
+                    banker_cards[1]=dummy_banker_cards[1]
+                    broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state
+
+                elif action == "reveal_dealer_player_cards":
+                    player_cards[0]=dummy_player_cards[0]
+                    player_cards[1]=dummy_player_cards[1]
+                    broadcast_game_state()
+                    if not has_unrevealed_cards():
+                        calculate_result() # Auto-calculate if all cards revealed
+                    await broadcast_game_state
+
                 else:
                     await send_error(websocket, f"Unknown action: {action}")
                     
@@ -1024,5 +1198,3 @@ async def get_banker_naturals():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
