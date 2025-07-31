@@ -286,6 +286,7 @@ const Player1Page = () => {
               isBanker={true}
               extraWide={gameState.bankerCards.length === 3}
               playerId={PLAYER_ID}
+              sendMessage={sendMessage}
               />
           </div>
           {/* Player GameBoard (bottom, starts at row 7) */}
@@ -299,6 +300,7 @@ const Player1Page = () => {
               vipRevealer={gameState.vip_revealer}
               connected={connected}
               onVipReveal={() => sendMessage({ action: 'vip_reveal', player_id: PLAYER_ID })}
+              sendMessage={sendMessage}
             />
           </div>
           <div className="col-start-9 col-end-12 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>

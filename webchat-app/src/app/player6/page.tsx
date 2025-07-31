@@ -283,11 +283,12 @@ const Player6Page = () => {
           </div>
           {/* Banker GameBoard (top, ends at row 7) */}
           <div className="col-start-4 col-end-10 row-start-3 row-end-7 flex justify-center items-end m-6">
-            <GameBoard gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={true} extraWide={gameState.bankerCards.length === 3} playerId={PLAYER_ID}/>
+            <GameBoard sendMessage={sendMessage} gameState={gameState} hideCards={isVipMode && !cardsRevealed} isBanker={true} extraWide={gameState.bankerCards.length === 3} playerId={PLAYER_ID}/>
           </div>
           {/* Player GameBoard (bottom, starts at row 7) */}
           <div className="col-start-4 col-end-10 row-start-7 row-end-11 flex justify-center items-start m-6">
             <GameBoard
+              sendMessage={sendMessage}
               gameState={gameState}
               hideCards={isVipMode && !cardsRevealed}
               isBanker={false}

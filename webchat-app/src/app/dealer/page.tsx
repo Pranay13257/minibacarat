@@ -489,10 +489,26 @@ const DealerPage = () => {
           <img src="/assets/red_design.png" alt="" className="z-10"/>
         </div>
         <div className={`${gameState.bankerCards.length === 3 ? 'col-start-2 col-end-7' : 'col-start-4 col-end-7'} row-start-4 row-end-10 flex justify-end m-2`}>
-          <GameBoard gameState={gameState} hideCards={mode === 'vip' && !gameState.cards_revealed} isBanker={true} extraWide={gameState.bankerCards.length === 3}/>
+          <GameBoard
+          gameState={gameState} 
+          hideCards={mode === 'vip' && !gameState.cards_revealed} 
+          isBanker={true} 
+          extraWide={gameState.bankerCards.length === 3} 
+          sendMessage={sendMessage}
+          playerId='dealer'
+          connected={connected}
+          />
         </div>
         <div className={`${gameState.playerCards.length === 3 ? 'col-start-7 col-end-12' : 'col-start-7 col-end-10'} row-start-4 row-end-10 flex justify-start m-2`}>
-          <GameBoard gameState={gameState} hideCards={mode === 'vip' && !gameState.cards_revealed} isBanker={false} extraWide={gameState.playerCards.length === 3}/>
+          <GameBoard 
+          gameState={gameState} 
+          hideCards={mode === 'vip' && !gameState.cards_revealed} 
+          isBanker={false} 
+          extraWide={gameState.playerCards.length === 3} 
+          sendMessage={sendMessage}
+          playerId='dealer'
+          connected={connected}
+          />
         </div>
         <div className="col-start-5 col-end-9 row-start-10 row-end-12" style={{transform: "translateX(1/2px)"}}>
           <img src="/assets/red_design.png" alt="" className="rotate-180"/>

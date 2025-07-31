@@ -1,6 +1,6 @@
 "use client";
 import { div } from "framer-motion/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface GameBoardProps {
   gameState: {
@@ -45,13 +45,16 @@ interface GameBoardProps {
   vipRevealer?: string | null;
   connected?: boolean;
   onVipReveal?: () => void;
+  sendMessage: (any:any) => void;
 }
 
-const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, playerId, vipRevealer, connected, onVipReveal }: GameBoardProps) => {
+const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, playerId, vipRevealer, connected, onVipReveal, sendMessage }: GameBoardProps) => {
   const [cardInput, setCardInput] = useState("");
   const [isTouched, setIsTouched] = useState(false);
   const [currPage, setCurrPage] = useState<'dealer' | 'player' | 'stats'>('stats');
   const [canReveal, setCanReveal] = useState(false);
+  const [counter,setCounter] = useState(0);
+  const counterRef = useRef(0);
 
   useEffect(() => {
     console.log("vipPlayer="+[gameState.vip_player_revealer]);
@@ -67,6 +70,14 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
     }
   }, [gameState])
 
+  // Reset counter when game state changes (new game starts)
+  useEffect(() => {
+    if (gameState.gamePhase === 'dealing' || gameState.gamePhase === 'waiting') {
+      setCounter(0);
+      counterRef.current = 0;
+    }
+  }, [gameState.gamePhase])
+
   useEffect(() => {
     const path = window.location.pathname;
     if (path.includes('dealer')) {
@@ -78,17 +89,34 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
     }
   }, []);
 
+  const cardClick = () => {
+    if ((currPage === 'player' || currPage === 'dealer') && canReveal) {
+      counterRef.current += 1; // Immediate update
+      console.log(`Card ${counterRef.current} clicked`);
+      
+      // Use the updated value immediately
+      isBanker 
+        ? sendMessage({action: `reveal_banker_card_${counterRef.current}`})
+        : sendMessage({action: `reveal_player_card_${counterRef.current}`});
+    }
+  }
+
   const handleTouchStart = () => {
-    if (currPage === 'player' && canReveal) {
+    if ((currPage === 'player' || currPage === 'dealer') && canReveal) {
       console.log("touched");
-      setIsTouched(prev => !prev);
+      setCounter(prev => {
+        const newCounter = prev + 1;
+        isBanker ? sendMessage({action:`reveal_banker_card_${newCounter}`}) : sendMessage({action:`reveal_player_card_${newCounter}`});
+        return newCounter;
+      });
+      setIsTouched(true);
     }
   };
 
   const handleTouchEnd = () => {
-    if (currPage === 'player' && canReveal) {
+    if ((currPage === 'player' || currPage === 'dealer') && canReveal) {
       console.log("untouched");
-      setIsTouched(prev => !prev);
+      setIsTouched(false);
     }
   };
 
@@ -160,10 +188,10 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
               return cards.map((_, i) => (
                   <img 
                   key={i}
-                  src={isTouched ? `/cards/${cards[i].toLowerCase()}.png` : "/cards/BR.png"}
+                  src={`/cards/${cards[i].toLowerCase()}.png`}
                   alt="VIP Hidden Card" 
                   className="w-24 h-36 rounded mb-2"
-                  onTouchStart={handleTouchStart}
+                  onTouchStart={cardClick}
                   onTouchEnd={handleTouchEnd}
                 />
               ));

@@ -39,6 +39,7 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
   // const [selectedMode, setSelectedMode] = useState<'automatic' | 'manual' | 'live'>('manual');
   const [isBetModalOpen, setIsBetModalOpen] = useState(false);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+  const [isVIPmakerOpen, setIsVIPmakerOpen] = useState('');
   const [betError, setBetError] = useState<string | null>(null);
   const [selectedRank, setSelectedRank] = useState<string | null>(null);
   const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
@@ -154,6 +155,28 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                 onClick={() => setIsTableModalOpen(false)}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isVIPmakerOpen && (
+        <div className="fixed top-0 left-0 h-full w-full z-[60] flex items-center justify-center bg-black bg-opacity-60">
+          <div className="rounded-lg shadow-lg p-8 relative min-w-[320px] max-w-[90vw] max-h-[90vh] flex flex-col items-center justify-center" style={{ backgroundColor: '#F0DEAD' }}>
+            <h2 className="text-3xl font-bold mb-6 text-black">Select VIP Type</h2>
+            <label className="text-xl font-semibold text-black">Current id: {isVIPmakerOpen.charAt(0).toUpperCase() + isVIPmakerOpen.slice(1,-1) + ' ' + isVIPmakerOpen.charAt(isVIPmakerOpen.length - 1)}</label>
+            <div className="flex gap-4 mt-4">
+              <button
+                className="px-3 py-2 bg-[darkRed] text-white rounded-lg text-xl font-bold"
+                onClick={() => {sendMessage({action: 'set_vip_player_revealer', player_id: isVIPmakerOpen}); setIsVIPmakerOpen('');}}
+              >
+                Player Revealer
+              </button>
+              <button
+                className="px-3 py-2 bg-[darkRed] text-white rounded-lg text-xl font-bold"
+                onClick={() => {sendMessage({action: 'set_vip_banker_revealer', player_id: isVIPmakerOpen}); setIsVIPmakerOpen('');}}
+              >
+                Banker Revealer
               </button>
             </div>
           </div>
@@ -548,7 +571,7 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
                       key={playerId}
                       className="rounded-lg shadow text-xl font-bold flex items-center justify-center"
                       style={{ width: 250, height: 60, backgroundColor: '#911606', color: '#fff' }}
-                      onClick={() => sendMessage({ action: 'set_vip_revealer', player_id: playerId })}
+                      onClick={() => setIsVIPmakerOpen(playerId)}
                     >
                       {(() => {
                         // Convert 'player1' to 'Player 1'
