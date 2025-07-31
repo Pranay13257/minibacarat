@@ -54,6 +54,12 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
     return `${winner.charAt(0).toUpperCase() + winner.slice(1)} Wins!`;
   };
 
+  const getWinnerColor = () => {
+    if(winner == 'tie') return 'text-green-500'
+    else if(winner == 'banker') return 'text-red-500'
+    else return 'text-blue-500' 
+  }
+
   const getSpecialWinText = () => {
     if(gameMode == "manual") return null;
     if (winner === 'tie') {
@@ -92,7 +98,7 @@ const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType
             className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md flex flex-col items-center text-black"
           >
            
-            <div className="text-4xl font-bold text-gray-800 text-center mb-4">
+            <div className={`text-4xl font-bold text-center mb-4 ${getWinnerColor()}`}>
               {getWinnerText()}
             </div>
             {getSpecialWinText() && (

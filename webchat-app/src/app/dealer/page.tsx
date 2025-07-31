@@ -435,6 +435,9 @@ const DealerPage = () => {
     setTimeout(() => setManualSubmitting(false), 1000);
   };
 
+  function idk(){
+    sendMessage({action:'reveal_player_card_1'});
+  }
 
 
   return (

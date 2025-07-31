@@ -48,7 +48,19 @@ module.exports = {
       },
       gridColumnStart: range(31), // adds col-start-1...col-start-31
       gridColumnEnd: range(31),   // adds col-end-1...col-end-31
-      gridColumn: range(31), 
+      gridColumn: range(31),
+      scale: {
+        '200': '2', // 200% scale
+      },
+      animation: {
+        marquee: 'marquee 20s linear infinite',
+      },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+      }, 
     },
   },
   plugins: [],

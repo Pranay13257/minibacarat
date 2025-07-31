@@ -144,7 +144,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
   return (
     <div className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit`}>
       <div className="flex flex-col items-center">
-        <h2 className="text-xl mb-4 text-white">{isBanker ? 'Banker Cards' : 'Player Cards'}</h2>
+        <h2 className="text-xl mb-4 text-white">{isBanker ? 'BANKER' : 'PLAYER'}</h2>
         <div className="flex gap-4 w-fit">
           {(() => {
             const isVipMode = gameState.game_mode === 'vip';
