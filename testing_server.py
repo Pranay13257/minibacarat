@@ -37,7 +37,7 @@ game_state = {
     "active_players": set(),
     "auto_dealing": False,
     "can_manage_players": True,
-    "table_number": "13257",
+    "table_number": "FT-",
     "max_bet": 100000,
     "min_bet": 10000,
     "game_mode": "manual",
@@ -46,7 +46,7 @@ game_state = {
     "cards_revealed": False,  
     "winner": None
 }
-game_state["active_players"].add("dealer")  # Add default player for testing
+
 remaining_cards = None
 card_duplicates = defaultdict(int)
 last_card_info = {"card": None, "recipient": None}
@@ -217,7 +217,6 @@ async def reset_all():
         logging.error(f"Error clearing MongoDB: {e}")
     # Deactivate all players
     game_state["active_players"] = set()
-    game_state["active_players"].add("dealer")
     game_state.update({
         "round": 0,
         "burn_mode": "inactive",
@@ -232,6 +231,8 @@ def has_unrevealed_cards():
         return True
     else:
         return False
+
+
 
 def get_next_card_recipient():
     if not game_state["auto_dealing"] and len(game_state["active_players"]) == 0:
@@ -359,7 +360,7 @@ async def broadcast_game_state():
     
     # Check if there are any entries in MongoDB for undo last win
     has_mongo_entries = await collection.count_documents({}) > 0
-    
+    game_state["cards_revealed"]= not has_unrevealed_cards() if game_state["game_mode"] == "vip" else True
     next_recipient = get_next_card_recipient()
     mode = game_state.get("game_mode", "manual")
     if mode == "automatic":
@@ -527,11 +528,16 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
     total_cards = len(player_cards) + len(banker_cards)
 
     # VIP logic to pause after 4 cards for reveal
-    if total_cards >= 4 and game_state["game_mode"] == "vip" and has_unrevealed_cards():
+    if total_cards == 4 and game_state["game_mode"] == "vip" and has_unrevealed_cards():
         game_state["game_phase"] = "waiting_for_reveal"
         game_state["can_calculate"] = False # Cannot calculate until reveal
         await broadcast_game_state()
         return True # Stop dealing process
+
+    # After cards are revealed in VIP mode, continue with normal logic
+    if total_cards >= 4 and game_state["game_mode"] == "vip" and not has_unrevealed_cards():
+        game_state["game_phase"] = "waiting"  # Set to waiting to allow more cards
+        game_state["can_calculate"] = True
     
     # Handle 4 cards logic
     if total_cards == 4 and game_state["game_mode"] != "vip":
@@ -926,7 +932,7 @@ async def handle_dealer_final_reveal(websocket):
     player_cards[1]=dummy_player_cards[1]
     banker_cards[0]=dummy_banker_cards[0]
     banker_cards[1]=dummy_banker_cards[1]
-    broadcast_game_state()
+    await broadcast_game_state()
     return True
 
 counter=0
@@ -1047,7 +1053,7 @@ async def handle_client(websocket):
                         await broadcast_game_state()
                         
                 elif action == "set_table_number":
-                    table_number = data.get("table_number", "13257")
+                    table_number = data.get("table_number", "FT-")
                     game_state["table_number"] = table_number
                     await send_success(websocket, f"Table number set to {table_number}")
                     await broadcast_game_state()
@@ -1088,65 +1094,124 @@ async def handle_client(websocket):
                    
                 elif action == "dealer_final_reveal":
                     await handle_dealer_final_reveal(websocket)
+                    if not has_unrevealed_cards():
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            # Only calculate if dealing is truly complete
+                            await calculate_result()
+                        else:
+                            # Set to waiting to allow more cards
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
 
                 elif action == "reveal_player_card_1":
-                    player_cards[0]=dummy_player_cards[0]
-                    await broadcast_game_state()
+                    player_cards[0] = dummy_player_cards[0]
+
+                    # Check if all cards are revealed AND if we need more cards
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state  
-                
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            # Only calculate if dealing is truly complete
+                            await calculate_result()
+                        else:
+                            # Set to waiting to allow more cards
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
+                    await broadcast_game_state()
 
                 elif action == "reveal_player_card_2":
-                    player_cards[1]=dummy_player_cards[1]
-                    await broadcast_game_state()
+                    player_cards[1] = dummy_player_cards[1]
+
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state 
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
+                    await broadcast_game_state()
 
                 elif action == "reveal_player_card_3":
-                    player_cards[2]=dummy_player_cards[2]
-                    await broadcast_game_state()
+                    player_cards[2] = dummy_player_cards[2]
+
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state 
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
+                    await broadcast_game_state()
 
                 elif action == "reveal_banker_card_1":
-                    banker_cards[0]=dummy_banker_cards[0]
-                    await broadcast_game_state()
+                    banker_cards[0] = dummy_banker_cards[0]
+
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state 
-                
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
+                    await broadcast_game_state()
+
                 elif action == "reveal_banker_card_2":
-                    banker_cards[1]=dummy_banker_cards[1]
-                    await broadcast_game_state()
+                    banker_cards[1] = dummy_banker_cards[1]
+
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state 
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+    
+                    await broadcast_game_state()
 
                 elif action == "reveal_banker_card_3":
-                    banker_cards[2]=dummy_banker_cards[2]
+                    banker_cards[2] = dummy_banker_cards[2]
+
+                    if not has_unrevealed_cards():
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
                     await broadcast_game_state()
-                    if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state 
-                
+
                 elif action == "reveal_dealer_banker_cards":
-                    banker_cards[0]=dummy_banker_cards[0]
-                    banker_cards[1]=dummy_banker_cards[1]
-                    broadcast_game_state()
+                    banker_cards[0] = dummy_banker_cards[0]
+                    banker_cards[1] = dummy_banker_cards[1]
+
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
+                    await broadcast_game_state()
 
                 elif action == "reveal_dealer_player_cards":
-                    player_cards[0]=dummy_player_cards[0]
-                    player_cards[1]=dummy_player_cards[1]
-                    broadcast_game_state()
+                    player_cards[0] = dummy_player_cards[0]
+                    player_cards[1] = dummy_player_cards[1]
+    
                     if not has_unrevealed_cards():
-                        calculate_result() # Auto-calculate if all cards revealed
-                    await broadcast_game_state
+                        next_recipient = get_next_card_recipient()
+                        if next_recipient == "complete":
+                            await calculate_result()
+                        else:
+                            game_state["game_phase"] = "waiting"
+                            game_state["can_calculate"] = True
+
+                    await broadcast_game_state()
 
                 else:
                     await send_error(websocket, f"Unknown action: {action}")
