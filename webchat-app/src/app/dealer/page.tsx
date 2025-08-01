@@ -485,10 +485,10 @@ const DealerPage = () => {
         <div className="col-start-5 col-end-9 row-start-1 row-end-3 z-40" style={{transform: "translateY(-25%)"}}>
           <img src="/assets/golden_design.png" alt="" className=""/>
         </div>
-        <div className="col-start-5 col-end-9 row-start-2 row-end-4" style={{transform: "translateX(1px)"}}>
+        {/* <div className="col-start-5 col-end-9 row-start-2 row-end-4" style={{transform: "translateX(1px)"}}>
           <img src="/assets/red_design.png" alt="" className="z-10"/>
-        </div>
-        <div className={`${gameState.bankerCards.length === 3 ? 'col-start-2 col-end-7' : 'col-start-4 col-end-7'} row-start-4 row-end-10 flex justify-end m-2`}>
+        </div> */}
+        <div className={`${gameState.bankerCards.length === 3 ? 'col-start-2 col-end-7' : 'col-start-4 col-end-7'} row-start-2 row-end-12 flex justify-end items-center m-2`}>
           <GameBoard
           gameState={gameState} 
           hideCards={mode === 'vip' && !gameState.cards_revealed} 
@@ -499,7 +499,7 @@ const DealerPage = () => {
           connected={connected}
           />
         </div>
-        <div className={`${gameState.playerCards.length === 3 ? 'col-start-7 col-end-12' : 'col-start-7 col-end-10'} row-start-4 row-end-10 flex justify-start m-2`}>
+        <div className={`${gameState.playerCards.length === 3 ? 'col-start-7 col-end-12' : 'col-start-7 col-end-10'} row-start-2 row-end-12 flex justify-start items-center m-2`}>
           <GameBoard 
           gameState={gameState} 
           hideCards={mode === 'vip' && !gameState.cards_revealed} 
@@ -510,9 +510,9 @@ const DealerPage = () => {
           connected={connected}
           />
         </div>
-        <div className="col-start-5 col-end-9 row-start-10 row-end-12" style={{transform: "translateX(1/2px)"}}>
+        {/* <div className="col-start-5 col-end-9 row-start-10 row-end-12" style={{transform: "translateX(1/2px)"}}>
           <img src="/assets/red_design.png" alt="" className="rotate-180"/>
-        </div>
+        </div> */}
         <div className="col-start-5 col-end-9 row-start-11 row-end-13 z-40 flex flex-col justify-start" style={{transform: "translateY(25%) translateX(1px)"}}>
           <img src="/assets/golden_design.png" alt="" className="rotate-180"/>
         </div>

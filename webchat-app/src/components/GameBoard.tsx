@@ -128,7 +128,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
         onTouchEnd={handleTouchEnd}
       >
         <img
-          src={`/cards/${card.toLowerCase()}.png`}
+          src={`/cards/${card}.png`}
           alt={`Card ${card}`}
           className="w-24 h-36 object-contain"
         />
@@ -170,9 +170,9 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
   };
 
   return (
-    <div className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit`}>
-      <div className="flex flex-col items-center">
-        <h2 className="text-xl mb-4 text-white">{isBanker ? 'BANKER' : 'PLAYER'}</h2>
+    <div className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit h-fit`}>
+      <div className="flex flex-col items-center gap-1">
+        <h2 className="text-xl text-white">{isBanker ? 'BANKER' : 'PLAYER'}</h2>
         <div className="flex gap-4 w-fit">
           {(() => {
             const isVipMode = gameState.game_mode === 'vip';
@@ -184,11 +184,11 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                 <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2" />
               ));
             } else if (isVipMode && !cardsRevealed) {
-              // VIP mode, cards dealt but not revealed: show BR.png for each card
-              return cards.map((_, i) => (
+              // VIP mode, cards dealt but not revealed: show BR.png for first 2 cards only
+              return cards.slice(0, 2).map((_, i) => (
                   <img 
                   key={i}
-                  src={`/cards/${cards[i].toLowerCase()}.png`}
+                  src={`/cards/${cards[i]}.png`}
                   alt="VIP Hidden Card" 
                   className="w-24 h-36 rounded mb-2"
                   onTouchStart={cardClick}
@@ -196,8 +196,31 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                 />
               ));
             } else {
-              // Normal: show actual cards
-              return cards.map(renderCard);
+              return cards.slice(0, 2).map(renderCard);
+            }
+          })()}
+        </div>
+        <div className="flex gap-4 w-fit">
+          {(() => {
+            const isVipMode = gameState.game_mode === 'vip';
+            const cardsRevealed = !!gameState.cards_revealed;
+            const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+            if (isVipMode && !cardsRevealed && cards.length == 3) {
+              // VIP mode, cards dealt but not revealed: show BR.png for 3rd card only
+              return (
+                <img 
+                  key={2}
+                  src={`/cards/${cards[2]}.png`}
+                  alt="VIP Hidden Card" 
+                  className="w-24 h-36 rounded mb-2"
+                  onTouchStart={cardClick}
+                  onTouchEnd={handleTouchEnd}
+                />
+              );
+            } else {
+              // Normal: show 3rd card only
+              if(cards.length == 3)
+                return renderCard(cards[2]);
             }
           })()}
         </div>
