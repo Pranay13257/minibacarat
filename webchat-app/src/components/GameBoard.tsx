@@ -72,7 +72,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
 
   // Reset counter when game state changes (new game starts)
   useEffect(() => {
-    if (gameState.gamePhase === 'dealing' || gameState.gamePhase === 'waiting') {
+    if (gameState.gamePhase === 'finished') {
       setCounter(0);
       counterRef.current = 0;
     }
@@ -124,7 +124,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
     return (
       // <div key={card} className="relative">
       <div 
-        onTouchStart={handleTouchStart}
+        onTouchStart={cardClick}
         onTouchEnd={handleTouchEnd}
       >
         <img
