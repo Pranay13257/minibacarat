@@ -232,66 +232,69 @@ def has_unrevealed_cards():
     else:
         return False
 
-
-
 def get_next_card_recipient():
     if not game_state["auto_dealing"] and len(game_state["active_players"]) == 0:
         return "no_players"
-   
+
     total_cards = len(player_cards) + len(banker_cards)
-   
+
+    # Initial 4 cards dealing (2 player, 2 banker)
     if total_cards < 4:
         if total_cards % 2 == 0:
             return "player"
-        elif total_cards % 2 == 1:
+        else:
             return "banker"
-    
-    # In VIP mode, stop dealing after 4 cards until they are revealed
-    if game_state["game_mode"] == "vip" and not game_state["cards_revealed"] and total_cards >= 4:
-        return "complete"
-       
-    if total_cards == 4:
-        # For VIP mode, use dummy cards for calculation
+
+    # In VIP mode, if we have 4 cards and any are unrevealed, MUST pause
+    if total_cards == 4 and game_state["game_mode"] == "vip" and has_unrevealed_cards():
+        return "waiting_for_reveal"  # New return value to indicate pause
+
+    # After 4 cards are dealt and revealed (or in non-VIP mode)
+    if total_cards >= 4:
+        # Use appropriate cards for calculation based on mode
         if game_state["game_mode"] == "vip":
             player_score = calculate_hand_score(dummy_player_cards)
             banker_score = calculate_hand_score(dummy_banker_cards)
         else:
             player_score = calculate_hand_score(player_cards)
             banker_score = calculate_hand_score(banker_cards)
-       
+
+        # Natural win check (8 or 9)
         if player_score >= 8 or banker_score >= 8:
             return "complete"
-       
-        if player_score <= 5:
+
+        # Player draws if 0-5
+        if total_cards == 4 and player_score <= 5:
             return "player"
-        elif banker_score <= 5:
+        
+        # If player didn't draw (stood on 6-7), banker draws if 0-5
+        if total_cards == 4 and player_score >= 6 and banker_score <= 5:
             return "banker"
-        else:
-            return "complete"
-   
-    if total_cards == 5 and len(player_cards) == 3:
-        # For VIP mode, use dummy cards for calculation
-        if game_state["game_mode"] == "vip":
-            banker_score = calculate_hand_score(dummy_banker_cards)
-            player_third = card_value(dummy_player_cards[2])  # Use dummy card for 3rd card value
-        else:
-            banker_score = calculate_hand_score(banker_cards)
-            player_third = card_value(player_cards[2])
-       
-        if banker_score <= 2:
-            return "banker"
-        elif banker_score == 3 and player_third != 8:
-            return "banker"
-        elif banker_score == 4 and player_third in [2, 3, 4, 5, 6, 7]:
-            return "banker"
-        elif banker_score == 5 and player_third in [4, 5, 6, 7]:
-            return "banker"
-        elif banker_score == 6 and player_third in [6, 7]:
-            return "banker"
-        else:
-            return "complete"
-   
+        
+        # If player drew a third card, banker follows drawing rules
+        if total_cards == 5 and len(player_cards) == 3:
+            # Get player's third card value
+            if game_state["game_mode"] == "vip":
+                player_third = card_value(dummy_player_cards[2])
+            else:
+                player_third = card_value(player_cards[2])
+
+            # Banker drawing rules based on banker total and player's third card
+            if banker_score <= 2:
+                return "banker"
+            elif banker_score == 3 and player_third != 8:
+                return "banker"
+            elif banker_score == 4 and player_third in [2, 3, 4, 5, 6, 7]:
+                return "banker"
+            elif banker_score == 5 and player_third in [4, 5, 6, 7]:
+                return "banker"
+            elif banker_score == 6 and player_third in [6, 7]:
+                return "banker"
+            else:
+                return "complete"
+
     return "complete"
+
 
 async def shuffle_deck(mode=None):
     global remaining_cards, card_duplicates
@@ -471,6 +474,11 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
         await send_error(websocket, "No active players - cannot deal cards")
         return False
     
+    if recipient == "waiting_for_reveal":
+        if not is_auto_deal:
+            await send_error(websocket, "Cannot add more cards until current cards are revealed")
+        return False
+    
     if recipient == "complete":
         if not is_auto_deal:
             await send_error(websocket, "Cannot add more cards")
@@ -534,10 +542,11 @@ async def handle_add_card(websocket, card, is_auto_deal=False):
         await broadcast_game_state()
         return True # Stop dealing process
 
-    # After cards are revealed in VIP mode, continue with normal logic
-    if total_cards >= 4 and game_state["game_mode"] == "vip" and not has_unrevealed_cards():
-        game_state["game_phase"] = "waiting"  # Set to waiting to allow more cards
-        game_state["can_calculate"] = True
+    if total_cards >= 5 and game_state["game_mode"] == "vip" and has_unrevealed_cards():
+        game_state["game_phase"] = "waiting_for_reveal"
+        game_state["can_calculate"] = False
+        await broadcast_game_state()
+        return True
     
     # Handle 4 cards logic
     if total_cards == 4 and game_state["game_mode"] != "vip":
@@ -690,9 +699,13 @@ async def handle_undo_card(websocket):
                 if total_cards > 0:
                     if len(banker_cards) > 0 and (total_cards % 2 == 0):
                         last_card_to_undo = banker_cards.pop()
+                        if game_state["game_mode"] == "vip":
+                            dummy_banker_cards.pop()
                         update_card_tracking(last_card_to_undo, "banker", is_undo=True)
                     elif len(player_cards) > 0:
                         last_card_to_undo = player_cards.pop()
+                        if game_state["game_mode"] == "vip":
+                            dummy_player_cards.pop()
                         update_card_tracking(last_card_to_undo, "player", is_undo=True)
                 last_game_result = None
                 await send_success(websocket, f"Undid game result for Round {last_entry.get('round')}, removed last card.")
