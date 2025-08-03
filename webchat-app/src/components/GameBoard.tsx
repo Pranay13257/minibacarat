@@ -137,6 +137,23 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
       // </div>
     );
   };
+  const renderCard_roated = (card: string) => {
+    return (
+      // <div key={card} className="relative">
+      <div 
+        onTouchStart={cardClick}
+        onTouchEnd={handleTouchEnd}
+      >
+        <img
+          src={`/cards/${card}.png`}
+          alt={`Card ${card}`}
+          className="w-24 h-36 object-contain rotate-90"
+        />
+      </div>
+        
+      // </div>
+    );
+  };
 
   const getWinnerText = () => {
     if (!gameState || gameState.gamePhase !== 'finished') return null;
@@ -212,7 +229,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                   key={2}
                   src={`/cards/${cards[2]}.png`}
                   alt="VIP Hidden Card" 
-                  className="w-24 h-36 rounded mb-2"
+                  className="w-24 h-36 rounded mb-2 rotate-90"
                   onTouchStart={cardClick}
                   onTouchEnd={handleTouchEnd}
                 />
@@ -220,7 +237,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
             } else {
               // Normal: show 3rd card only
               if(cards.length == 3)
-                return renderCard(cards[2]);
+                return renderCard_roated(cards[2]);
             }
           })()}
         </div>

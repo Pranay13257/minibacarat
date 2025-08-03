@@ -1,8 +1,6 @@
 "use client";
-import WinsList from "@/components/WinsList";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { IP } from "./ip";
-import { div } from "framer-motion/client";
 
 export default function MiniBaccaratDashboard() {
   // Live stats and game state
@@ -19,6 +17,9 @@ export default function MiniBaccaratDashboard() {
     min_bet: 0,
     max_bet: 0,
     table_number: "",
+    bankerCards: [],
+    playerCards: [],
+    gamePhase: "",
   });
   const [beadPlate, setBeadPlate] = useState<any[][]>([]);
   const [bigRoad, setBigRoad] = useState<any[][]>([]);
@@ -27,10 +28,25 @@ export default function MiniBaccaratDashboard() {
   const [cp, setCP] = useState<any[][]>([]);
   const [brDragonTail,setBrDragonTain] = useState<any[]>([]); 
   const wsRef = useRef<WebSocket | null>(null);
+  const [cardModal, setCardModal] = useState(false);
 
   // Derived values
   const naturals = stats.player_naturals + stats.banker_naturals;
   const games = stats.player_wins + stats.banker_wins + stats.ties;
+
+  useEffect(() => {
+    if (
+      (gameState.bankerCards.length >= 1 ||
+        gameState.playerCards.length >= 1) &&
+      gameState.gamePhase != "finished"
+    )
+      setCardModal(true);
+  },[gameState.bankerCards,gameState.playerCards]);
+
+  useEffect(() => {
+    if (gameState.gamePhase == 'finished')
+      setCardModal(false);
+  },[gameState.gamePhase]);
 
   // Function to update bead plate - memoized with useCallback
   const updateBeadPlate = useCallback(async () => {
@@ -106,6 +122,9 @@ export default function MiniBaccaratDashboard() {
               min_bet: data.min_bet ?? prev.min_bet,
               max_bet: data.max_bet ?? prev.max_bet,
               table_number: data.table_number ?? prev.table_number,
+              bankerCards: data.bankerCards ?? prev.bankerCards,
+              playerCards: data.playerCards ?? prev.playerCards,
+              gamePhase: data.gamePhase ?? prev.gamePhase,
             }));
           }
           
@@ -477,14 +496,14 @@ export default function MiniBaccaratDashboard() {
           style={{
             backgroundImage: "url('/assets/wood.png')",
             backgroundSize: "cover",
-            backgroundPosition: "center"
+            backgroundPosition: "center",
           }}
         >
           <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-5xl text-yellow-500">
             <div>Games : {games}</div>
-            <div>Table no.  : {gameState.table_number}</div>
+            <div>Table no. : {gameState.table_number}</div>
           </div>
-          <img src="/assets/mini_baccarat.png" className="z-50 scale-150"/>
+          <img src="/assets/mini_baccarat.png" className="z-50 scale-150" />
           <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-5xl text-yellow-500">
             <div>Min bet : {gameState.max_bet}</div>
             <div>Max bet : {gameState.min_bet}</div>
@@ -492,379 +511,498 @@ export default function MiniBaccaratDashboard() {
         </div>
 
         <div className="gird row-start-2 row-end-6 col-start-9 col-end-11 border-2 border-yellow-500 grid grid-cols-2 grid-rows-4">
-          <div className="row-start-1 row-end-2 col-start-1 col-end-2 text-black text-6xl text-bold flex items-center justify-center">Player</div>
+          <div className="row-start-1 row-end-2 col-start-1 col-end-2 text-black text-6xl text-bold flex items-center justify-center">
+            Player
+          </div>
           <div className="row-start-2 row-end-3 col-start-1 col-end-2 text-black flex items-center justify-center">
-            <img src="/assets/new_bc.png" className="w-18 h-18"/>
+            <img src="/assets/new_bc.png" className="w-18 h-18" />
           </div>
           <div className="row-start-3 row-end-4 col-start-1 col-end-2 text-black flex items-center justify-center">
-            <img src="/assets/new_bhcz.png" className="w-18 h-18"/>
+            <img src="/assets/new_bhcz.png" className="w-18 h-18" />
           </div>
           <div className="row-start-4 row-end-5 col-start-1 col-end-2 text-black flex items-center justify-center">
-            <img src="/assets/new_lineBlue.png" className="w-18 h-18"/>
+            <img src="/assets/new_lineBlue.png" className="w-18 h-18" />
           </div>
-          <div className="row-start-1 row-end-2 col-start-2 col-end-3 text-black text-6xl text-bold flex items-center justify-center">Banker</div>
+          <div className="row-start-1 row-end-2 col-start-2 col-end-3 text-black text-6xl text-bold flex items-center justify-center">
+            Banker
+          </div>
           <div className="row-start-2 row-end-3 col-start-2 col-end-3 text-black flex items-center justify-center">
-            <img src="/assets/new_rc.png" className="w-18 h-18"/>
+            <img src="/assets/new_rc.png" className="w-18 h-18" />
           </div>
           <div className="row-start-3 row-end-4 col-start-2 col-end-3 text-black flex items-center justify-center">
-            <img src="/assets/new_rhcz.png" className="w-18 h-18"/>
+            <img src="/assets/new_rhcz.png" className="w-18 h-18" />
           </div>
           <div className="row-start-4 row-end-5 col-start-2 col-end-3 text-black flex items-center justify-center">
-            <img src="/assets/new_lineRed.png" className="w-18 h-18"/>
+            <img src="/assets/new_lineRed.png" className="w-18 h-18" />
           </div>
         </div>
 
         <div className="gird row-start-2 row-end-6 col-start-11 col-end-13 bg-[darkRed] flex flex-col justify-around items-start pl-4">
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn1.png" className="w-14 h-14"/>
-            <div className="text-5xl text-yellow-500">Player Wins : {stats.player_wins}</div>
+            <img src="/assets/cn1.png" className="w-14 h-14" />
+            <div className="text-5xl text-yellow-500">
+              Player Wins : {stats.player_wins}
+            </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn2.png" className="w-14 h-14"/>
-            <div className="text-5xl text-yellow-500">Banker Wins : {stats.banker_wins}</div>
+            <img src="/assets/cn2.png" className="w-14 h-14" />
+            <div className="text-5xl text-yellow-500">
+              Banker Wins : {stats.banker_wins}
+            </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn3.png" className="w-14 h-14"/>
+            <img src="/assets/cn3.png" className="w-14 h-14" />
             <div className="text-5xl text-yellow-500">Tie : {stats.ties}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn4.png" className="w-14 h-14"/>
-            <div className="text-5xl text-yellow-500">Naturals : {naturals}</div>
+            <img src="/assets/cn4.png" className="w-14 h-14" />
+            <div className="text-5xl text-yellow-500">
+              Naturals : {naturals}
+            </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn5.png" className="w-14 h-14"/>
-            <div className="text-5xl text-yellow-500">Player pair : {stats.player_pairs}</div>
+            <img src="/assets/cn5.png" className="w-14 h-14" />
+            <div className="text-5xl text-yellow-500">
+              Player pair : {stats.player_pairs}
+            </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn6.png" className="w-14 h-14"/>
-            <div className="text-5xl text-yellow-500">Banker pair : {stats.banker_pairs}</div>
+            <img src="/assets/cn6.png" className="w-14 h-14" />
+            <div className="text-5xl text-yellow-500">
+              Banker pair : {stats.banker_pairs}
+            </div>
           </div>
         </div>
 
         <div className="gird row-start-2 row-end-6 col-start-1 col-end-9 border-2 border-yellow-500 grid grid-cols-11 grid-rows-5">
-            <div className="col-start-6 col-end-8 row-start-3 row-end-4 flex justify-center items-center">
-              <div className="text-8xl opacity-50 z-20 text-[#915A14] text-center">Bead Plate</div>
+          <div className="col-start-6 col-end-8 row-start-3 row-end-4 flex justify-center items-center">
+            <div className="text-8xl opacity-50 z-20 text-[#915A14] text-center">
+              Bead Plate
             </div>
-            {Array.from({length:11}).map((_,colIdx) => (
-              Array.from({length:5}).map((_,rowIdx) => {
-                // console.log(beadPlate);
-                const game = beadPlate[colIdx]?.[rowIdx];
-                let imgSrc = "";
-                if (game?.winner === "player") {
-                  imgSrc = "/assets/f2.png";
-                } else if (game?.winner === "banker") {
-                  imgSrc = "/assets/f1.png";
-                } else if (game?.winner === "tie") {
-                  imgSrc = "/assets/f3.png";
-                }
-                return (
-                  <div key={`${colIdx}-${rowIdx}`} className={`col-start-${colIdx+1} col-end-${colIdx+2} row-start-${rowIdx+1} row-end-${rowIdx+2} z-50 relative `}>
-                    {imgSrc ? (<img src={imgSrc} className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"/>) : null}
-                  </div>
-                )
-              })
-            ))}
+          </div>
+          {Array.from({ length: 11 }).map((_, colIdx) =>
+            Array.from({ length: 5 }).map((_, rowIdx) => {
+              // console.log(beadPlate);
+              const game = beadPlate[colIdx]?.[rowIdx];
+              let imgSrc = "";
+              if (game?.winner === "player") {
+                imgSrc = "/assets/f2.png";
+              } else if (game?.winner === "banker") {
+                imgSrc = "/assets/f1.png";
+              } else if (game?.winner === "tie") {
+                imgSrc = "/assets/f3.png";
+              }
+              return (
+                <div
+                  key={`${colIdx}-${rowIdx}`}
+                  className={`col-start-${colIdx + 1} col-end-${
+                    colIdx + 2
+                  } row-start-${rowIdx + 1} row-end-${
+                    rowIdx + 2
+                  } z-50 relative `}
+                >
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                    />
+                  ) : null}
+                </div>
+              );
+            })
+          )}
         </div>
         <div className="row-start-6 row-end-9 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(20,minmax(0,1fr))] grid-rows-4">
           <div className="col-start-10 col-end-12 row-start-2 row-end-4 flex justify-center items-center">
-             <div className="text-8xl opacity-50 text-[#915A14] text-center">Big Road</div>
+            <div className="text-8xl opacity-50 text-[#915A14] text-center">
+              Big Road
+            </div>
           </div>
           {(() => {
-              const maxRows = 4;
-              let positions = [];
-              let grid: Record<string, boolean> = {};
-              let col = 0;
-              for (let streakIdx = 0; streakIdx < bigRoad.length; streakIdx++) {
-                const streak = bigRoad[streakIdx];
-                if (streak.length <= maxRows) {
-                  for (let i = 0; i < streak.length; i++) {
-                    let targetCol = col;
-                    let targetRow = i;
-                    // Slide diagonally up-right if collision
-                    while (grid[`${targetCol},${targetRow}`]) {
-                      targetCol++;
-                      targetRow--;
-                      if (targetRow < 0) break;
-                    }
-                    if (targetRow >= 0) {
-                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
-                      grid[`${targetCol},${targetRow}`] = true;
-                    }
+            const maxRows = 4;
+            let positions = [];
+            let grid: Record<string, boolean> = {};
+            let col = 0;
+            for (let streakIdx = 0; streakIdx < bigRoad.length; streakIdx++) {
+              const streak = bigRoad[streakIdx];
+              if (streak.length <= maxRows) {
+                for (let i = 0; i < streak.length; i++) {
+                  let targetCol = col;
+                  let targetRow = i;
+                  // Slide diagonally up-right if collision
+                  while (grid[`${targetCol},${targetRow}`]) {
+                    targetCol++;
+                    targetRow--;
+                    if (targetRow < 0) break;
                   }
-                  col++; // Next streak starts in next column
-                } else {
-                  // Fill the column vertically
-                  for (let i = 0; i < maxRows; i++) {
-                    let targetCol = col;
-                    let targetRow = i;
-                    // Slide diagonally up-right if collision
-                    while (grid[`${targetCol},${targetRow}`]) {
-                      targetCol++;
-                      targetRow--;
-                      if (targetRow < 0) break;
-                    }
-                    if (targetRow >= 0) {
-                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
-                      grid[`${targetCol},${targetRow}`] = true;
-                    }
+                  if (targetRow >= 0) {
+                    positions.push({
+                      bead: streak[i],
+                      col: targetCol,
+                      row: targetRow,
+                    });
+                    grid[`${targetCol},${targetRow}`] = true;
                   }
-                  // Remaining beads go to the right, all at the bottom row
-                  let tailCol = col + 1;
-                  let tailRow = maxRows - 1;
-                  for (let i = maxRows; i < streak.length; i++) {
-                    let targetCol = tailCol;
-                    let targetRow = tailRow;
-                    // Slide diagonally up-right if collision
-                    while (grid[`${targetCol},${targetRow}`]) {
-                      targetCol++;
-                      targetRow--;
-                      if (targetRow < 0) break;
-                    }
-                    if (targetRow >= 0) {
-                      positions.push({ bead: streak[i], col: targetCol, row: targetRow });
-                      grid[`${targetCol},${targetRow}`] = true;
-                    }
-                    tailCol = targetCol + 1;
-                  }
-                  col++; // Next streak starts in next column
                 }
+                col++; // Next streak starts in next column
+              } else {
+                // Fill the column vertically
+                for (let i = 0; i < maxRows; i++) {
+                  let targetCol = col;
+                  let targetRow = i;
+                  // Slide diagonally up-right if collision
+                  while (grid[`${targetCol},${targetRow}`]) {
+                    targetCol++;
+                    targetRow--;
+                    if (targetRow < 0) break;
+                  }
+                  if (targetRow >= 0) {
+                    positions.push({
+                      bead: streak[i],
+                      col: targetCol,
+                      row: targetRow,
+                    });
+                    grid[`${targetCol},${targetRow}`] = true;
+                  }
+                }
+                // Remaining beads go to the right, all at the bottom row
+                let tailCol = col + 1;
+                let tailRow = maxRows - 1;
+                for (let i = maxRows; i < streak.length; i++) {
+                  let targetCol = tailCol;
+                  let targetRow = tailRow;
+                  // Slide diagonally up-right if collision
+                  while (grid[`${targetCol},${targetRow}`]) {
+                    targetCol++;
+                    targetRow--;
+                    if (targetRow < 0) break;
+                  }
+                  if (targetRow >= 0) {
+                    positions.push({
+                      bead: streak[i],
+                      col: targetCol,
+                      row: targetRow,
+                    });
+                    grid[`${targetCol},${targetRow}`] = true;
+                  }
+                  tailCol = targetCol + 1;
+                }
+                col++; // Next streak starts in next column
               }
-              return positions.map(({ bead: cell, col, row }, idx) => {
-                let imgSrc = "";
-                if (cell.winner === "player") imgSrc = "/assets/yoloBlue.png";
-                else if (cell.winner === "banker") imgSrc = "/assets/yoloRed.png";
-                return (
-                  <div
-                    key={`${col}-${row}-${cell.tie_count || 0}-BigRoad`}
-                    className={`col-start-${col+1} col-end-${col+2} row-start-${row+1} row-end-${row+2} z-50 relative`}
-                  >
-                    {imgSrc && (
+            }
+            return positions.map(({ bead: cell, col, row }, idx) => {
+              let imgSrc = "";
+              if (cell.winner === "player") imgSrc = "/assets/yoloBlue.png";
+              else if (cell.winner === "banker") imgSrc = "/assets/yoloRed.png";
+              return (
+                <div
+                  key={`${col}-${row}-${cell.tie_count || 0}-BigRoad`}
+                  className={`col-start-${col + 1} col-end-${
+                    col + 2
+                  } row-start-${row + 1} row-end-${row + 2} z-50 relative`}
+                >
+                  {imgSrc && (
+                    <img
+                      src={imgSrc}
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      alt={cell.winner}
+                    />
+                  )}
+                  {cell.tie_count >= 1 &&
+                    cell.tie_count <= 8 &&
+                    Array.from({ length: cell.tie_count }, (_, index) => (
                       <img
-                        src={imgSrc}
+                        key={`line${index + 1}`}
+                        src={`/assets/l${index + 1}.png`}
                         className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                        alt={cell.winner}
+                        alt={`tie-line-${index + 1}`}
                       />
-                    )}
-                    {cell.tie_count >= 1 && cell.tie_count <= 8 && (
-                      Array.from({ length: cell.tie_count }, (_, index) => (
-                        <img
-                          key={`line${index + 1}`}
-                          src={`/assets/l${index + 1}.png`}
-                          className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                          alt={`tie-line-${index + 1}`}
-                        />
-                      ))
-                    )}
-                    {cell.player_pair ? (
-                      <img src="/assets/bcs.png" className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
-                    ) : null}
-                    {cell.banker_pair ? (
-                      <img src="/assets/rcs.png" className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
-                    ) : null}
-                    {(cell.banker_natural || cell.player_natural) ? (
-                      <img src="/assets/n.png" className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
-                    ) : null}
-                  </div>
-                );
-              });
-            })()}
+                    ))}
+                  {cell.player_pair ? (
+                    <img
+                      src="/assets/bcs.png"
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"
+                    />
+                  ) : null}
+                  {cell.banker_pair ? (
+                    <img
+                      src="/assets/rcs.png"
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"
+                    />
+                  ) : null}
+                  {cell.banker_natural || cell.player_natural ? (
+                    <img
+                      src="/assets/n.png"
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"
+                    />
+                  ) : null}
+                </div>
+              );
+            });
+          })()}
         </div>
         <div className="row-start-9 row-end-11 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(30,minmax(0,1fr))] grid-rows-3">
           <div className="col-start-14 col-end-18 row-start-1 row-end-4 flex justify-center items-center">
-             <div className="text-6xl opacity-50 text-[#915A14] text-center">Big Eye Boy</div>
+            <div className="text-6xl opacity-50 text-[#915A14] text-center">
+              Big Eye Boy
+            </div>
           </div>
           {(() => {
-              const maxRow = 3;
-              let positions = [];
-              let grid: Record<string, boolean> = {};
-              for(let i=0; i<=21;i++){
-                grid[`${i},${4}`] = true;
-                grid[`${i},${5}`] = true;
-                grid[`${i},${6}`] = true;
-                grid[`${i},${7}`] = true;
-                grid[`${i},${8}`] = true;
-                grid[`${i},${9}`] = true;
-                grid[`${i},${10}`] = true;
-                grid[`${i},${11}`] = true;
-                grid[`${i},${12}`] = true;
-                grid[`${i},${13}`] = true;
-                grid[`${i},${14}`] = true;
-                grid[`${i},${15}`] = true;
-                grid[`${i},${16}`] = true;
-              }
-              for(let col=0;col < BEB.length;col++){
-                for(let row=0;row < BEB[col].length;row++){
-                  let tempRow = row+1;
-                  let tempCol = col+1;
-                  while(grid[`${tempCol},${tempRow}`]){
-                    tempCol++;
+            const maxRow = 3;
+            let positions = [];
+            let grid: Record<string, boolean> = {};
+            for (let i = 0; i <= 21; i++) {
+              grid[`${i},${4}`] = true;
+              grid[`${i},${5}`] = true;
+              grid[`${i},${6}`] = true;
+              grid[`${i},${7}`] = true;
+              grid[`${i},${8}`] = true;
+              grid[`${i},${9}`] = true;
+              grid[`${i},${10}`] = true;
+              grid[`${i},${11}`] = true;
+              grid[`${i},${12}`] = true;
+              grid[`${i},${13}`] = true;
+              grid[`${i},${14}`] = true;
+              grid[`${i},${15}`] = true;
+              grid[`${i},${16}`] = true;
+            }
+            for (let col = 0; col < BEB.length; col++) {
+              for (let row = 0; row < BEB[col].length; row++) {
+                let tempRow = row + 1;
+                let tempCol = col + 1;
+                while (grid[`${tempCol},${tempRow}`]) {
+                  tempCol++;
+                  if(tempRow >= 2)
                     tempRow--;
-                  }
-                  positions.push({tempo:BEB[col][row].tempo, col:tempCol, row:tempRow});
-                  grid[`${tempCol},${tempRow}`] = true;
                 }
+                positions.push({
+                  tempo: BEB[col][row].tempo,
+                  col: tempCol,
+                  row: tempRow,
+                });
+                grid[`${tempCol},${tempRow}`] = true;
               }
-              return positions.map(({ tempo, col, row }, idx) => {
-                let imgSrc = "";
-                if (tempo === "stable") imgSrc = "/assets/f1.png";
-                else if (tempo === "unstable") imgSrc = "/assets/f2.png";
-                return (
-                  <div
-                    key={`${col}-${row}-${tempo}-BigRoad`}
-                    className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
-                  >
-                    {imgSrc && (
-                      <img
-                        src={imgSrc}
-                        className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                      />
-                    )}
-                  </div>
-                );
-              });
-            })()}
+            }
+            return positions.map(({ tempo, col, row }, idx) => {
+              let imgSrc = "";
+              if (tempo === "stable") imgSrc = "/assets/f1.png";
+              else if (tempo === "unstable") imgSrc = "/assets/f2.png";
+              return (
+                <div
+                  key={`${col}-${row}-${tempo}-BigRoad`}
+                  className={`col-start-${col} col-end-${
+                    col + 1
+                  } row-start-${row} row-end-${row + 1} z-50 relative`}
+                >
+                  {imgSrc && (
+                    <img
+                      src={imgSrc}
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                    />
+                  )}
+                </div>
+              );
+            });
+          })()}
         </div>
-        <div className="row-start-11 row-end-13 col-start-7 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3" >
+        <div className="row-start-11 row-end-13 col-start-7 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3">
           <div className="col-start-6 col-end-10 row-start-1 row-end-4 flex justify-center items-center">
-             <div className="text-6xl opacity-50 text-[#915A14] text-center">Cockroach Pig</div>
+            <div className="text-6xl opacity-50 text-[#915A14] text-center">
+              Cockroach Pig
+            </div>
           </div>
           {(() => {
-                const maxRow = 3;
-                let positions = [];
-                let grid: Record<string, boolean> = {};
-                for(let i=0; i<=21;i++){
-                  grid[`${i},${4}`] = true;
-                  grid[`${i},${5}`] = true;
-                  grid[`${i},${6}`] = true;
-                  grid[`${i},${7}`] = true;
-                  grid[`${i},${8}`] = true;
-                  grid[`${i},${9}`] = true;
-                  grid[`${i},${10}`] = true;
-                  grid[`${i},${11}`] = true;
-                  grid[`${i},${12}`] = true;
-                  grid[`${i},${13}`] = true;
-                  grid[`${i},${14}`] = true;
-                  grid[`${i},${15}`] = true;
-                  grid[`${i},${16}`] = true;
+            const maxRow = 3;
+            let positions = [];
+            let grid: Record<string, boolean> = {};
+            for (let i = 0; i <= 21; i++) {
+              grid[`${i},${4}`] = true;
+              grid[`${i},${5}`] = true;
+              grid[`${i},${6}`] = true;
+              grid[`${i},${7}`] = true;
+              grid[`${i},${8}`] = true;
+              grid[`${i},${9}`] = true;
+              grid[`${i},${10}`] = true;
+              grid[`${i},${11}`] = true;
+              grid[`${i},${12}`] = true;
+              grid[`${i},${13}`] = true;
+              grid[`${i},${14}`] = true;
+              grid[`${i},${15}`] = true;
+              grid[`${i},${16}`] = true;
+            }
+            for (let col = 0; col < cp.length; col++) {
+              for (let row = 0; row < cp[col].length; row++) {
+                let tempRow = row + 1;
+                let tempCol = col + 1;
+                while (grid[`${tempCol},${tempRow}`]) {
+                  tempCol++;
+                  tempRow--;
                 }
-                for(let col=0;col < cp.length;col++){
-                  for(let row=0;row < cp[col].length;row++){
-                    let tempRow = row+1;
-                    let tempCol = col+1;
-                    while(grid[`${tempCol},${tempRow}`]){
-                      tempCol++;
-                      tempRow--;
-                    }
-                    positions.push({tempo:cp[col][row].tempo, col:tempCol, row:tempRow});
-                    grid[`${tempCol},${tempRow}`] = true;
-                  }
-                }
-                return positions.map(({ tempo, col, row }, idx) => {
-                  let imgSrc = "";
-                  if (tempo === "stable") imgSrc = "/assets/new_lineRed.png";
-                  else if (tempo === "unstable") imgSrc = "/assets/new_lineBlue.png";
-                  return (
-                    <div
-                      key={`${col}-${row}-${tempo}-BigRoad`}
-                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
-                    >
-                      {imgSrc && (
-                        <img
-                          src={imgSrc}
-                          className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                        />
-                      )}
-                    </div>
-                  );
+                positions.push({
+                  tempo: cp[col][row].tempo,
+                  col: tempCol,
+                  row: tempRow,
                 });
-              })()}
+                grid[`${tempCol},${tempRow}`] = true;
+              }
+            }
+            return positions.map(({ tempo, col, row }, idx) => {
+              let imgSrc = "";
+              if (tempo === "stable") imgSrc = "/assets/new_lineRed.png";
+              else if (tempo === "unstable")
+                imgSrc = "/assets/new_lineBlue.png";
+              return (
+                <div
+                  key={`${col}-${row}-${tempo}-BigRoad`}
+                  className={`col-start-${col} col-end-${
+                    col + 1
+                  } row-start-${row} row-end-${row + 1} z-50 relative`}
+                >
+                  {imgSrc && (
+                    <img
+                      src={imgSrc}
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                    />
+                  )}
+                </div>
+              );
+            });
+          })()}
         </div>
         <div className="row-start-11 row-end-13 col-start-1 col-end-7 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3">
           <div className="col-start-6 col-end-10 row-start-1 row-end-4 flex justify-center items-center">
-             <div className="text-6xl opacity-50 text-[#915A14] text-center">Small Road</div>
+            <div className="text-6xl opacity-50 text-[#915A14] text-center">
+              Small Road
+            </div>
           </div>
           {(() => {
-                const maxRow = 3;
-                let positions = [];
-                let grid: Record<string, boolean> = {};
-                for(let i=0; i<=21;i++){
-                  grid[`${i},${4}`] = true;
-                  grid[`${i},${5}`] = true;
-                  grid[`${i},${6}`] = true;
-                  grid[`${i},${7}`] = true;
-                  grid[`${i},${8}`] = true;
-                  grid[`${i},${9}`] = true;
-                  grid[`${i},${10}`] = true;
-                  grid[`${i},${11}`] = true;
-                  grid[`${i},${12}`] = true;
-                  grid[`${i},${13}`] = true;
-                  grid[`${i},${14}`] = true;
-                  grid[`${i},${15}`] = true;
-                  grid[`${i},${16}`] = true;
+            const maxRow = 3;
+            let positions = [];
+            let grid: Record<string, boolean> = {};
+            for (let i = 0; i <= 21; i++) {
+              grid[`${i},${4}`] = true;
+              grid[`${i},${5}`] = true;
+              grid[`${i},${6}`] = true;
+              grid[`${i},${7}`] = true;
+              grid[`${i},${8}`] = true;
+              grid[`${i},${9}`] = true;
+              grid[`${i},${10}`] = true;
+              grid[`${i},${11}`] = true;
+              grid[`${i},${12}`] = true;
+              grid[`${i},${13}`] = true;
+              grid[`${i},${14}`] = true;
+              grid[`${i},${15}`] = true;
+              grid[`${i},${16}`] = true;
+            }
+            for (let col = 0; col < smallRoad.length; col++) {
+              for (let row = 0; row < smallRoad[col].length; row++) {
+                let tempRow = row + 1;
+                let tempCol = col + 1;
+                while (grid[`${tempCol},${tempRow}`]) {
+                  tempCol++;
+                  tempRow--;
                 }
-                for(let col=0;col < smallRoad.length;col++){
-                  for(let row=0;row < smallRoad[col].length;row++){
-                    let tempRow = row+1;
-                    let tempCol = col+1;
-                    while(grid[`${tempCol},${tempRow}`]){
-                      tempCol++;
-                      tempRow--;
-                    }
-                    positions.push({tempo:smallRoad[col][row].tempo, col:tempCol, row:tempRow});
-                    grid[`${tempCol},${tempRow}`] = true;
-                  }
-                }
-                return positions.map(({ tempo, col, row }, idx) => {
-                  let imgSrc = "";
-                  if (tempo === "stable") imgSrc = "/assets/f1.png";
-                  else if (tempo === "unstable") imgSrc = "/assets/f2.png";
-                  return (
-                    <div
-                      key={`${col}-${row}-${tempo}-BigRoad`}
-                      className={`col-start-${col} col-end-${col+1} row-start-${row} row-end-${row+1} z-50 relative`}
-                    >
-                      {imgSrc && (
-                        <img
-                          src={imgSrc}
-                          className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-                        />
-                      )}
-                    </div>
-                  );
+                positions.push({
+                  tempo: smallRoad[col][row].tempo,
+                  col: tempCol,
+                  row: tempRow,
                 });
-            })()}
+                grid[`${tempCol},${tempRow}`] = true;
+              }
+            }
+            return positions.map(({ tempo, col, row }, idx) => {
+              let imgSrc = "";
+              if (tempo === "stable") imgSrc = "/assets/f1.png";
+              else if (tempo === "unstable") imgSrc = "/assets/f2.png";
+              return (
+                <div
+                  key={`${col}-${row}-${tempo}-BigRoad`}
+                  className={`col-start-${col} col-end-${
+                    col + 1
+                  } row-start-${row} row-end-${row + 1} z-50 relative`}
+                >
+                  {imgSrc && (
+                    <img
+                      src={imgSrc}
+                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                    />
+                  )}
+                </div>
+              );
+            });
+          })()}
         </div>
-
       </div>
       <div className="w-[97vw] relative overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee">
           <span className="mx-8 text-3xl font-semibold text-red-600">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
-          <span className="mx-8 text-3xl font-semibold text-red-600" aria-hidden="true">
-            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT DECISION WILL BE FINAL
+          <span
+            className="mx-8 text-3xl font-semibold text-red-600"
+            aria-hidden="true"
+          >
+            THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
+            DECISION WILL BE FINAL
           </span>
         </div>
       </div>
+      {cardModal && (
+        <div className="fixed h-screen w-full z-50 top-0 left-0 bottom-0 right-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md flex flex-col items-center text-black">
+            <div className={`text-4xl font-bold text-center mb-4 `}>
+              happy friendship day
+            </div>
+            {1 && (
+              <div className="text-2xl font-bold text-yellow-600 text-center mb-4"></div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
 

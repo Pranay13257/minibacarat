@@ -127,15 +127,6 @@ const DealerPage = () => {
 
   // Add mode state
   const [mode, setMode] = useState<string>('manual');
-
-  // Manual result form state
-  const [manualWinner, setManualWinner] = useState('player');
-  const [manualPlayerPair, setManualPlayerPair] = useState(false);
-  const [manualBankerPair, setManualBankerPair] = useState(false);
-  const [manualPlayerNatural, setManualPlayerNatural] = useState(false);
-  const [manualBankerNatural, setManualBankerNatural] = useState(false);
-  const [manualSuperSix, setManualSuperSix] = useState(false);
-  const [manualSubmitting, setManualSubmitting] = useState(false);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   
@@ -396,9 +387,6 @@ const DealerPage = () => {
 
   const handleGameAction = (action: string) => {
     if (action === 'reset_game') {
-      // if (!window.confirm('Reset everything? This will clear all game data.')) {
-      //   return;
-      // }
       setHasBurnedCard(false);
     }
     sendMessage({ action });
@@ -419,25 +407,6 @@ const DealerPage = () => {
     }
     return reasons.join(", ");
   };
-
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setManualSubmitting(true);
-    sendMessage({
-      action: 'manual_result',
-      winner: manualWinner,
-      player_pair: manualPlayerPair,
-      banker_pair: manualBankerPair,
-      player_natural: manualPlayerNatural,
-      banker_natural: manualBankerNatural,
-      is_super_six: manualSuperSix
-    });
-    setTimeout(() => setManualSubmitting(false), 1000);
-  };
-
-  function idk(){
-    sendMessage({action:'reveal_player_card_1'});
-  }
 
 
   return (
