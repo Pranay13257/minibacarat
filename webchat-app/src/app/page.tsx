@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { IP } from "./ip";
+import GameBoard from "@/components/GameBoard";
 
 export default function MiniBaccaratDashboard() {
   // Live stats and game state
@@ -14,12 +15,41 @@ export default function MiniBaccaratDashboard() {
     banker_naturals: 0,
   });
   const [gameState, setGameState] = useState({
-    min_bet: 0,
-    max_bet: 0,
-    table_number: "",
-    bankerCards: [],
     playerCards: [],
-    gamePhase: "",
+    bankerCards: [],
+    playerTotal: 0,
+    bankerTotal: 0,
+    nextCardGoesTo: "player",
+    gamePhase: "waiting",
+    thirdCardPhase: false,
+    canUndo: false,
+    canCalculate: false,
+    canShuffle: false,
+    remainingCards: 416,
+    usedCards: 0,
+    burnCard: null,
+    burnEnabled: false,
+    playerPair: false,
+    bankerPair: false,
+    round: 0,
+    playerWins: 0,
+    bankerWins: 0,
+    ties: 0,
+    luckySixCount: 0,
+    naturalCount: 0,
+    activePlayers: [],
+    winMessage: "",
+    naturalWin: false,
+    naturalType: null,
+    isSuperSix: false,
+    lastGameResult: null,
+    table_number: "",
+    max_bet: 0,
+    min_bet: 0,
+    game_mode: undefined,
+    vip_revealer: null,
+    cards_revealed: false,
+    winner: null,
   });
   const [beadPlate, setBeadPlate] = useState<any[][]>([]);
   const [bigRoad, setBigRoad] = useState<any[][]>([]);
@@ -44,9 +74,13 @@ export default function MiniBaccaratDashboard() {
   },[gameState.bankerCards,gameState.playerCards]);
 
   useEffect(() => {
-    if (gameState.gamePhase == 'finished')
-      setCardModal(false);
-  },[gameState.gamePhase]);
+    if (gameState.gamePhase === "finished") {
+      const timeout = setTimeout(() => {
+        setCardModal(false);
+      }, 3000);
+      return () => clearTimeout(timeout); 
+    }
+  }, [gameState.gamePhase]);
 
   // Function to update bead plate - memoized with useCallback
   const updateBeadPlate = useCallback(async () => {
@@ -119,12 +153,43 @@ export default function MiniBaccaratDashboard() {
           if (data.action === "game_state" || data.action === "game_result") {
             setGameState((prev) => ({
               ...prev,
-              min_bet: data.min_bet ?? prev.min_bet,
-              max_bet: data.max_bet ?? prev.max_bet,
-              table_number: data.table_number ?? prev.table_number,
-              bankerCards: data.bankerCards ?? prev.bankerCards,
-              playerCards: data.playerCards ?? prev.playerCards,
-              gamePhase: data.gamePhase ?? prev.gamePhase,
+              playerCards: data.playerCards || [],
+              bankerCards: data.bankerCards || [],
+              playerTotal: data.playerTotal || 0,
+              bankerTotal: data.bankerTotal || 0,
+              nextCardGoesTo: data.nextCardGoesTo || "player",
+              gamePhase: data.gamePhase || "waiting",
+              thirdCardPhase: data.thirdCardPhase || false,
+              canUndo: data.canUndo || false,
+              canCalculate: data.canCalculate || false,
+              canShuffle: data.canShuffle || false,
+              remainingCards: data.remainingCards || 0,
+              usedCards: data.usedCards || 0,
+              burnCard: data.burnCard,
+              burnEnabled: data.burnEnabled || false,
+              playerPair: data.playerPair || false,
+              bankerPair: data.bankerPair || false,
+              round: data.round || 0,
+              playerWins: data.playerWins || 0,
+              bankerWins: data.bankerWins || 0,
+              ties: data.ties || 0,
+              luckySixCount: data.luckySixCount || 0,
+              naturalCount: data.naturalCount || 0,
+              activePlayers: data.activePlayers || [],
+              winMessage: data.winMessage || "",
+              naturalWin: data.naturalWin || false,
+              naturalType: data.naturalType || null,
+              isSuperSix: data.is_super_six || false,
+              lastGameResult: data.lastGameResult || null,
+              table_number: data.table_number || "",
+              max_bet: data.max_bet || 0,
+              min_bet: data.min_bet || 0,
+              game_mode: data.game_mode || undefined,
+              vip_revealer: data.vip_revealer || null,
+              cards_revealed: data.cards_revealed || false,
+              winner: data.winner || null,
+              vip_player_revealer: data.vip_player_revealer || null,
+              vip_banker_revealer: data.vip_banker_revealer || null,
             }));
           }
           
@@ -772,8 +837,7 @@ export default function MiniBaccaratDashboard() {
                 let tempCol = col + 1;
                 while (grid[`${tempCol},${tempRow}`]) {
                   tempCol++;
-                  if(tempRow >= 2)
-                    tempRow--;
+                  if (tempRow >= 2) tempRow--;
                 }
                 positions.push({
                   tempo: BEB[col][row].tempo,
@@ -992,13 +1056,47 @@ export default function MiniBaccaratDashboard() {
       </div>
       {cardModal && (
         <div className="fixed h-screen w-full z-50 top-0 left-0 bottom-0 right-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md flex flex-col items-center text-black">
-            <div className={`text-4xl font-bold text-center mb-4 `}>
-              happy friendship day
+          <div className="bg-[midRed] rounded-2xl shadow-lg p-6 w-[75vw] h-[75vh] text-black grid grid-cols-12 grid-rows-12">
+            <div
+              className={`${
+                gameState.bankerCards.length === 3
+                  ? "col-start-2 col-end-7"
+                  : "col-start-4 col-end-7"
+              } row-start-2 row-end-12 flex justify-end items-center m-2`}
+            >
+              <GameBoard
+                gameState={gameState}
+                hideCards={
+                  gameState.game_mode === "vip" && !gameState.cards_revealed
+                }
+                isBanker={true}
+                extraWide={gameState.bankerCards.length === 3}
+                playerId="poko"
+                sendMessage={() => { }}
+                scaleFactor={3}
+                scaleDir="right"
+              />
             </div>
-            {1 && (
-              <div className="text-2xl font-bold text-yellow-600 text-center mb-4"></div>
-            )}
+            <div
+              className={`${
+                gameState.playerCards.length === 3
+                  ? "col-start-7 col-end-12"
+                  : "col-start-7 col-end-10"
+              } row-start-2 row-end-12 flex justify-start items-center m-2`}
+            >
+              <GameBoard
+                gameState={gameState}
+                hideCards={
+                  gameState.game_mode === "vip" && !gameState.cards_revealed
+                }
+                isBanker={false}
+                extraWide={gameState.playerCards.length === 3}
+                playerId="poko"
+                sendMessage={() => {}}
+                scaleFactor={3}
+                scaleDir="left"
+              />
+            </div>
           </div>
         </div>
       )}

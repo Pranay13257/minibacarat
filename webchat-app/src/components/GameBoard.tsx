@@ -1,5 +1,5 @@
 "use client";
-import { div } from "framer-motion/client";
+import { div, style } from "framer-motion/client";
 import { useState, useEffect, useRef } from "react";
 
 interface GameBoardProps {
@@ -45,10 +45,12 @@ interface GameBoardProps {
   vipRevealer?: string | null;
   connected?: boolean;
   onVipReveal?: () => void;
-  sendMessage: (any:any) => void;
+  sendMessage: (any: any) => void;
+  scaleFactor?: number;
+  scaleDir?: string;
 }
 
-const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, playerId, vipRevealer, connected, onVipReveal, sendMessage }: GameBoardProps) => {
+const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, playerId, vipRevealer, connected, onVipReveal, sendMessage, scaleFactor = 1, scaleDir= ''}: GameBoardProps) => {
   const [cardInput, setCardInput] = useState("");
   const [isTouched, setIsTouched] = useState(false);
   const [currPage, setCurrPage] = useState<'dealer' | 'player' | 'stats'>('stats');
@@ -187,31 +189,46 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
   };
 
   return (
-    <div className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit h-fit`}>
+    <div
+      className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit h-fit`}
+      style={{
+        transform: `scale(${scaleFactor})`,
+        transformOrigin: `${scaleDir}`,
+      }}
+    >
       <div className="flex flex-col items-center gap-1">
-        <h2 className="text-xl text-white">{isBanker ? 'BANKER' : 'PLAYER'}</h2>
+        <h2 className="text-xl text-white">{isBanker ? "BANKER" : "PLAYER"}</h2>
         <div className="flex gap-4 w-fit">
           {(() => {
-            const isVipMode = gameState.game_mode === 'vip';
+            const isVipMode = gameState.game_mode === "vip";
             const cardsRevealed = !!gameState.cards_revealed;
-            const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+            const cards = isBanker
+              ? gameState.bankerCards
+              : gameState.playerCards;
             if (cards.length === 0) {
               // No cards dealt: show 2 card backs
-              return [0,1].map(i => (
-                <img key={i} src="/cards/card_back.png" alt="Card Back" className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2" />
+              return [0, 1].map((i) => (
+                <img
+                  key={i}
+                  src="/cards/card_back.png"
+                  alt="Card Back"
+                  className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2"
+                />
               ));
             } else if (isVipMode && !cardsRevealed) {
               // VIP mode, cards dealt but not revealed: show BR.png for first 2 cards only
-              return cards.slice(0, 2).map((_, i) => (
-                  <img 
-                  key={i}
-                  src={`/cards/${cards[i]}.png`}
-                  alt="VIP Hidden Card" 
-                  className="w-24 h-36 rounded mb-2"
-                  onTouchStart={cardClick}
-                  onTouchEnd={handleTouchEnd}
-                />
-              ));
+              return cards
+                .slice(0, 2)
+                .map((_, i) => (
+                  <img
+                    key={i}
+                    src={`/cards/${cards[i]}.png`}
+                    alt="VIP Hidden Card"
+                    className="w-24 h-36 rounded mb-2"
+                    onTouchStart={cardClick}
+                    onTouchEnd={handleTouchEnd}
+                  />
+                ));
             } else {
               return cards.slice(0, 2).map(renderCard);
             }
@@ -219,16 +236,18 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
         </div>
         <div className="flex gap-4 w-fit">
           {(() => {
-            const isVipMode = gameState.game_mode === 'vip';
+            const isVipMode = gameState.game_mode === "vip";
             const cardsRevealed = !!gameState.cards_revealed;
-            const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+            const cards = isBanker
+              ? gameState.bankerCards
+              : gameState.playerCards;
             if (isVipMode && !cardsRevealed && cards.length == 3) {
               // VIP mode, cards dealt but not revealed: show BR.png for 3rd card only
               return (
-                <img 
+                <img
                   key={2}
                   src={`/cards/${cards[2]}.png`}
-                  alt="VIP Hidden Card" 
+                  alt="VIP Hidden Card"
                   className="w-24 h-36 rounded mb-2 rotate-90"
                   onTouchStart={cardClick}
                   onTouchEnd={handleTouchEnd}
@@ -236,18 +255,22 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
               );
             } else {
               // Normal: show 3rd card only
-              if(cards.length == 3)
-                return renderCard_roated(cards[2]);
+              if (cards.length == 3) return renderCard_roated(cards[2]);
             }
           })()}
         </div>
         {/* VIP Reveal Button - under cards, above total */}
         {(() => {
-          const isVipMode = gameState.game_mode === 'vip';
+          const isVipMode = gameState.game_mode === "vip";
           const cardsRevealed = !!gameState.cards_revealed;
-          const revealer = isBanker ? gameState.vip_banker_revealer : gameState.vip_player_revealer;
-          const isRevealer = isVipMode && revealer && playerId && revealer === playerId;
-          const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+          const revealer = isBanker
+            ? gameState.vip_banker_revealer
+            : gameState.vip_player_revealer;
+          const isRevealer =
+            isVipMode && revealer && playerId && revealer === playerId;
+          const cards = isBanker
+            ? gameState.bankerCards
+            : gameState.playerCards;
           // if (isVipMode && isRevealer && !cardsRevealed && cards.length > 0) {
           //   return (
           //     <div className="my-4 text-center">
@@ -268,21 +291,28 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
         className="absolute bottom-0 text-lg text-white border-2 border-yellow-500 py-2 px-6 bg-darkRed rounded-3xl font-bold shadow-lg"
         style={{ zIndex: 10, transform: "translateY(50%)" }}
       >
-        Total: {(() => {
-          const isVipMode = gameState.game_mode === 'vip';
+        Total:{" "}
+        {(() => {
+          const isVipMode = gameState.game_mode === "vip";
           const cardsRevealed = !!gameState.cards_revealed;
-          const cards = isBanker ? gameState.bankerCards : gameState.playerCards;
+          const cards = isBanker
+            ? gameState.bankerCards
+            : gameState.playerCards;
           if (isVipMode && cards.length > 0 && !cardsRevealed) {
-            return '--';
+            return "--";
           }
           return isBanker ? gameState.bankerTotal : gameState.playerTotal;
         })()}
-        {((!gameState.game_mode || gameState.game_mode !== 'vip' || gameState.cards_revealed) && (
-          isBanker && gameState.bankerPair && <span className="ml-2">(Pair)</span>
-        ))}
-        {((!gameState.game_mode || gameState.game_mode !== 'vip' || gameState.cards_revealed) && (
-          !isBanker && gameState.playerPair && <span className="ml-2">(Pair)</span>
-        ))}
+        {(!gameState.game_mode ||
+          gameState.game_mode !== "vip" ||
+          gameState.cards_revealed) &&
+          isBanker &&
+          gameState.bankerPair && <span className="ml-2">(Pair)</span>}
+        {(!gameState.game_mode ||
+          gameState.game_mode !== "vip" ||
+          gameState.cards_revealed) &&
+          !isBanker &&
+          gameState.playerPair && <span className="ml-2">(Pair)</span>}
       </div>
     </div>
   );
