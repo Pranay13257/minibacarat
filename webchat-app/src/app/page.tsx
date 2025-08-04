@@ -983,7 +983,7 @@ export default function MiniBaccaratDashboard() {
                 extraWide={gameState.bankerCards.length === 3}
                 playerId="poko"
                 sendMessage={() => { }}
-                scaleFactor={4}
+                scaleFactor={2}
                 scaleDir="right"
               />
             </div>
@@ -1003,7 +1003,7 @@ export default function MiniBaccaratDashboard() {
                 extraWide={gameState.playerCards.length === 3}
                 playerId="poko"
                 sendMessage={() => {}}
-                scaleFactor={4}
+                scaleFactor={2}
                 scaleDir="left"
               />
             </div>
