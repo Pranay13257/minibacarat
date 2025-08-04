@@ -463,99 +463,9 @@ export default function MiniBaccaratDashboard() {
     console.log("CP updated:", cp);
   }, [cp]);
 
-  function BigRoad() {
-    const maxRows = 5;
-    // Flatten beadPlate into a single array of games in order
-    const results = [];
-    for (let col = 0; col < beadPlate.length; col++) {
-      for (let row = 0; row < beadPlate[col].length; row++) {
-        const game = beadPlate[col][row];
-        console.log(game);
-        if (game) results.push(game);
-      }
-    }
-
-    let col = 0;
-    let row = 0;
-    let prevWinner: string | null = null;
-    const beads: React.JSX.Element[] = [];
-    let tieCount = 0; // Track consecutive ties
-
-    let prevPlayerPair = false;
-    let prevBankerPair = false;
-    let prevNatural = false;
-
-    results.forEach((game, idx) => {
-      const winner = game.winner;
-      
-      // Always update previous states for every game
-      prevPlayerPair = game.player_pair || prevPlayerPair || false;
-      prevBankerPair = game.banker_pair || prevBankerPair || false;
-      prevNatural = (game.banker_natural || game.player_natural) || prevNatural || false;
-      
-      // Reset tie count when new winner (non-tie) occurs
-      if (winner !== "tie") {
-        tieCount = 0;
-      } else {
-        tieCount++;
-      }
-      
-      if(winner !== "tie"){
-        if (winner === prevWinner) {
-          row++;
-          if (row >= maxRows) {
-            col++;
-            row = 0;
-          }
-        } else {
-          col++;
-          row = 0;
-        }
-      }
-      
-      
-      let imgSrc = "";
-      if (winner === "player") imgSrc = "/assets/bhcz.png";
-      else if (winner === "banker") imgSrc = "/assets/rhcz.png";
-      
-      beads.push(
-        <div
-          key={`${col}-${row}-${tieCount}-BigRoad`}
-          className={`col-start-${col} col-end-${col+1} row-start-${row+1} row-end-${row+2} z-50 relative`}
-        >
-          {imgSrc ? (
-            <img src={imgSrc} className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-1"/>
-            ) : null}
-          {winner === "tie" && tieCount >= 1 && tieCount <= 8 ? (
-            Array.from({ length: tieCount }, (_, index) => (
-              <img 
-                key={`line${index + 1}`}
-                src={`/assets/line${index + 1}.png`} 
-                className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
-              />
-            ))
-          ) : null}
-          {(winner !== "tie" ? game.player_pair : prevPlayerPair) ? (
-            <img src="/assets/player (2).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
-          ) : null}
-          {(winner !== "tie" ? game.banker_pair : prevBankerPair) ? (
-            <img src="/assets/banker (1).png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"/>
-          ) : null}
-          {(winner !== "tie" ? (game.banker_natural || game.player_natural) : prevNatural) ? (
-            <img src="/assets/natural.png" className="w-12 h-12 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"/>
-          ) : null}
-        </div>
-      );
-      if(winner !== "tie")
-        prevWinner = winner;
-    });
-
-    return beads;
-  }
-
   return (
     <div className="min-h-screen bg-darkBrown flex flex-col justify-center items-center">
-      <div className="h-[95vh] w-[97vw] m-4 border-[1rem] border-randomBrown bg-[#EFE6D3] grid grid-cols-12 grid-rows-12">
+      <div className="h-[95vh] w-[97vw] mr-4 ml-4 mt-3 mb-0.75 border-[1rem] border-randomBrown bg-[#EFE6D3] grid grid-cols-12 grid-rows-12">
         <div
           className="col-start-1 col-end-13 row-start-1 row-end-2 flex justify-between items-center relative z-15"
           style={{
@@ -564,76 +474,76 @@ export default function MiniBaccaratDashboard() {
             backgroundPosition: "center",
           }}
         >
-          <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-5xl text-yellow-500">
+          <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-3xl text-yellow-500">
             <div>Games : {games}</div>
             <div>Table no. : {gameState.table_number}</div>
           </div>
-          <img src="/assets/mini_baccarat.png" className="z-50 scale-150" />
-          <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-5xl text-yellow-500">
+          <img src="/assets/mini_baccarat.png" className="z-50" />
+          <div className="flex flex-row gap-4 min-w-[20vw] justify-around items-center text-3xl text-yellow-500">
             <div>Min bet : {gameState.max_bet}</div>
             <div>Max bet : {gameState.min_bet}</div>
           </div>
         </div>
 
         <div className="gird row-start-2 row-end-6 col-start-9 col-end-11 border-2 border-yellow-500 grid grid-cols-2 grid-rows-4">
-          <div className="row-start-1 row-end-2 col-start-1 col-end-2 text-black text-6xl text-bold flex items-center justify-center">
+          <div className="row-start-1 row-end-2 col-start-1 col-end-2 text-black text-4xl text-bold flex items-center justify-center">
             Player
           </div>
           <div className="row-start-2 row-end-3 col-start-1 col-end-2 text-black flex items-center justify-center">
-            <img src="/assets/new_bc.png" className="w-18 h-18" />
+            <img src="/assets/new_bc.png" className="w-14 h-14" />
           </div>
           <div className="row-start-3 row-end-4 col-start-1 col-end-2 text-black flex items-center justify-center">
-            <img src="/assets/new_bhcz.png" className="w-18 h-18" />
+            <img src="/assets/new_bhcz.png" className="w-14 h-14" />
           </div>
           <div className="row-start-4 row-end-5 col-start-1 col-end-2 text-black flex items-center justify-center">
-            <img src="/assets/new_lineBlue.png" className="w-18 h-18" />
+            <img src="/assets/new_lineBlue.png" className="w-14 h-14" />
           </div>
-          <div className="row-start-1 row-end-2 col-start-2 col-end-3 text-black text-6xl text-bold flex items-center justify-center">
+          <div className="row-start-1 row-end-2 col-start-2 col-end-3 text-black text-4xl text-bold flex items-center justify-center">
             Banker
           </div>
           <div className="row-start-2 row-end-3 col-start-2 col-end-3 text-black flex items-center justify-center">
-            <img src="/assets/new_rc.png" className="w-18 h-18" />
+            <img src="/assets/new_rc.png" className="w-14 h-14" />
           </div>
           <div className="row-start-3 row-end-4 col-start-2 col-end-3 text-black flex items-center justify-center">
-            <img src="/assets/new_rhcz.png" className="w-18 h-18" />
+            <img src="/assets/new_rhcz.png" className="w-14 h-14" />
           </div>
           <div className="row-start-4 row-end-5 col-start-2 col-end-3 text-black flex items-center justify-center">
-            <img src="/assets/new_lineRed.png" className="w-18 h-18" />
+            <img src="/assets/new_lineRed.png" className="w-14 h-14" />
           </div>
         </div>
 
         <div className="gird row-start-2 row-end-6 col-start-11 col-end-13 bg-[darkRed] flex flex-col justify-around items-start pl-4">
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn1.png" className="w-14 h-14" />
-            <div className="text-5xl text-yellow-500">
+            <img src="/assets/cn1.png" className="w-8 h-8" />
+            <div className="text-3xl text-yellow-500">
               Player Wins : {stats.player_wins}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn2.png" className="w-14 h-14" />
-            <div className="text-5xl text-yellow-500">
+            <img src="/assets/cn2.png" className="w-8 h-8" />
+            <div className="text-3xl text-yellow-500">
               Banker Wins : {stats.banker_wins}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn3.png" className="w-14 h-14" />
-            <div className="text-5xl text-yellow-500">Tie : {stats.ties}</div>
+            <img src="/assets/cn3.png" className="w-8 h-8" />
+            <div className="text-3xl text-yellow-500">Tie : {stats.ties}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn4.png" className="w-14 h-14" />
-            <div className="text-5xl text-yellow-500">
+            <img src="/assets/cn4.png" className="w-8 h-8" />
+            <div className="text-3xl text-yellow-500">
               Naturals : {naturals}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn5.png" className="w-14 h-14" />
-            <div className="text-5xl text-yellow-500">
+            <img src="/assets/cn5.png" className="w-8 h-8" />
+            <div className="text-3xl text-yellow-500">
               Player pair : {stats.player_pairs}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
-            <img src="/assets/cn6.png" className="w-14 h-14" />
-            <div className="text-5xl text-yellow-500">
+            <img src="/assets/cn6.png" className="w-8 h-8" />
+            <div className="text-3xl text-yellow-500">
               Banker pair : {stats.banker_pairs}
             </div>
           </div>
@@ -641,7 +551,7 @@ export default function MiniBaccaratDashboard() {
 
         <div className="gird row-start-2 row-end-6 col-start-1 col-end-9 border-2 border-yellow-500 grid grid-cols-11 grid-rows-5">
           <div className="col-start-6 col-end-8 row-start-3 row-end-4 flex justify-center items-center">
-            <div className="text-8xl opacity-50 z-20 text-[#915A14] text-center">
+            <div className="text-6xl opacity-50 z-20 text-[#915A14] text-center">
               Bead Plate
             </div>
           </div>
@@ -669,7 +579,7 @@ export default function MiniBaccaratDashboard() {
                   {imgSrc ? (
                     <img
                       src={imgSrc}
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
                     />
                   ) : null}
                 </div>
@@ -679,7 +589,7 @@ export default function MiniBaccaratDashboard() {
         </div>
         <div className="row-start-6 row-end-9 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(20,minmax(0,1fr))] grid-rows-4">
           <div className="col-start-10 col-end-12 row-start-2 row-end-4 flex justify-center items-center">
-            <div className="text-8xl opacity-50 text-[#915A14] text-center">
+            <div className="text-6xl opacity-50 text-[#915A14] text-center">
               Big Road
             </div>
           </div>
@@ -769,7 +679,7 @@ export default function MiniBaccaratDashboard() {
                   {imgSrc && (
                     <img
                       src={imgSrc}
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
                       alt={cell.winner}
                     />
                   )}
@@ -779,26 +689,26 @@ export default function MiniBaccaratDashboard() {
                       <img
                         key={`line${index + 1}`}
                         src={`/assets/l${index + 1}.png`}
-                        className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                        className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
                         alt={`tie-line-${index + 1}`}
                       />
                     ))}
                   {cell.player_pair ? (
                     <img
                       src="/assets/bcs.png"
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"
                     />
                   ) : null}
                   {cell.banker_pair ? (
                     <img
                       src="/assets/rcs.png"
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-50"
                     />
                   ) : null}
                   {cell.banker_natural || cell.player_natural ? (
                     <img
                       src="/assets/n.png"
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%] z-100"
                     />
                   ) : null}
                 </div>
@@ -808,7 +718,7 @@ export default function MiniBaccaratDashboard() {
         </div>
         <div className="row-start-9 row-end-11 col-start-1 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(30,minmax(0,1fr))] grid-rows-3">
           <div className="col-start-14 col-end-18 row-start-1 row-end-4 flex justify-center items-center">
-            <div className="text-6xl opacity-50 text-[#915A14] text-center">
+            <div className="text-4xl opacity-50 text-[#915A14] text-center">
               Big Eye Boy
             </div>
           </div>
@@ -861,7 +771,7 @@ export default function MiniBaccaratDashboard() {
                   {imgSrc && (
                     <img
                       src={imgSrc}
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
                     />
                   )}
                 </div>
@@ -871,7 +781,7 @@ export default function MiniBaccaratDashboard() {
         </div>
         <div className="row-start-11 row-end-13 col-start-7 col-end-13 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3">
           <div className="col-start-6 col-end-10 row-start-1 row-end-4 flex justify-center items-center">
-            <div className="text-6xl opacity-50 text-[#915A14] text-center">
+            <div className="text-4xl opacity-50 text-[#915A14] text-center">
               Cockroach Pig
             </div>
           </div>
@@ -925,7 +835,7 @@ export default function MiniBaccaratDashboard() {
                   {imgSrc && (
                     <img
                       src={imgSrc}
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
                     />
                   )}
                 </div>
@@ -935,7 +845,7 @@ export default function MiniBaccaratDashboard() {
         </div>
         <div className="row-start-11 row-end-13 col-start-1 col-end-7 border-2 border-yellow-500 grid [grid-template-columns:repeat(15,minmax(0,1fr))] grid-rows-3">
           <div className="col-start-6 col-end-10 row-start-1 row-end-4 flex justify-center items-center">
-            <div className="text-6xl opacity-50 text-[#915A14] text-center">
+            <div className="text-4xl opacity-50 text-[#915A14] text-center">
               Small Road
             </div>
           </div>
@@ -988,7 +898,7 @@ export default function MiniBaccaratDashboard() {
                   {imgSrc && (
                     <img
                       src={imgSrc}
-                      className="w-12 h-12 scale-200 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
+                      className="w-12 h-12 scale-120 absolute transform -translate-x-1/2 -translate-y-1/2 top-[50%] left-[50%]"
                     />
                   )}
                 </div>
@@ -999,54 +909,54 @@ export default function MiniBaccaratDashboard() {
       </div>
       <div className="w-[97vw] relative overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee">
-          <span className="mx-8 text-3xl font-semibold text-red-600">
+          <span className="mx-8 text-2xl font-semibold text-red-600">
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
             DECISION WILL BE FINAL
           </span>
           <span
-            className="mx-8 text-3xl font-semibold text-red-600"
+            className="mx-8 text-2xl font-semibold text-red-600"
             aria-hidden="true"
           >
             THIS IS AN ELECTRONIC GAME INCASE OF ANY GRIEVANCES THE MANAGEMENT
