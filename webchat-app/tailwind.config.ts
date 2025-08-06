@@ -4,12 +4,17 @@ const range = (size) => {
   const output = {};
   for (let i = 1; i <= size; i++) {
     output[i] = `${i}`;
-    output[`span-${i}`] = `span ${i} / span ${i}`;
+    // output[`span-${i}`] = `span ${i} / span ${i}`;
   }
   return output;
 };
 
 export default {
+  safelist: [
+    {
+      pattern: /(col|row)-(start|end)-[0-9]+/,
+    },
+  ],
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}', // Note the addition of the `app` directory.
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -33,9 +38,9 @@ export default {
       },
       gridColumnStart: range(31), // adds col-start-1...col-start-31
       gridColumnEnd: range(31),   // adds col-end-1...col-end-31
-      gridColumn: range(31),
+      // gridColumn: range(31),
       scale: {
-        '200': '2', // 200% scale
+        '200': '2', // 200% scale 
       }, 
       animation: {
         marquee: 'marquee 20s linear infinite',

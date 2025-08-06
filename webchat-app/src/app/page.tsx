@@ -726,7 +726,7 @@ export default function MiniBaccaratDashboard() {
             const maxRow = 3;
             let positions = [];
             let grid: Record<string, boolean> = {};
-            for (let i = 0; i <= 21; i++) {
+            for (let i = 0; i <= 31; i++) {
               grid[`${i},${4}`] = true;
               grid[`${i},${5}`] = true;
               grid[`${i},${6}`] = true;
