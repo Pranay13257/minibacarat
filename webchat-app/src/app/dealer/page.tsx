@@ -485,8 +485,7 @@ const DealerPage = () => {
         <div className="col-start-5 col-end-9 row-start-11 row-end-13 z-40 flex flex-col justify-start" style={{transform: "translateY(25%) translateX(1px)"}}>
           <img src="/assets/golden_design.png" alt="" className="rotate-180"/>
         </div>
-        {/* {showWinnerModal && ( */}
-        {0 && (
+        {showWinnerModal && (
           <WinnerModal
             show={showWinnerModal}
             winner={gameState.winner ?? null}
