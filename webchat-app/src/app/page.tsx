@@ -515,35 +515,35 @@ export default function MiniBaccaratDashboard() {
         <div className="gird row-start-2 row-end-6 col-start-11 col-end-13 bg-[darkRed] flex flex-col justify-around items-start pl-4">
           <div className="flex flex-row gap-4 justify-center items-center">
             <img src="/assets/cn1.png" className="w-8 h-8" />
-            <div className="text-3xl text-yellow-500">
+            <div className="text-2xl text-yellow-500">
               Player Wins : {stats.player_wins}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
             <img src="/assets/cn2.png" className="w-8 h-8" />
-            <div className="text-3xl text-yellow-500">
+            <div className="text-2xl text-yellow-500">
               Banker Wins : {stats.banker_wins}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
             <img src="/assets/cn3.png" className="w-8 h-8" />
-            <div className="text-3xl text-yellow-500">Tie : {stats.ties}</div>
+            <div className="text-2xl text-yellow-500">Tie : {stats.ties}</div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
             <img src="/assets/cn4.png" className="w-8 h-8" />
-            <div className="text-3xl text-yellow-500">
+            <div className="text-2xl text-yellow-500">
               Naturals : {naturals}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
             <img src="/assets/cn5.png" className="w-8 h-8" />
-            <div className="text-3xl text-yellow-500">
+            <div className="text-2xl text-yellow-500">
               Player pair : {stats.player_pairs}
             </div>
           </div>
           <div className="flex flex-row gap-4 justify-center items-center">
             <img src="/assets/cn6.png" className="w-8 h-8" />
-            <div className="text-3xl text-yellow-500">
+            <div className="text-2xl text-yellow-500">
               Banker pair : {stats.banker_pairs}
             </div>
           </div>
