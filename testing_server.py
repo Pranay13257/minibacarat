@@ -585,7 +585,8 @@ async def calculate_result():
             game_state["natural_win"] = True
             game_state["natural_type"] = "natural_9" if (player_score == 9 or banker_score == 9) else "natural_8"
 
-    is_super_six = (banker_score == 6 and banker_score > player_score and len(calc_banker_cards) == 3)
+    # is_super_six = (banker_score == 6 and banker_score > player_score and len(calc_banker_cards) == 3)
+    is_super_six = (banker_score == 6 and banker_score > player_score)
     
     # Use calculation cards for pair detection too
     player_pair = len(calc_player_cards) == 2 and has_pair(calc_player_cards)
