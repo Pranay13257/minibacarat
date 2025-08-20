@@ -132,7 +132,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
         <img
           src={`/cards/${card}.png`}
           alt={`Card ${card}`}
-          className="w-24 h-36 object-contain"
+          className="w-30 h-[11.1rem] object-contain"
         />
       </div>
         
@@ -143,13 +143,14 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
     return (
       // <div key={card} className="relative">
       <div 
+        className="w-fit h-fit"
         onTouchStart={cardClick}
         onTouchEnd={handleTouchEnd}
       >
         <img
           src={`/cards/${card}.png`}
           alt={`Card ${card}`}
-          className="w-24 h-36 object-contain rotate-90"
+          className="w-30 h-[11.1rem] object-contain"
         />
       </div>
         
@@ -190,7 +191,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
 
   return (
     <div
-      className={`relative bg-vlightRed rounded-lg shadow-lg p-6 flex flex-col items-center border-2 border-yellow-500 w-fit h-fit`}
+      className={`relative bg-vlightRed rounded-lg shadow-lg p-4 flex flex-col items-center border-2 border-yellow-500 w-fit h-fit`}
       style={{
         transform: `scale(${scaleFactor})`,
         transformOrigin: `${scaleDir}`,
@@ -198,7 +199,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
     >
       <div className="flex flex-col items-center gap-1">
         <h2 className="text-xl text-white">{isBanker ? "BANKER" : "PLAYER"}</h2>
-        <div className="flex gap-4 w-fit">
+        <div className="flex gap-4 w-fit justify-center items-center">
           {(() => {
             const isVipMode = gameState.game_mode === "vip";
             const cardsRevealed = !!gameState.cards_revealed;
@@ -212,7 +213,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                   key={i}
                   src="/cards/card_back.png"
                   alt="Card Back"
-                  className="w-24 h-36 border rounded shadow-lg opacity-70 mb-2"
+                  className="w-30 h-[11.1rem] border rounded shadow-lg opacity-70 mb-2"
                 />
               ));
             } else if (isVipMode && !cardsRevealed) {
@@ -224,7 +225,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                     key={i}
                     src={`/cards/${cards[i]}.png`}
                     alt="VIP Hidden Card"
-                    className="w-24 h-36 rounded mb-2"
+                    className="w-30 h-[11.1rem] rounded mb-2"
                     onTouchStart={cardClick}
                     onTouchEnd={handleTouchEnd}
                   />
@@ -234,7 +235,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
             }
           })()}
         </div>
-        <div className="flex gap-4 w-fit">
+        <div className="flex gap-4 w-fit h-fit rotate-90">
           {(() => {
             const isVipMode = gameState.game_mode === "vip";
             const cardsRevealed = !!gameState.cards_revealed;
@@ -248,7 +249,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                   key={2}
                   src={`/cards/${cards[2]}.png`}
                   alt="VIP Hidden Card"
-                  className="w-24 h-36 rounded mb-2 rotate-90"
+                  className="w-30 h-[11.1rem] rounded mb-2"
                   onTouchStart={cardClick}
                   onTouchEnd={handleTouchEnd}
                 />
