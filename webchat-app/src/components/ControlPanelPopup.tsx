@@ -68,6 +68,13 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
       is_super_six: manualSuperSix
     });
     setTimeout(() => setManualSubmitting(false), 1000);
+    setManualBankerNatural(false);
+    setManualBankerPair(false);
+    setManualPlayerNatural(false);
+    setManualPlayerPair(false);
+    setManualSuperSix(false);
+    setManualSuperSix(false);
+    setManualWinner('');
   };
 
   if (!open) return null;
