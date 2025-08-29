@@ -46,7 +46,7 @@ const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, ch
   const [tempTableNumber, setTempTableNumber] = useState(1);
   const [isWinConditionModalOpen, setIsWinConditionModalOpen] = useState(false);
   // Manual Result Entry state for form
-  const [manualWinner, setManualWinner] = useState('player');
+  const [manualWinner, setManualWinner] = useState('');
   const [manualPlayerPair, setManualPlayerPair] = useState(false);
   const [manualBankerPair, setManualBankerPair] = useState(false);
   const [manualPlayerNatural, setManualPlayerNatural] = useState(false);
