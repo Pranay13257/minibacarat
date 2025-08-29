@@ -1250,7 +1250,9 @@ async def main():
     print(f"Baccarat WebSocket server running on localhost:6789")
     print(f"Initialized with {len(remaining_cards)} cards")
     
-    async with websockets.serve(handle_client, "0.0.0.0",6789):
+    # async with websockets.serve(handle_client, "0.0.0.0",6789):
+    #     await asyncio.Future()
+    async with websockets.serve(handle_client, "192.168.2.190",6789):
         await asyncio.Future()
 
 # --- MongoDB stat aggregation functions ---
