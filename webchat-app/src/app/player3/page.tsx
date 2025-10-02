@@ -254,7 +254,7 @@ const Player3Page = () => {
             </div>
             <img
                 src="/assets/ocean7.png"
-                className="h-14 w-auto object-contain scale-150"
+                className="h-16 w-auto object-contain scale-150"
               />
             <div className="flex flex-col items-center justify-center h-full min-w-[120px] z-10 ml-4 mr-4 mt-2 mb-4">
             <span className="text-yellow-300 text-lg font-bold text-center">Bet:</span>
@@ -265,7 +265,7 @@ const Player3Page = () => {
         </div>
 
         {/* Main Content */}
-        <div className="h-[75vh] w-[95vw] border-4 border-yellow-500 bg-midRed m-4 grid grid-cols-12 grid-rows-12">
+        <div className="h-[78.5vh] w-[95vw] border-4 border-yellow-500 bg-midRed m-4 grid grid-cols-12 grid-rows-12">
 
           <div className="col-start-2 col-end-5 row-start-4 row-end-11 relative overflow-hidden" style={{transform : "translateY(-30px)"}}>
             <img
@@ -316,7 +316,7 @@ const Player3Page = () => {
         </div>
 
         {/* Footer */}
-        <div className="h-[10vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="h-[7vh] w-full rotate-180" style={{ backgroundImage: 'url(/assets/wood.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
         </div>
 
         {/* Winner Modal */}
