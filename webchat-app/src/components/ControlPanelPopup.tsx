@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 
 interface ControlPanelPopupProps {
-  open: boolean;
+  open?: boolean;
   onClose: () => void;
   children?: React.ReactNode;
   handleGameAction: (action: string) => void;
-  stats: {
+  stats?: {
     banker_wins: number;
     player_wins: number;
     ties: number;
@@ -14,28 +14,28 @@ interface ControlPanelPopupProps {
     player_naturals: number;
     banker_naturals: number;
   };
-  tableNumberInput: string;
-  setTableNumberInput: (val: string) => void;
-  saveTableNumber: () => void;
-  maxBetInput: string;
+  tableNumberInput?: string;
+  setTableNumberInput?: (val: string) => void;
+  saveTableNumber?: () => void;
+  maxBetInput?: string;
   setMaxBetInput: (val: string) => void;
-  minBetInput: string;
+  minBetInput?: string;
   setMinBetInput: (val: string) => void;
-  saveMaxBet: () => void;
-  saveMinBet: () => void;
-  addCard: () => void;
-  cardInput: string;
-  setCardInput: (val: string) => void;
-  sendMessage: (msg: Record<string, any>) => void;
-  gameState: any;
-  selectedMode : string;
-  setSelectedMode : (val: any) => void;
-  connected : boolean;
-  setSelectedRevealer : (val: string) => void;
-  canUndoLastWin: boolean;
+  saveMaxBet?: () => void;
+  saveMinBet?: () => void;
+  addCard?: () => void;
+  cardInput?: string;
+  setCardInput?: (val: string) => void;
+  sendMessage?: (msg: Record<string, any>) => void;
+  gameState?: any;
+  selectedMode?: string;
+  setSelectedMode?: (val: any) => void;
+  connected?: boolean;
+  setSelectedRevealer?: (val: string) => void;
+  canUndoLastWin?: boolean;
 }
 
-const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, children, handleGameAction, stats, tableNumberInput, setTableNumberInput, saveTableNumber, maxBetInput, setMaxBetInput, minBetInput, setMinBetInput, saveMaxBet, saveMinBet, addCard, cardInput, setCardInput, sendMessage, gameState, selectedMode, setSelectedMode, connected, setSelectedRevealer, canUndoLastWin}) => {
+const ControlPanelPopup: React.FC<ControlPanelPopupProps> = ({ open, onClose, children, handleGameAction, stats, tableNumberInput, setTableNumberInput = () => {}, saveTableNumber = () => {}, maxBetInput, setMaxBetInput = () => {}, minBetInput, setMinBetInput = () => {}, saveMaxBet = () => {}, saveMinBet = () => {}, addCard, cardInput, setCardInput = () => {}, sendMessage = () => {}, gameState, selectedMode, setSelectedMode = () => {}, connected, setSelectedRevealer = () => {}, canUndoLastWin}) => {
   // const [selectedMode, setSelectedMode] = useState<'automatic' | 'manual' | 'live'>('manual');
   const [isBetModalOpen, setIsBetModalOpen] = useState(false);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);

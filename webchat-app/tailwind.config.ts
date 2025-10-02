@@ -1,13 +1,14 @@
 import type { Config } from "tailwindcss";
 
-const range = (size) => {
-  const output = {};
+const range = (size: number): Record<number, string> => {
+  const output: Record<number, string> = {};
   for (let i = 1; i <= size; i++) {
     output[i] = `${i}`;
-    // output[`span-${i}`] = `span ${i} / span ${i}`;
+    // output[`span-${i}`] = `span ${i} / span ${i}`;  // Your commented line is fine
   }
   return output;
 };
+
 
 export default {
   safelist: [

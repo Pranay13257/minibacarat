@@ -35,7 +35,7 @@ const GameMenu = ({ socket }: GameMenuProps) => {
   // UI state
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
-  const [winner, setWinner] = useState<number | null>(null);
+  const [winner, setWinner] = useState<any>(null);
   const [showTableModal, setShowTableModal] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");

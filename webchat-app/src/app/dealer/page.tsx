@@ -457,7 +457,7 @@ const DealerPage = () => {
         {/* <div className="col-start-5 col-end-9 row-start-2 row-end-4" style={{transform: "translateX(1px)"}}>
           <img src="/assets/red_design.png" alt="" className="z-10"/>
         </div> */}
-        <div className={`${gameState.bankerCards.length === 3 ? 'col-start-2 col-end-7' : 'col-start-4 col-end-7'} row-start-2 row-end-12 flex justify-end items-center m-2`}>
+        <div className={`${gameState.bankerCards.length === 3 ? 'col-start-2 col-end-7' : 'col-start-3 col-end-7'} row-start-2 row-end-12 flex justify-end items-center m-2`}>
           <GameBoard
           gameState={gameState} 
           hideCards={mode === 'vip' && !gameState.cards_revealed} 
@@ -468,7 +468,7 @@ const DealerPage = () => {
           connected={connected}
           />
         </div>
-        <div className={`${gameState.playerCards.length === 3 ? 'col-start-7 col-end-12' : 'col-start-7 col-end-10'} row-start-2 row-end-12 flex justify-start items-center m-2`}>
+        <div className={`${gameState.playerCards.length === 3 ? 'col-start-7 col-end-12' : 'col-start-7 col-end-11'} row-start-2 row-end-12 flex justify-start items-center m-2`}>
           <GameBoard 
           gameState={gameState} 
           hideCards={mode === 'vip' && !gameState.cards_revealed} 

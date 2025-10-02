@@ -5,15 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 interface WinnerModalProps {
   show: boolean;
   onClose: () => void;
-  winner: string | null;
+  winner?: string | null;
   isLuckySix?: boolean;
   isNatural?: boolean;
   naturalType?: string | null;
-  playerTotal: number;
-  bankerTotal: number;
-  playerNatural: boolean;
-  bankerNatural: boolean;
-  gameMode: string;
+  playerTotal?: number;
+  bankerTotal?: number;
+  playerNatural?: boolean;
+  bankerNatural?: boolean;
+  gameMode?: string;
 }
 
 const WinnerModal = ({ show, onClose, winner, isLuckySix, isNatural, naturalType, playerTotal, bankerTotal, playerNatural, bankerNatural, gameMode }: WinnerModalProps) => {

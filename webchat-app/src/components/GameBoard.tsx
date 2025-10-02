@@ -39,7 +39,7 @@ interface GameBoardProps {
     // Add any other new fields from server.py here
   };
   hideCards?: boolean;
-  isBanker: boolean;
+  isBanker?: boolean;
   extraWide?: boolean;
   playerId?: string;
   vipRevealer?: string | null;
@@ -191,7 +191,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
 
   return (
     <div
-      className={`relative bg-vlightRed rounded-lg shadow-lg p-4 flex flex-col items-center border-2 border-yellow-500 w-fit h-fit`}
+      className={`relative bg-vlightRed rounded-lg shadow-lg flex flex-col items-center border-2 p-2 border-yellow-500 w-fit h-fit`}
       style={{
         transform: `scale(${scaleFactor})`,
         transformOrigin: `${scaleDir}`,
