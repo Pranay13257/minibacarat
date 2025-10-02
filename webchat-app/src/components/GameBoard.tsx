@@ -132,7 +132,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
         <img
           src={`/cards/${card}.png`}
           alt={`Card ${card}`}
-          className="w-30 h-[11.5rem] object-contain"
+          className="w-30 h-[11.1rem] object-contain"
         />
       </div>
         
@@ -150,7 +150,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
         <img
           src={`/cards/${card}.png`}
           alt={`Card ${card}`}
-          className="w-30 h-[11.5rem] object-contain"
+          className="w-30 h-[11.1rem] object-contain"
         />
       </div>
         
@@ -213,7 +213,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                   key={i}
                   src="/cards/card_back.png"
                   alt="Card Back"
-                  className="w-30 h-[11.5rem] border rounded shadow-lg opacity-70 mb-2"
+                  className="w-30 h-[11.1rem] border rounded shadow-lg opacity-70 mb-2"
                 />
               ));
             } else if (isVipMode && !cardsRevealed) {
@@ -225,7 +225,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                     key={i}
                     src={`/cards/${cards[i]}.png`}
                     alt="VIP Hidden Card"
-                    className="w-30 h-[11.5rem] rounded mb-2"
+                    className="w-30 h-[11.1rem] rounded mb-2"
                     onTouchStart={cardClick}
                     onTouchEnd={handleTouchEnd}
                   />
@@ -249,7 +249,7 @@ const GameBoard = ({ gameState, hideCards = false, isBanker, extraWide = false, 
                   key={2}
                   src={`/cards/${cards[2]}.png`}
                   alt="VIP Hidden Card"
-                  className="w-30 h-[11.5rem] rounded mb-2"
+                  className="w-30 h-[11.1rem] rounded mb-2"
                   onTouchStart={cardClick}
                   onTouchEnd={handleTouchEnd}
                 />
