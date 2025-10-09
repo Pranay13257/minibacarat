@@ -16,7 +16,7 @@ node_proc = None
 python_proc = None
 
 # URL to open
-WEB_URL = "http://192.168.2.190:3000"
+WEB_URL = "http://169.254.192.244:3000"
 
 # Tkinter setup
 # root = tk.Tk()
@@ -48,9 +48,31 @@ def find_chrome_path():
         return chrome_path
     return None
 
+def kill_process_on_port(port):
+    """Kill any process listening on the given port using Windows commands."""
+    try:
+        # Find the PID of the process using the port
+        cmd = f"netstat -ano | findstr :{port}"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout:
+            lines = result.stdout.strip().split('\n')
+            for line in lines:
+                if "LISTENING" in line:
+                    parts = line.split()
+                    pid = parts[-1]  # PID is the last column
+                    # Kill the process
+                    subprocess.run(f"taskkill /pid {pid} /f", shell=True, capture_output=True)
+                    print(f"Killed process {pid} on port {port}")
+        else:
+            print(f"No process found on port {port}")
+    except Exception as e:
+        print(f"Error killing process on port {port}: {e}")
+
 # --- Server management ---
 def start_servers():
     global node_proc, python_proc
+    kill_process_on_port(3000)
+    kill_process_on_port(6789)
     if node_proc is None or node_proc.poll() is not None:
         node_proc = subprocess.Popen(
             'cd /d "webchat-app" && npx next start --port 3000 --hostname 0.0.0.0',
@@ -84,6 +106,9 @@ def close_serial_port():
 
 def close_servers():
     global node_proc, python_proc
+    kill_process_on_port(3000)
+    kill_process_on_port(6789)
+    close_serial_port()
     if node_proc is not None and node_proc.poll() is None:
         node_proc.terminate()
         try:
