@@ -480,8 +480,8 @@ export default function MiniBaccaratDashboard() {
           </div>
           <img src="/assets/mini_baccarat.png" className="z-50" />
           <div className="flex flex-row gap-4 min-w-[25vw] justify-around items-center text-3xl text-yellow-500 mr-2">
-            <div>Min bet : {gameState.max_bet}</div>
-            <div>Max bet : {gameState.min_bet}</div>
+            <div>Min bet : {gameState.min_bet}</div>
+            <div>Max bet : {gameState.max_bet}</div>
           </div>
         </div>
 
